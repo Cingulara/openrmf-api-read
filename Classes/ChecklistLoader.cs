@@ -12,15 +12,14 @@ namespace openstig_read_api.Classes
 {
     public static class ChecklistLoader
     {        
-        public static CHECKLIST LoadASDChecklist(string filepath) {
-            CHECKLIST asdChecklist = new CHECKLIST();
-            if (System.IO.File.Exists(filepath)) {
-                XmlSerializer serializer = new XmlSerializer(typeof(CHECKLIST));
-                StreamReader reader = new StreamReader(filepath);
-                asdChecklist = (CHECKLIST)serializer.Deserialize(reader);
-                reader.Close();
+        public static CHECKLIST LoadASDChecklist(string rawChecklist) {
+            CHECKLIST myChecklist = new CHECKLIST();
+            XmlSerializer serializer = new XmlSerializer(typeof(CHECKLIST));
+            using (TextReader reader = new StringReader(rawChecklist))
+            {
+                myChecklist = (CHECKLIST)serializer.Deserialize(reader);
             }
-            return asdChecklist;
+            return myChecklist;
         }
     }
 }
