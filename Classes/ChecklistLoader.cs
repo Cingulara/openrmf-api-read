@@ -12,7 +12,7 @@ namespace openstig_read_api.Classes
 {
     public static class ChecklistLoader
     {        
-        public static CHECKLIST LoadASDChecklist(string rawChecklist) {
+        public static CHECKLIST LoadChecklist(string rawChecklist) {
             CHECKLIST myChecklist = new CHECKLIST();
             XmlSerializer serializer = new XmlSerializer(typeof(CHECKLIST));
             using (TextReader reader = new StringReader(rawChecklist))

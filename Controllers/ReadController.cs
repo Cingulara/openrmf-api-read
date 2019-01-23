@@ -43,10 +43,15 @@ namespace openstig_read_api.Controllers
             try {
                 IEnumerable<Artifact> artifacts;
                 artifacts = await _artifactRepo.GetAllArtifacts();
+                foreach (Artifact a in artifacts) {
+                    // deserialize the checklist so it comes out more gooder
+                    a.Checklist = ChecklistLoader.LoadChecklist(a.rawChecklist);
+                    a.rawChecklist = string.Empty;
+                }
                 return Json(artifacts);
             }
             catch (Exception ex) {
-                _logger.LogError(ex, "Error listing all artifacts");
+                _logger.LogError(ex, "Error listing all artifacts and deserializing the checklist XML");
                 return BadRequest();
             }
         }
@@ -58,6 +63,8 @@ namespace openstig_read_api.Controllers
             try {
                 Artifact art = new Artifact();
                 art = await _artifactRepo.GetArtifact(id);
+                art.Checklist = ChecklistLoader.LoadChecklist(art.rawChecklist);
+                art.rawChecklist = string.Empty;
                 return Json(art);
             }
             catch (Exception ex) {
