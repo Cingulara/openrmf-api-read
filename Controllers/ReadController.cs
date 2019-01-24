@@ -48,7 +48,7 @@ namespace openstig_read_api.Controllers
                     a.Checklist = ChecklistLoader.LoadChecklist(a.rawChecklist);
                     a.rawChecklist = string.Empty;
                 }
-                return Json(artifacts);
+                return Ok(artifacts);
             }
             catch (Exception ex) {
                 _logger.LogError(ex, "Error listing all artifacts and deserializing the checklist XML");
@@ -64,8 +64,8 @@ namespace openstig_read_api.Controllers
                 Artifact art = new Artifact();
                 art = await _artifactRepo.GetArtifact(id);
                 art.Checklist = ChecklistLoader.LoadChecklist(art.rawChecklist);
-                art.rawChecklist = string.Empty;
-                return Json(art);
+                //art.rawChecklist = string.Empty;
+                return Ok(art);
             }
             catch (Exception ex) {
                 _logger.LogError(ex, "Error Retrieving Artifact");
