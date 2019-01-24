@@ -44,13 +44,13 @@ namespace openstig_read_api
             // Register the Swagger generator, defining one or more Swagger documents
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new Info { Title = "openSTIG Scoring API", Version = "v1", 
-                    Description = "The Scoring API that goes with the openSTIG tool",
+                c.SwaggerDoc("v1", new Info { Title = "openSTIG Read API", Version = "v1", 
+                    Description = "The Read API that goes with the openSTIG tool",
                     Contact = new Contact
                     {
                         Name = "Dale Bingham",
                         Email = "dale.bingham@cingulara.com",
-                        Url = "https://github.com/Cingulara/openstig-api-scoring"
+                        Url = "https://github.com/Cingulara/openstig-api-read"
                     } });
             });
 
@@ -69,10 +69,8 @@ namespace openstig_read_api
                         .AllowCredentials();
                     });
             });
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
-
-            // add this in memory for now. Persist later.
-        	services.AddDistributedMemoryCache();
+            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
+                .AddXmlSerializerFormatters();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
