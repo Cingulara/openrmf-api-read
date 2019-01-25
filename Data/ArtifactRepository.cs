@@ -38,8 +38,8 @@ namespace openstig_read_api.Data {
             {
                 ObjectId internalId = GetInternalId(id);
                 return await _context.Artifacts
-                                .Find(artifact => artifact.id.ToString() == id 
-                                        || artifact.InternalId == internalId).FirstOrDefaultAsync();
+                                .Find(artifact => artifact.id == new Guid(id)).FirstOrDefaultAsync();
+                                //|| artifact.InternalId == internalId).FirstOrDefaultAsync();
             }
             catch (Exception ex)
             {
