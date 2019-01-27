@@ -24,7 +24,8 @@ using openstig_read_api.Data;
 
 namespace openstig_read_api.Controllers
 {
-    [Route("[controller]")]
+    //[Route("[controller]")]
+    [Route("/")]
     public class ReadController : Controller
     {
 	    private readonly IArtifactRepository _artifactRepo;
