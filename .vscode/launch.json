@@ -31,7 +31,7 @@
             },
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development",
-                "ASPNETCORE_URLS": "http://*:8080",
+                "ASPNETCORE_URLS": "http://*:8084",
                 "mongoConnection": "mongodb://openstig:openstig1234!@localhost",
                 "mongodb": "openstig"
             },

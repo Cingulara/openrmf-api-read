@@ -45,7 +45,7 @@ namespace openstig_read_api.Controllers
                 artifacts = await _artifactRepo.GetAllArtifacts();
                 foreach (Artifact a in artifacts) {
                     // deserialize the checklist so it comes out more gooder
-                    a.Checklist = ChecklistLoader.LoadChecklist(a.rawChecklist);
+                    a.CHECKLIST = ChecklistLoader.LoadChecklist(a.rawChecklist);
                     a.rawChecklist = string.Empty;
                 }
                 return Ok(artifacts);
@@ -63,8 +63,8 @@ namespace openstig_read_api.Controllers
             try {
                 Artifact art = new Artifact();
                 art = await _artifactRepo.GetArtifact(id);
-                art.Checklist = ChecklistLoader.LoadChecklist(art.rawChecklist);
-                //art.rawChecklist = string.Empty;
+                art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist);
+                art.rawChecklist = string.Empty;
                 return Ok(art);
             }
             catch (Exception ex) {
