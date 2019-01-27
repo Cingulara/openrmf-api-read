@@ -36,7 +36,7 @@ namespace openstig_read_api.Controllers
             _artifactRepo = artifactRepo;
         }
 
-        // GET values
+        // GET the listing with Ids of the Checklist artifacts, but without all the extra XML
         [HttpGet]
         public async Task<IActionResult> ListArtifacts()
         {
@@ -45,7 +45,7 @@ namespace openstig_read_api.Controllers
                 artifacts = await _artifactRepo.GetAllArtifacts();
                 foreach (Artifact a in artifacts) {
                     // deserialize the checklist so it comes out more gooder
-                    a.CHECKLIST = ChecklistLoader.LoadChecklist(a.rawChecklist);
+                    //a.CHECKLIST = ChecklistLoader.LoadChecklist(a.rawChecklist);
                     a.rawChecklist = string.Empty;
                 }
                 return Ok(artifacts);
@@ -73,5 +73,20 @@ namespace openstig_read_api.Controllers
             }
         }
         
+        // GET /value
+        [HttpGet("download/{id}")]
+        public async Task<IActionResult> DownloadChecklist(string id)
+        {
+            try {
+                Artifact art = new Artifact();
+                art = await _artifactRepo.GetArtifact(id);
+                art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist);
+                return Ok(art.CHECKLIST);
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "Error Retrieving Artifact for Download");
+                return NotFound();
+            }
+        }        
     }
 }
