@@ -1,4 +1,4 @@
-# openstig-api-save
+# openstig-api-read
 This is the openSTIG Read API for reading a checklist and all its metadata we store. It has two calls.
 
 GET to / to list all records
