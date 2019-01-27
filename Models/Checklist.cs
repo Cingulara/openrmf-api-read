@@ -223,14 +223,15 @@ namespace openstig_read_api.Models
     [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true)]
     public partial class CHECKLISTSTIGSISTIG {
         
-        private CHECKLISTSTIGSISTIGSTIG_INFOSI_DATA[][] sTIG_INFOField;
+        private CHECKLISTSTIGSISTIGSTIG_INFO sTIG_INFOField;
         
         private CHECKLISTSTIGSISTIGVULN[] vULNField;
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlArrayAttribute(Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
-        [System.Xml.Serialization.XmlArrayItemAttribute("SI_DATA", typeof(CHECKLISTSTIGSISTIGSTIG_INFOSI_DATA[]), Form=System.Xml.Schema.XmlSchemaForm.Unqualified, IsNullable=false)]
-        public CHECKLISTSTIGSISTIGSTIG_INFOSI_DATA[][] STIG_INFO {
+        // [System.Xml.Serialization.XmlElementAttribute("STIG_INFO", Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
+        [System.Xml.Serialization.XmlArrayItemAttribute("STIG_INFO", typeof(CHECKLISTSTIGSISTIGSTIG_INFO), Form=System.Xml.Schema.XmlSchemaForm.Unqualified, IsNullable=false, NestingLevel = 1)]
+
+        public CHECKLISTSTIGSISTIGSTIG_INFO STIG_INFO {
             get {
                 return this.sTIG_INFOField;
             }
@@ -247,6 +248,29 @@ namespace openstig_read_api.Models
             }
             set {
                 this.vULNField = value;
+            }
+        }
+    }
+
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "4.6.1055.0")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true)]
+    public partial class CHECKLISTSTIGSISTIGSTIG_INFO {
+        
+        private CHECKLISTSTIGSISTIGSTIG_INFOSI_DATA[] sTIG_INFOField;
+                
+        /// <remarks/>
+        [System.Xml.Serialization.XmlArrayAttribute(Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
+        [System.Xml.Serialization.XmlArrayItemAttribute("SI_DATA", typeof(CHECKLISTSTIGSISTIGSTIG_INFOSI_DATA[]), Form=System.Xml.Schema.XmlSchemaForm.Unqualified, IsNullable=false)]
+        public CHECKLISTSTIGSISTIGSTIG_INFOSI_DATA[] STIG_INFO {
+            get {
+                return this.sTIG_INFOField;
+            }
+            set {
+                this.sTIG_INFOField = value;
             }
         }
     }
@@ -307,6 +331,17 @@ namespace openstig_read_api.Models
         private CHECKLISTSTIGSISTIGVULNSTIG_DATA[] sTIG_DATAField;
         
         /// <remarks/>
+        [System.Xml.Serialization.XmlElementAttribute("STIG_DATA", Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
+        public CHECKLISTSTIGSISTIGVULNSTIG_DATA[] STIG_DATA {
+            get {
+                return this.sTIG_DATAField;
+            }
+            set {
+                this.sTIG_DATAField = value;
+            }
+        }
+
+        /// <remarks/>
         [System.Xml.Serialization.XmlElementAttribute(Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
         public string STATUS {
             get {
@@ -358,17 +393,6 @@ namespace openstig_read_api.Models
             }
             set {
                 this.sEVERITY_JUSTIFICATIONField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute("STIG_DATA", Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
-        public CHECKLISTSTIGSISTIGVULNSTIG_DATA[] STIG_DATA {
-            get {
-                return this.sTIG_DATAField;
-            }
-            set {
-                this.sTIG_DATAField = value;
             }
         }
     }

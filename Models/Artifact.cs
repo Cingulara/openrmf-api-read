@@ -10,12 +10,12 @@ namespace openstig_read_api.Models
     {
         public Artifact () {
             id= Guid.NewGuid();
-            Checklist = new CHECKLIST();
+            CHECKLIST = new CHECKLIST();
         }
 
         public DateTime created { get; set; }
         public string title { get; set; }
-        public CHECKLIST Checklist { get; set; }
+        public CHECKLIST CHECKLIST { get; set; }
         public string rawChecklist { get; set; }
         
         [BsonId]
