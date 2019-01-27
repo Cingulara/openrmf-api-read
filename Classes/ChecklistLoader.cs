@@ -35,7 +35,7 @@ namespace openstig_read_api.Classes
                     myChecklist.STIGS.iSTIG.STIG_INFO = getStigInfoListing(stiginfoList.Item(0));
                 // now get the VULN listings until the end!
                 if (vulnList.Count > 0) {
-                    myChecklist.STIGS.iSTIG.VULNs = getVulnerabilityListing(vulnList);
+                    myChecklist.STIGS.iSTIG.VULN = getVulnerabilityListing(vulnList);
                 }
             }            
             return myChecklist;
@@ -99,7 +99,7 @@ namespace openstig_read_api.Classes
                     else if (siddata.Name == "SID_DATA")
                         data.SID_DATA = siddata.InnerText;
                 }
-                info.SI_DATAs.Add(data);
+                info.SI_DATA.Add(data);
             }            
             return info;
         }
@@ -120,7 +120,7 @@ namespace openstig_read_api.Classes
                                 else if (stigdata.Name == "ATTRIBUTE_DATA")
                                     data.ATTRIBUTE_DATA = stigdata.InnerText;
                             }
-                            vuln.STIG_DATAs.Add(data);
+                            vuln.STIG_DATA.Add(data);
                         }
                         else {
                             // switch on the fields left over to fill them in the VULN class 
