@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-
+using System.Xml.Serialization;
 
 namespace openstig_read_api.Models
 {
@@ -9,10 +9,12 @@ namespace openstig_read_api.Models
 
         public iSTIG (){
             STIG_INFO = new STIG_INFO();
-            VULNs = new List<VULN>();
+            VULN = new List<VULN>();
         }
 
         public STIG_INFO STIG_INFO { get; set; }
-        public List<VULN> VULNs { get; set; }
+
+        [XmlElement("VULN")]
+        public List<VULN> VULN { get; set; }
     }
 }
