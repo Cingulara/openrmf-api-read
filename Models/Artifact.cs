@@ -15,6 +15,7 @@ namespace openstig_read_api.Models
 
         public DateTime created { get; set; }
         public string title { get; set; }
+        public string description { get; set; }
         public CHECKLIST CHECKLIST { get; set; }
         public string rawChecklist { get; set; }
         
@@ -27,7 +28,10 @@ namespace openstig_read_api.Models
 
         [BsonDateTimeOptions]
         // attribute to gain control on datetime serialization
-        public DateTime UpdatedOn { get; set; } = DateTime.Now;
+        public DateTime? updatedOn { get; set; }
+
+        public Guid createdBy { get; set; }
+        public Guid? updatedBy { get; set; }
     }
 
     public enum STIGtype{
