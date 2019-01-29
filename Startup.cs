@@ -92,7 +92,7 @@ namespace openstig_read_api
             // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.), specifying the Swagger JSON endpoint.
             app.UseSwaggerUI(c =>
             {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "openSTIG Score API V1");
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "openSTIG Read API V1");
             });
 
             // ********************
