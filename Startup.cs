@@ -32,7 +32,6 @@ namespace openstig_read_api
         public void ConfigureServices(IServiceCollection services)
         {
             // Register the database components
-
             services.Configure<Settings>(options =>
             {
                 options.ConnectionString = Environment.GetEnvironmentVariable("mongoConnection");

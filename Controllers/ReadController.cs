@@ -59,7 +59,7 @@ namespace openstig_read_api.Controllers
 
         // GET /value
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetArtifacts(string id)
+        public async Task<IActionResult> GetArtifact(string id)
         {
             try {
                 Artifact art = new Artifact();
