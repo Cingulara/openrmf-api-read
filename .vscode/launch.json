@@ -10,7 +10,7 @@
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/bin/Debug/netcoreapp2.2/openstig-read-api.dll",
+            "program": "${workspaceFolder}/bin/Debug/netcoreapp2.2/openstig-api-read.dll",
             "args": [],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,
@@ -33,7 +33,8 @@
                 "ASPNETCORE_ENVIRONMENT": "Development",
                 "ASPNETCORE_URLS": "http://*:8084",
                 "mongoConnection": "mongodb://openstig:openstig1234!@localhost",
-                "mongodb": "openstig"
+                "mongodb": "openstig",
+                "natsserverurl" : "nats://192.168.11.46:4222"
             },
             "sourceFileMap": {
                 "/Views": "${workspaceFolder}/Views"
