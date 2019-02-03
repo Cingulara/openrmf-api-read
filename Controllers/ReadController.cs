@@ -24,7 +24,8 @@ using openstig_read_api.Data;
 
 namespace openstig_read_api.Controllers
 {
-    [Route("api/[controller]")]
+    //[Route("[controller]")]
+    [Route("/")]
     public class ReadController : Controller
     {
 	    private readonly IArtifactRepository _artifactRepo;
@@ -36,29 +37,36 @@ namespace openstig_read_api.Controllers
             _artifactRepo = artifactRepo;
         }
 
-        // GET values
+        // GET the listing with Ids of the Checklist artifacts, but without all the extra XML
         [HttpGet]
         public async Task<IActionResult> ListArtifacts()
         {
             try {
                 IEnumerable<Artifact> artifacts;
                 artifacts = await _artifactRepo.GetAllArtifacts();
-                return Json(artifacts);
+                foreach (Artifact a in artifacts) {
+                    // deserialize the checklist so it comes out more gooder
+                    //a.CHECKLIST = ChecklistLoader.LoadChecklist(a.rawChecklist);
+                    a.rawChecklist = string.Empty;
+                }
+                return Ok(artifacts);
             }
             catch (Exception ex) {
-                _logger.LogError(ex, "Error listing all artifacts");
+                _logger.LogError(ex, "Error listing all artifacts and deserializing the checklist XML");
                 return BadRequest();
             }
         }
 
         // GET /value
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetArtifacts(string id)
+        public async Task<IActionResult> GetArtifact(string id)
         {
             try {
                 Artifact art = new Artifact();
                 art = await _artifactRepo.GetArtifact(id);
-                return Json(art);
+                art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist);
+                art.rawChecklist = string.Empty;
+                return Ok(art);
             }
             catch (Exception ex) {
                 _logger.LogError(ex, "Error Retrieving Artifact");
@@ -66,5 +74,20 @@ namespace openstig_read_api.Controllers
             }
         }
         
+        // GET /value
+        [HttpGet("download/{id}")]
+        public async Task<IActionResult> DownloadChecklist(string id)
+        {
+            try {
+                Artifact art = new Artifact();
+                art = await _artifactRepo.GetArtifact(id);
+                art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist);
+                return Ok(art.CHECKLIST);
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "Error Retrieving Artifact for Download");
+                return NotFound();
+            }
+        }        
     }
 }
