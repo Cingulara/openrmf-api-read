@@ -36,10 +36,10 @@ namespace openstig_read_api.Data {
         {
             try
             {
-                Guid internalId = GetInternalId(id);
+                ObjectId internalId = GetInternalId(id);
                 return await _context.Artifacts
-                                .Find(artifact => artifact.id.ToString() == id 
-                                        || artifact.id == internalId).FirstOrDefaultAsync();
+                                .Find(artifact => artifact.id == new Guid(id)).FirstOrDefaultAsync();
+                                //|| artifact.InternalId == internalId).FirstOrDefaultAsync();
             }
             catch (Exception ex)
             {
@@ -55,7 +55,7 @@ namespace openstig_read_api.Data {
             try
             {
                 var query = _context.Artifacts.Find(artifact => artifact.title.Contains(bodyText) &&
-                                    artifact.UpdatedOn >= updatedFrom);
+                                    artifact.updatedOn >= updatedFrom);
 
                 return await query.ToListAsync();
             }
@@ -66,11 +66,11 @@ namespace openstig_read_api.Data {
             }
         }
 
-        private Guid GetInternalId(string id)
+        private ObjectId GetInternalId(string id)
         {
-            Guid internalId;
-            if (!Guid.TryParse(id, out internalId))
-                internalId = Guid.Empty;
+            ObjectId internalId;
+            if (!ObjectId.TryParse(id, out internalId))
+                internalId = ObjectId.Empty;
 
             return internalId;
         }
@@ -111,7 +111,7 @@ namespace openstig_read_api.Data {
             var filter = Builders<Artifact>.Filter.Eq(s => s.id.ToString(), id);
             var update = Builders<Artifact>.Update
                             .Set(s => s, body)
-                            .CurrentDate(s => s.UpdatedOn);
+                            .CurrentDate(s => s.updatedOn);
 
             try
             {

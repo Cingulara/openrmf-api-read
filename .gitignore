@@ -39,3 +39,6 @@ c/\temp\internal-nlog.txt
 
 # MAC OSX
 .DS_Store
+
+# generated test files
+test.ckl
