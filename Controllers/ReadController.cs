@@ -88,6 +88,19 @@ namespace openstig_read_api.Controllers
                 _logger.LogError(ex, "Error Retrieving Artifact for Download");
                 return NotFound();
             }
-        }        
+        }
+        
+        // GET /value
+        [HttpGet("{id}")]
+        public async Task<IActionResult> CountArtifacts(string id)
+        {
+            try {
+                long result = await _artifactRepo.CountChecklists();
+                return Ok(result);
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "Error Retrieving Artifact Count in MongoDB");
+                return NotFound();
+            }
     }
 }
