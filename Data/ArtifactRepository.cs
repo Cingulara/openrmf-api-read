@@ -144,5 +144,16 @@ namespace openstig_read_api.Data {
                 throw ex;
             }
         }
+        public async Task<long> CountChecklists(){
+            try {
+                long result = await _context.Artifacts.CountDocumentsAsync(Builders<Artifact>.Filter.Empty);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                // log or manage the exception
+                throw ex;
+            }
+        }
     }
 }

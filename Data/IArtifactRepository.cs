@@ -23,5 +23,7 @@ namespace openstig_read_api.Data {
 
         // should be used with high cautious, only in relation with demo setup
         Task<bool> RemoveAllArtifacts();
+
+        Task<long> CountChecklists();
     }
 }
