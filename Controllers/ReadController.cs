@@ -90,8 +90,8 @@ namespace openstig_read_api.Controllers
             }
         }
         
-        // GET /value
-        [HttpGet("{id}")]
+        // GET /count
+        [HttpGet("count")]
         public async Task<IActionResult> CountArtifacts(string id)
         {
             try {
