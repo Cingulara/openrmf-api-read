@@ -102,5 +102,6 @@ namespace openstig_read_api.Controllers
                 _logger.LogError(ex, "Error Retrieving Artifact Count in MongoDB");
                 return NotFound();
             }
+        }
     }
 }
