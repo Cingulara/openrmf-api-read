@@ -155,5 +155,18 @@ namespace openstig_read_api.Data {
                 throw ex;
             }
         }
+
+        public async Task<IEnumerable<Artifact>> GetLatestArtifacts(int number)
+        {
+            try
+            {
+                return await _context.Artifacts.Find(_ => true).SortByDescending(y => y.updatedOn).Limit(number).ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                // log or manage the exception
+                throw ex;
+            }
+        }
     }
 }

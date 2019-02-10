@@ -90,6 +90,9 @@ namespace openstig_read_api.Controllers
             }
         }
         
+        /******************************************
+        * Dashboard Specific API calls
+        */
         // GET /count
         [HttpGet("count")]
         public async Task<IActionResult> CountArtifacts(string id)
@@ -101,6 +104,23 @@ namespace openstig_read_api.Controllers
             catch (Exception ex) {
                 _logger.LogError(ex, "Error Retrieving Artifact Count in MongoDB");
                 return NotFound();
+            }
+        }
+        // GET /latest
+        [HttpGet("latest/{number}")]
+        public async Task<IActionResult> GetLatestArtifacts(int number)
+        {
+            try {
+                IEnumerable<Artifact> artifacts;
+                artifacts = await _artifactRepo.GetLatestArtifacts(number);
+                foreach (Artifact a in artifacts) {
+                    a.rawChecklist = string.Empty;
+                }
+                return Ok(artifacts);
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "Error listing latest {0} artifacts and deserializing the checklist XML", number.ToString());
+                return BadRequest();
             }
         }
     }
