@@ -180,7 +180,8 @@ namespace openstig_read_api.Data {
             {
                 var groupArtifactItemsByType = _context.Artifacts.Aggregate()
                         .Group(s => s.type,
-                        g => new { Result = g.Count()}).ToListAsync();
+                        g => new ArtifactCount {type = g.Key, count = g.Count()}).ToListAsync();
+
                 return await groupArtifactItemsByType;
             }
             catch (Exception ex)
