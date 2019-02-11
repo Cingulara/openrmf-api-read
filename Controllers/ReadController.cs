@@ -123,5 +123,21 @@ namespace openstig_read_api.Controllers
                 return BadRequest();
             }
         }
+
+        
+        // GET /latest
+        [HttpGet("counttype")]
+        public async Task<IActionResult> GetCountByType()
+        {
+            try {
+                IEnumerable<Object> artifacts;
+                artifacts = await _artifactRepo.GetCountByType();
+                return Ok(artifacts);
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "Error getting the counts by type for the Reports page");
+                return BadRequest();
+            }
+        }
     }
 }

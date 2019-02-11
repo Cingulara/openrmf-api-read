@@ -26,11 +26,15 @@ namespace openstig_read_api.Data {
 
         /******************************************** 
          Dashboard specific calls
-        */
-
+        ********************************************/
         // get the # of checklists for the dashboard listing
         Task<long> CountChecklists();
         // get the last 5 checklists being edited in a sort order by last updated
         Task<IEnumerable<Artifact>> GetLatestArtifacts(int number);
+
+        /******************************************** 
+         Reports specific calls
+        ********************************************/
+        Task<IEnumerable<object>> GetCountByType();
     }
 }

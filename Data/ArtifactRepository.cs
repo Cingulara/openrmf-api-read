@@ -2,8 +2,13 @@ using openstig_read_api.Models;
 using System.Collections.Generic;
 using System;
 using System.Threading.Tasks;
+using System.Linq;
+using System.Linq.Expressions;
 using MongoDB.Driver;
 using MongoDB.Bson;
+using MongoDB.Bson.Serialization;
+using MongoDB.Driver.Linq;
+using MongoDB.Driver.Linq.Translators;
 using Microsoft.Extensions.Options;
 
 namespace openstig_read_api.Data {
@@ -161,6 +166,22 @@ namespace openstig_read_api.Data {
             try
             {
                 return await _context.Artifacts.Find(_ => true).SortByDescending(y => y.updatedOn).Limit(number).ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                // log or manage the exception
+                throw ex;
+            }
+        }
+
+        public async Task<IEnumerable<object>> GetCountByType()
+        {
+            try
+            {
+                var groupArtifactItemsByType = _context.Artifacts.Aggregate()
+                        .Group(s => s.type,
+                        g => new { Result = g.Count()}).ToListAsync();
+                return await groupArtifactItemsByType;
             }
             catch (Exception ex)
             {
