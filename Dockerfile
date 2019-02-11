@@ -15,7 +15,7 @@ RUN dotnet publish -c Release -o out
 FROM microsoft/dotnet:2.2-aspnetcore-runtime
 RUN mkdir /app
 WORKDIR /app
-RUN apt-get update && apt-get -y install ca-certificates
+# RUN apt-get update && apt-get -y install ca-certificates
 
 COPY --from=build-env /app/out ./
 ENTRYPOINT ["dotnet", "openstig-api-read.dll"]
