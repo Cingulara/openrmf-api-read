@@ -81,8 +81,7 @@ namespace openstig_read_api.Controllers
             try {
                 Artifact art = new Artifact();
                 art = await _artifactRepo.GetArtifact(id);
-                art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist);
-                return Ok(art.CHECKLIST);
+                return Ok(art.rawChecklist);
             }
             catch (Exception ex) {
                 _logger.LogError(ex, "Error Retrieving Artifact for Download");
