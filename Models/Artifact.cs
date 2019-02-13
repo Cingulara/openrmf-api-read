@@ -25,6 +25,7 @@ namespace openstig_read_api.Models
 
         public Guid id { get; set; }
         public STIGtype type { get; set; }
+        public string typeTitle { get { return Enum.GetName(typeof(STIGtype), type);} }
 
         [BsonDateTimeOptions]
         // attribute to gain control on datetime serialization

@@ -32,7 +32,7 @@
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development",
                 "ASPNETCORE_URLS": "http://*:8084",
-                "mongoConnection": "mongodb://openstig:openstig1234!@localhost",
+                "mongoConnection": "mongodb://openstig:openstig1234!@checklistdb/openstig?authSource=openstig",
                 "mongodb": "openstig",
                 "natsserverurl" : "nats://192.168.11.46:4222"
             },
