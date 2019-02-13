@@ -2,8 +2,13 @@ using openstig_read_api.Models;
 using System.Collections.Generic;
 using System;
 using System.Threading.Tasks;
+using System.Linq;
+using System.Linq.Expressions;
 using MongoDB.Driver;
 using MongoDB.Bson;
+using MongoDB.Bson.Serialization;
+using MongoDB.Driver.Linq;
+using MongoDB.Driver.Linq.Translators;
 using Microsoft.Extensions.Options;
 
 namespace openstig_read_api.Data {
@@ -36,10 +41,7 @@ namespace openstig_read_api.Data {
         {
             try
             {
-                ObjectId internalId = GetInternalId(id);
-                return await _context.Artifacts
-                                .Find(artifact => artifact.id == new Guid(id)).FirstOrDefaultAsync();
-                                //|| artifact.InternalId == internalId).FirstOrDefaultAsync();
+                return await _context.Artifacts.Find(artifact => artifact.id == new Guid(id)).FirstOrDefaultAsync();
             }
             catch (Exception ex)
             {
@@ -64,15 +66,6 @@ namespace openstig_read_api.Data {
                 // log or manage the exception
                 throw ex;
             }
-        }
-
-        private ObjectId GetInternalId(string id)
-        {
-            ObjectId internalId;
-            if (!ObjectId.TryParse(id, out internalId))
-                internalId = ObjectId.Empty;
-
-            return internalId;
         }
         
         public async Task AddArtifact(Artifact item)
@@ -137,6 +130,47 @@ namespace openstig_read_api.Data {
 
                 return actionResult.IsAcknowledged
                     && actionResult.DeletedCount > 0;
+            }
+            catch (Exception ex)
+            {
+                // log or manage the exception
+                throw ex;
+            }
+        }
+        public async Task<long> CountChecklists(){
+            try {
+                long result = await _context.Artifacts.CountDocumentsAsync(Builders<Artifact>.Filter.Empty);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                // log or manage the exception
+                throw ex;
+            }
+        }
+
+        public async Task<IEnumerable<Artifact>> GetLatestArtifacts(int number)
+        {
+            try
+            {
+                return await _context.Artifacts.Find(_ => true).SortByDescending(y => y.updatedOn).Limit(number).ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                // log or manage the exception
+                throw ex;
+            }
+        }
+
+        public async Task<IEnumerable<object>> GetCountByType()
+        {
+            try
+            {
+                var groupArtifactItemsByType = _context.Artifacts.Aggregate()
+                        .Group(s => s.type,
+                        g => new ArtifactCount {type = g.Key, count = g.Count()}).ToListAsync();
+
+                return await groupArtifactItemsByType;
             }
             catch (Exception ex)
             {
