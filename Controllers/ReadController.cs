@@ -81,13 +81,62 @@ namespace openstig_read_api.Controllers
             try {
                 Artifact art = new Artifact();
                 art = await _artifactRepo.GetArtifact(id);
-                art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist);
-                return Ok(art.CHECKLIST);
+                return Ok(art.rawChecklist);
             }
             catch (Exception ex) {
                 _logger.LogError(ex, "Error Retrieving Artifact for Download");
                 return NotFound();
             }
-        }        
+        }
+        
+        /******************************************
+        * Dashboard Specific API calls
+        */
+        // GET /count
+        [HttpGet("count")]
+        public async Task<IActionResult> CountArtifacts(string id)
+        {
+            try {
+                long result = await _artifactRepo.CountChecklists();
+                return Ok(result);
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "Error Retrieving Artifact Count in MongoDB");
+                return NotFound();
+            }
+        }
+        // GET /latest
+        [HttpGet("latest/{number}")]
+        public async Task<IActionResult> GetLatestArtifacts(int number)
+        {
+            try {
+                IEnumerable<Artifact> artifacts;
+                artifacts = await _artifactRepo.GetLatestArtifacts(number);
+                foreach (Artifact a in artifacts) {
+                    a.rawChecklist = string.Empty;
+                }
+                return Ok(artifacts);
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "Error listing latest {0} artifacts and deserializing the checklist XML", number.ToString());
+                return BadRequest();
+            }
+        }
+
+        
+        // GET /latest
+        [HttpGet("counttype")]
+        public async Task<IActionResult> GetCountByType()
+        {
+            try {
+                IEnumerable<Object> artifacts;
+                artifacts = await _artifactRepo.GetCountByType();
+                return Ok(artifacts);
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "Error getting the counts by type for the Reports page");
+                return BadRequest();
+            }
+        }
     }
 }
