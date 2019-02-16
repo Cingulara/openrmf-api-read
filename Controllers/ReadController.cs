@@ -17,7 +17,6 @@ using Newtonsoft.Json;
 using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 
 using openstig_read_api.Data;
@@ -45,8 +44,6 @@ namespace openstig_read_api.Controllers
                 IEnumerable<Artifact> artifacts;
                 artifacts = await _artifactRepo.GetAllArtifacts();
                 foreach (Artifact a in artifacts) {
-                    // deserialize the checklist so it comes out more gooder
-                    //a.CHECKLIST = ChecklistLoader.LoadChecklist(a.rawChecklist);
                     a.rawChecklist = string.Empty;
                 }
                 return Ok(artifacts);
