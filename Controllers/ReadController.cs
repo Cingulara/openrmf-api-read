@@ -61,8 +61,8 @@ namespace openstig_read_api.Controllers
             try {
                 Artifact art = new Artifact();
                 art = await _artifactRepo.GetArtifact(id);
-                //art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist);
-                //art.rawChecklist = string.Empty;
+                art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist);
+                art.rawChecklist = string.Empty;
                 return Ok(art);
             }
             catch (Exception ex) {
