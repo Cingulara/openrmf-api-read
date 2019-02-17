@@ -16,7 +16,7 @@ namespace openstig_read_api.Models
             Fonts fonts1 = new Fonts() { Count = (UInt32Value)3U, KnownFonts = true };
 
             Font font1 = new Font();
-            FontSize fontSize1 = new FontSize() { Val = 11D };
+            FontSize fontSize1 = new FontSize() { Val = 14D };
             Color color1 = new Color() { Theme = (UInt32Value)1U };
             FontName fontName1 = new FontName() { Val = "Calibri" };
             FontFamilyNumbering fontFamilyNumbering1 = new FontFamilyNumbering() { Val = 2 };
@@ -30,7 +30,7 @@ namespace openstig_read_api.Models
 
             Font font2 = new Font();
             Bold bold2 = new Bold();
-            FontSize fontSize2 = new FontSize() { Val = 15D };
+            FontSize fontSize2 = new FontSize() { Val = 18D };
             Color color2 = new Color() { Theme = (UInt32Value)1U };
             FontName fontName2 = new FontName() { Val = "Calibri" };
             FontFamilyNumbering fontFamilyNumbering2 = new FontFamilyNumbering() { Val = 2 };
