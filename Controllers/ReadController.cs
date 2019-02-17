@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -18,6 +17,10 @@ using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+
+using DocumentFormat.OpenXml;
+using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Spreadsheet;
 
 using openstig_read_api.Data;
 
@@ -71,7 +74,7 @@ namespace openstig_read_api.Controllers
             }
         }
         
-        // GET /value
+        // GET /download/value
         [HttpGet("download/{id}")]
         public async Task<IActionResult> DownloadChecklist(string id)
         {
@@ -86,9 +89,205 @@ namespace openstig_read_api.Controllers
             }
         }
         
+        // GET /export/value
+        [HttpGet("export/{id}")]
+        public async Task<IActionResult> ExportChecklist(string id)
+        {
+            try {
+                Artifact art = new Artifact();
+                art = await _artifactRepo.GetArtifact(id);
+                if (art != null && art.CHECKLIST != null) {
+                    art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist);
+
+                    // starting row number for data
+                    uint rowNumber = 8;
+
+                    // create the XLSX in memory and send it out
+                    var memory = new MemoryStream();
+                    using (SpreadsheetDocument spreadSheet = SpreadsheetDocument.Create(memory, SpreadsheetDocumentType.Workbook))
+                    {
+                        // Add a WorkbookPart to the document.
+                        WorkbookPart workbookpart = spreadSheet.AddWorkbookPart();
+                        workbookpart.Workbook = new Workbook();
+                        
+                        // add styles to workbook
+                        WorkbookStylesPart wbsp = workbookpart.AddNewPart<WorkbookStylesPart>();
+
+                        // Add a WorksheetPart to the WorkbookPart.
+                        WorksheetPart worksheetPart = workbookpart.AddNewPart<WorksheetPart>();
+                        worksheetPart.Worksheet = new Worksheet(new SheetData());
+
+                        // add stylesheet to use cell formats 1 - 4
+                        wbsp.Stylesheet = ExcelStyleSheet.GenerateStylesheet();
+
+                        DocumentFormat.OpenXml.Spreadsheet.Columns lstColumns = worksheetPart.Worksheet.GetFirstChild<DocumentFormat.OpenXml.Spreadsheet.Columns>();
+                        if (lstColumns == null) { // generate the column listings we need with custom widths
+                            lstColumns = new DocumentFormat.OpenXml.Spreadsheet.Columns();
+                            // Min = 1, Max = 1 ==> Apply this to column 1 (A)
+                            // Min = 2, Max = 2 ==> Apply this to column 2 (B)
+                            // Width = 25 ==> Set the width to 25
+                            // CustomWidth = true ==> Tell Excel to use the custom width
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 1, Max = 1, Width = 20, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 2, Max = 2, Width = 50, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 3, Max = 3, Width = 110, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 4, Max = 4, Width = 32, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 5, Max = 5, Width = 32, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 6, Max = 6, Width = 20, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 7, Max = 7, Width = 20, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 8, Max = 8, Width = 20, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 9, Max = 9, Width = 20, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 10, Max = 10, Width = 20, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 11, Max = 11, Width = 20, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 12, Max = 12, Width = 20, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 13, Max = 13, Width = 20, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 14, Max = 14, Width = 20, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 15, Max = 15, Width = 20, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 16, Max = 16, Width = 20, CustomWidth = true });
+                            worksheetPart.Worksheet.InsertAt(lstColumns, 0);
+                        }
+
+                        // Add Sheets to the Workbook.
+                        Sheets sheets = spreadSheet.WorkbookPart.Workbook.AppendChild<Sheets>(new Sheets());
+
+                        // Append a new worksheet and associate it with the workbook.
+                        Sheet sheet = new Sheet() { Id = spreadSheet.WorkbookPart.
+                            GetIdOfPart(worksheetPart), SheetId = 1, Name = "Req-Capabilities" };
+                        sheets.Append(sheet);
+                        // Get the sheetData cell table.
+                        SheetData sheetData = worksheetPart.Worksheet.GetFirstChild<SheetData>();
+                        DocumentFormat.OpenXml.Spreadsheet.Cell refCell = null;
+                        DocumentFormat.OpenXml.Spreadsheet.Cell newCell = null;
+
+                        DocumentFormat.OpenXml.Spreadsheet.Row row = MakeTitleRow("KBRWyle Capability Matrix Worksheet");
+                        sheetData.Append(row);
+                        row = MakeChecklistInfoRow("Checklist Name", art.title,2);
+                        sheetData.Append(row);
+                        row = MakeChecklistInfoRow("Description", art.description,3);
+                        sheetData.Append(row);
+                        row = MakeChecklistInfoRow("Type", art.typeTitle,4);
+                        sheetData.Append(row);
+                        row = MakeChecklistInfoRow("Last Updated", art.updatedOn.Value.ToString("MM/dd/yy hh:mm tt"),5);
+                        sheetData.Append(row);
+
+                        row = MakeHeaderRows(rowNumber);
+                        sheetData.Append(row);
+                        
+                        // cuycle through the vulnerabilities
+                        // newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "B" + rowNumber.ToString() };
+                        // row.InsertBefore(newCell, refCell);
+                        // newCell.CellValue = new CellValue(sectionDescription.Substring(0, sectionDescription.IndexOf(". ")).Trim());
+                        // newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                        // newCell.StyleIndex = 0;
+                        // // now put the stuff after the "." in C
+                        // newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "C" + rowNumber.ToString() };
+                        // row.InsertBefore(newCell, refCell);
+                        // newCell.CellValue = new CellValue(sectionDescription.Substring(sectionDescription.IndexOf(". ")+2).Trim());
+                        // newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                        // newCell.StyleIndex = 0;
+                        // continueProcessing = false;
+
+                        // Save the new worksheet.
+                        workbookpart.Workbook.Save();
+                        // Close the document.
+                        spreadSheet.Close();
+
+                        memory.Seek(0, SeekOrigin.Begin);
+                        //return new FileStreamResult(memory, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+                        return File(memory, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", CreateXLSXFilename(art.title));
+                    }
+                }
+                else {
+                    return NotFound();
+                }
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "Error Retrieving Artifact for Download");
+                return NotFound();
+            }
+        } 
+
+        private string CreateXLSXFilename(string title) {
+            return title.Replace(" ", "-") + ".xlsx";
+        }
+
+        #region XLSX Formatting
+        private DocumentFormat.OpenXml.Spreadsheet.Row MakeTitleRow(string title) {
+            DocumentFormat.OpenXml.Spreadsheet.Row row = new DocumentFormat.OpenXml.Spreadsheet.Row() { RowIndex = 1 };
+            DocumentFormat.OpenXml.Spreadsheet.Cell refCell = null;
+            DocumentFormat.OpenXml.Spreadsheet.Cell newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "A1"};
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue(title.Trim());
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = 2;
+            return row;
+        }
+        private DocumentFormat.OpenXml.Spreadsheet.Row MakeChecklistInfoRow(string title, string value, uint rowindex) {
+            DocumentFormat.OpenXml.Spreadsheet.Row row = new DocumentFormat.OpenXml.Spreadsheet.Row() { RowIndex = rowindex };
+            DocumentFormat.OpenXml.Spreadsheet.Cell refCell = null;
+            DocumentFormat.OpenXml.Spreadsheet.Cell newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "A" + rowindex.ToString()};
+            row.InsertBefore(newCell, refCell);
+            string cellValue = title + ": ";
+            if (!String.IsNullOrEmpty(value))
+                cellValue += value;
+            else 
+                cellValue += "N/A";
+            newCell.CellValue = new CellValue(cellValue);
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = 3;
+            return row;
+        }
+        private DocumentFormat.OpenXml.Spreadsheet.Row MakeHeaderRows(uint rowindex) {
+            DocumentFormat.OpenXml.Spreadsheet.Cell refCell = null;
+            DocumentFormat.OpenXml.Spreadsheet.Row row = new DocumentFormat.OpenXml.Spreadsheet.Row() { RowIndex = rowindex };
+            DocumentFormat.OpenXml.Spreadsheet.Cell newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "A" + rowindex.ToString() };
+            //row.Height = 25;
+            //row.CustomHeight = true;
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Section#");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = 3;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "B" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Requirement");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = 3;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "C" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Description");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = 3;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "D" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Capability");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = 3;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Keyword/Phrase and Context");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = 3;
+            return row;
+        }
+        private DocumentFormat.OpenXml.Spreadsheet.Row MakeDataRow(uint rowNumber, string cellReference, string value) {
+            DocumentFormat.OpenXml.Spreadsheet.Row row = new DocumentFormat.OpenXml.Spreadsheet.Row() { RowIndex = rowNumber };
+            DocumentFormat.OpenXml.Spreadsheet.Cell refCell = null;
+            DocumentFormat.OpenXml.Spreadsheet.Cell newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = cellReference };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue(value);
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = 0;
+            return row;
+        }
+        #endregion
+
         /******************************************
         * Dashboard Specific API calls
         */
+        #region Dashboard APIs
         // GET /count
         [HttpGet("count")]
         public async Task<IActionResult> CountArtifacts(string id)
@@ -135,5 +334,6 @@ namespace openstig_read_api.Controllers
                 return BadRequest();
             }
         }
+        #endregion
     }
 }
