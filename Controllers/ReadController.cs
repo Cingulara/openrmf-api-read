@@ -186,19 +186,17 @@ namespace openstig_read_api.Controllers
                         // cycle through the vulnerabilities
                         foreach (VULN v in art.CHECKLIST.STIGS.iSTIG.VULN) {
                             rowNumber++;
-                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "A" + rowNumber.ToString() };
-                            row.InsertBefore(newCell, refCell);
-                            newCell.CellValue = new CellValue("test");
-                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                            newCell.StyleIndex = 0;
+                            // make a new row for this set of items
+                            row = MakeDataRow(rowNumber, "A", v.STIG_DATA[1].ATTRIBUTE_DATA);
+                            // now cycle through the rest of the items
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "B" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
-                            newCell.CellValue = new CellValue("test2");
+                            newCell.CellValue = new CellValue(v.STIG_DATA[1].ATTRIBUTE_DATA);
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
                             newCell.StyleIndex = 0;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "C" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
-                            newCell.CellValue = new CellValue("test");
+                            newCell.CellValue = new CellValue(v.STIG_DATA[2].ATTRIBUTE_DATA);
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
                             newCell.StyleIndex = 0;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "D" + rowNumber.ToString() };
