@@ -180,25 +180,25 @@ namespace openstig_read_api.Controllers
                         sheetData.Append(row);
                         row = MakeChecklistInfoRow("Last Updated", art.updatedOn.Value.ToString("MM/dd/yy hh:mm tt"),5);
                         sheetData.Append(row);
-
                         row = MakeHeaderRows(rowNumber);
                         sheetData.Append(row);
-                        
-                            // cycle through the vulnerabilities
+
+                        // cycle through the vulnerabilities
                         foreach (VULN v in art.CHECKLIST.STIGS.iSTIG.VULN) {
+                            rowNumber++;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "A" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
-                            newCell.CellValue = new CellValue(v.STIG_DATA[0].ATTRIBUTE_DATA);
+                            newCell.CellValue = new CellValue("test");
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
                             newCell.StyleIndex = 0;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "B" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
-                            newCell.CellValue = new CellValue(v.STIG_DATA[1].ATTRIBUTE_DATA);
+                            newCell.CellValue = new CellValue("test2");
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
                             newCell.StyleIndex = 0;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "C" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
-                            newCell.CellValue = new CellValue(v.STIG_DATA[2].ATTRIBUTE_DATA);
+                            newCell.CellValue = new CellValue("test");
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
                             newCell.StyleIndex = 0;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "D" + rowNumber.ToString() };
@@ -326,7 +326,7 @@ namespace openstig_read_api.Controllers
                             newCell.CellValue = new CellValue(v.STIG_DATA[24].ATTRIBUTE_DATA);
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
                             newCell.StyleIndex = 0;
-                            rowNumber++;
+                            sheetData.Append(row);
                         }
 
                         // Save the new worksheet.
@@ -547,7 +547,7 @@ namespace openstig_read_api.Controllers
         private DocumentFormat.OpenXml.Spreadsheet.Row MakeDataRow(uint rowNumber, string cellReference, string value) {
             DocumentFormat.OpenXml.Spreadsheet.Row row = new DocumentFormat.OpenXml.Spreadsheet.Row() { RowIndex = rowNumber };
             DocumentFormat.OpenXml.Spreadsheet.Cell refCell = null;
-            DocumentFormat.OpenXml.Spreadsheet.Cell newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = cellReference };
+            DocumentFormat.OpenXml.Spreadsheet.Cell newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = cellReference + rowNumber.ToString()};
             row.InsertBefore(newCell, refCell);
             newCell.CellValue = new CellValue(value);
             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
