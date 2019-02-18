@@ -179,147 +179,149 @@ namespace openstig_read_api.Controllers
                         row = MakeHeaderRows(rowNumber);
                         sheetData.Append(row);
 
+                        uint styleIndex = 0; // use this for 4, 5, 6, or 7 for status
                         // cycle through the vulnerabilities
                         foreach (VULN v in art.CHECKLIST.STIGS.iSTIG.VULN) {
                             rowNumber++;
+                            styleIndex = GetVulnerabilitiStatus(v.STATUS);
                             // make a new row for this set of items
-                            row = MakeDataRow(rowNumber, "A", v.STIG_DATA[1].ATTRIBUTE_DATA);
+                            row = MakeDataRow(rowNumber, "A", v.STIG_DATA[1].ATTRIBUTE_DATA, styleIndex);
                             // now cycle through the rest of the items
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "B" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(v.STIG_DATA[1].ATTRIBUTE_DATA);
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                            newCell.StyleIndex = 0;
+                            newCell.StyleIndex = styleIndex;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "C" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(v.STIG_DATA[2].ATTRIBUTE_DATA);
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                            newCell.StyleIndex = 0;
+                            newCell.StyleIndex = styleIndex;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "D" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(v.STIG_DATA[3].ATTRIBUTE_DATA);
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                            newCell.StyleIndex = 0;
+                            newCell.StyleIndex = styleIndex;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(v.STIG_DATA[4].ATTRIBUTE_DATA);
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                            newCell.StyleIndex = 0;
+                            newCell.StyleIndex = styleIndex;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "F" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(v.STIG_DATA[5].ATTRIBUTE_DATA);
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                            newCell.StyleIndex = 0;
+                            newCell.StyleIndex = styleIndex;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "G" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(v.STIG_DATA[6].ATTRIBUTE_DATA);
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                            newCell.StyleIndex = 0;
+                            newCell.StyleIndex = styleIndex;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "H" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(v.STIG_DATA[7].ATTRIBUTE_DATA);
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                            newCell.StyleIndex = 0;
+                            newCell.StyleIndex = styleIndex;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "I" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(v.STIG_DATA[8].ATTRIBUTE_DATA);
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                            newCell.StyleIndex = 0;
+                            newCell.StyleIndex = styleIndex;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "J" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(v.STIG_DATA[9].ATTRIBUTE_DATA);
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                            newCell.StyleIndex = 0;
+                            newCell.StyleIndex = styleIndex;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "K" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(v.STIG_DATA[10].ATTRIBUTE_DATA);
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                            newCell.StyleIndex = 0;
+                            newCell.StyleIndex = styleIndex;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "L" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(v.STIG_DATA[11].ATTRIBUTE_DATA);
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                            newCell.StyleIndex = 0;
+                            newCell.StyleIndex = styleIndex;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "M" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(v.STIG_DATA[12].ATTRIBUTE_DATA);
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                            newCell.StyleIndex = 0;
+                            newCell.StyleIndex = styleIndex;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "N" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(v.STIG_DATA[13].ATTRIBUTE_DATA);
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                            newCell.StyleIndex = 0;
+                            newCell.StyleIndex = styleIndex;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "O" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(v.STIG_DATA[14].ATTRIBUTE_DATA);
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                            newCell.StyleIndex = 0;
+                            newCell.StyleIndex = styleIndex;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "P" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(v.STIG_DATA[15].ATTRIBUTE_DATA);
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                            newCell.StyleIndex = 0;
+                            newCell.StyleIndex = styleIndex;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "Q" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(v.STIG_DATA[16].ATTRIBUTE_DATA);
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                            newCell.StyleIndex = 0;
+                            newCell.StyleIndex = styleIndex;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "R" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(v.STIG_DATA[17].ATTRIBUTE_DATA);
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                            newCell.StyleIndex = 0;
+                            newCell.StyleIndex = styleIndex;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "S" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(v.STIG_DATA[18].ATTRIBUTE_DATA);
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                            newCell.StyleIndex = 0;
+                            newCell.StyleIndex = styleIndex;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "T" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(v.STIG_DATA[19].ATTRIBUTE_DATA);
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                            newCell.StyleIndex = 0;
+                            newCell.StyleIndex = styleIndex;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "U" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(v.STIG_DATA[20].ATTRIBUTE_DATA);
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                            newCell.StyleIndex = 0;
+                            newCell.StyleIndex = styleIndex;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "V" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(v.STIG_DATA[21].ATTRIBUTE_DATA);
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                            newCell.StyleIndex = 0;
+                            newCell.StyleIndex = styleIndex;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "W" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(v.STATUS);
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                            newCell.StyleIndex = 0;
+                            newCell.StyleIndex = styleIndex;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "X" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(v.COMMENTS);
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                            newCell.StyleIndex = 0;
+                            newCell.StyleIndex = styleIndex;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "Y" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(v.FINDING_DETAILS);
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                            newCell.StyleIndex = 0;
+                            newCell.StyleIndex = styleIndex;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "Z" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(v.SEVERITY_OVERRIDE);
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                            newCell.StyleIndex = 0;
+                            newCell.StyleIndex = styleIndex;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "AA" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(v.SEVERITY_JUSTIFICATION);
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                            newCell.StyleIndex = 0;
+                            newCell.StyleIndex = styleIndex;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "AB" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(v.STIG_DATA[24].ATTRIBUTE_DATA);
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                            newCell.StyleIndex = 0;
+                            newCell.StyleIndex = styleIndex;
                             sheetData.Append(row);
                         }
 
@@ -538,15 +540,27 @@ namespace openstig_read_api.Controllers
             newCell.StyleIndex = 3;
             return row;
         }
-        private DocumentFormat.OpenXml.Spreadsheet.Row MakeDataRow(uint rowNumber, string cellReference, string value) {
+        private DocumentFormat.OpenXml.Spreadsheet.Row MakeDataRow(uint rowNumber, string cellReference, string value, uint styleIndex) {
             DocumentFormat.OpenXml.Spreadsheet.Row row = new DocumentFormat.OpenXml.Spreadsheet.Row() { RowIndex = rowNumber };
             DocumentFormat.OpenXml.Spreadsheet.Cell refCell = null;
             DocumentFormat.OpenXml.Spreadsheet.Cell newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = cellReference + rowNumber.ToString()};
             row.InsertBefore(newCell, refCell);
             newCell.CellValue = new CellValue(value);
             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-            newCell.StyleIndex = 0;
+            newCell.StyleIndex = styleIndex;
             return row;
+        }
+
+        private uint GetVulnerabilitiStatus(string status) {
+            // open = 4, N/A = 5, NaF = 6, Not Reviewed = 7
+            if (status.ToLower() == "not_reviewed")
+                return 7U;
+            if (status.ToLower() == "open")
+                return 4U;
+            if (status.ToLower() == "not_applicable")
+                return 5U;
+            // catch all
+            return 6U;
         }
         #endregion
 

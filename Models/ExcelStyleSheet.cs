@@ -80,7 +80,7 @@ namespace openstig_read_api.Models
 
             // blue or N/A
             Fill fill3 = new Fill();
-            PatternFill patternFill3 = new PatternFill() { PatternType = PatternValues.None};
+            PatternFill patternFill3 = new PatternFill() { PatternType = PatternValues.Solid};
             ForegroundColor foregroundColor3 = new ForegroundColor() { Rgb = "FF039BE5" };
             BackgroundColor backgroundColor3 = new BackgroundColor() { Indexed = (UInt32Value)64U };
             patternFill3.Append(foregroundColor3);
@@ -89,7 +89,7 @@ namespace openstig_read_api.Models
 
             // green or NaF
             Fill fill4 = new Fill();
-            PatternFill patternFill4 = new PatternFill() { PatternType = PatternValues.None};
+            PatternFill patternFill4 = new PatternFill() { PatternType = PatternValues.Solid};
             ForegroundColor foregroundColor4 = new ForegroundColor() { Rgb = "FF50CC83" };
             BackgroundColor backgroundColor4 = new BackgroundColor() { Indexed = (UInt32Value)64U };
             patternFill4.Append(foregroundColor4);
@@ -98,7 +98,7 @@ namespace openstig_read_api.Models
 
             // silver or Not Reviewed
             Fill fill5 = new Fill();
-            PatternFill patternFill5 = new PatternFill() { PatternType = PatternValues.None};
+            PatternFill patternFill5 = new PatternFill() { PatternType = PatternValues.Solid};
             ForegroundColor foregroundColor5 = new ForegroundColor() { Rgb = "FFCCCCCC" };
             BackgroundColor backgroundColor5 = new BackgroundColor() { Indexed = (UInt32Value)64U };
             patternFill5.Append(foregroundColor5);
@@ -133,22 +133,38 @@ namespace openstig_read_api.Models
 
             CellFormats cellFormats1 = new CellFormats() { Count = (UInt32Value)4U };
             // style index 0:  normal font and wrapping of text for cell rows
-            CellFormat cellFormat2 = new CellFormat(new Alignment() { WrapText = true }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)3U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U };
+            CellFormat cellFormat2 = new CellFormat(new Alignment() { WrapText = true }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)0U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U };
             // style index 1:  normal font with numerical format
             CellFormat cellFormat3 = new CellFormat() { NumberFormatId = (UInt32Value)2U, FontId = (UInt32Value)0U, FillId = (UInt32Value)0U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U, ApplyNumberFormat = true };
             // style index 2:  title font of 30 bold
             CellFormat cellFormat4 = new CellFormat() { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)2U, FillId = (UInt32Value)0U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U, ApplyFont = true };
-            // style index 3:  info row under title font bold size 18
-            CellFormat cellFormat5 = new CellFormat() { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)1U, FillId = (UInt32Value)1U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U, ApplyFont = true };
+            // style index 3:  info row under title and header rows font bold size 18
+            CellFormat cellFormat5 = new CellFormat() { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)1U, FillId = (UInt32Value)0U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U, ApplyFont = true };
+
+            // fill colors based on the fillx variables above to match the 4 statuses of the checklist vulnerabilities
+            // red or Open
+            CellFormat cellFormat6 = new CellFormat(new Alignment() { WrapText = true }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)1U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U };
+            // blue or Not Applicable
+            CellFormat cellFormat7 = new CellFormat(new Alignment() { WrapText = true }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)2U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U };
+            // green or Not a Finding
+            CellFormat cellFormat8 = new CellFormat(new Alignment() { WrapText = true }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)3U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U };
+            // silver or Not Reviewed
+            CellFormat cellFormat9 = new CellFormat(new Alignment() { WrapText = true }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)4U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U };
+
+            // add all these formats
             cellFormats1.Append(cellFormat2);
             cellFormats1.Append(cellFormat3);
             cellFormats1.Append(cellFormat4);
             cellFormats1.Append(cellFormat5);
+            cellFormats1.Append(cellFormat6);
+            cellFormats1.Append(cellFormat7);
+            cellFormats1.Append(cellFormat8);
+            cellFormats1.Append(cellFormat9);
 
             CellStyles cellStyles1 = new CellStyles() { Count = (UInt32Value)1U };
             CellStyle cellStyle1 = new CellStyle() { Name = "Normal", FormatId = 0, BuiltinId = 0 };
-
             cellStyles1.Append(cellStyle1);
+            
             DifferentialFormats differentialFormats1 = new DifferentialFormats() { Count = 0 };
             TableStyles tableStyles1 = new TableStyles() { Count = 0, DefaultTableStyle = "TableStyleMedium2", DefaultPivotStyle = "PivotStyleLight16" };
 
