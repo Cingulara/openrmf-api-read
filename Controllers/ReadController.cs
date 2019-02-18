@@ -123,10 +123,6 @@ namespace openstig_read_api.Controllers
                         DocumentFormat.OpenXml.Spreadsheet.Columns lstColumns = worksheetPart.Worksheet.GetFirstChild<DocumentFormat.OpenXml.Spreadsheet.Columns>();
                         if (lstColumns == null) { // generate the column listings we need with custom widths
                             lstColumns = new DocumentFormat.OpenXml.Spreadsheet.Columns();
-                            // Min = 1, Max = 1 ==> Apply this to column 1 (A)
-                            // Min = 2, Max = 2 ==> Apply this to column 2 (B)
-                            // Width = 25 ==> Set the width to 25
-                            // CustomWidth = true ==> Tell Excel to use the custom width
                             lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 1, Max = 1, Width = 20, CustomWidth = true }); // col A
                             lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 2, Max = 2, Width = 20, CustomWidth = true });
                             lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 3, Max = 3, Width = 40, CustomWidth = true });
