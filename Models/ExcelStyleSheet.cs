@@ -72,7 +72,7 @@ namespace openstig_read_api.Models
             // red or open
             Fill fill2 = new Fill();
             PatternFill patternFill2 = new PatternFill() { PatternType = PatternValues.Solid};
-            ForegroundColor foregroundColor2 = new ForegroundColor() { Rgb = "FFE53935" };
+            ForegroundColor foregroundColor2 = new ForegroundColor() { Rgb = "FFFF0000" };
             BackgroundColor backgroundColor2 = new BackgroundColor() { Indexed = (UInt32Value)64U };
             patternFill2.Append(foregroundColor2);
             patternFill2.Append(backgroundColor2);
@@ -105,11 +105,21 @@ namespace openstig_read_api.Models
             patternFill5.Append(backgroundColor5);
             fill5.Append(patternFill5);
 
+            // red or open
+            Fill fill6 = new Fill();
+            PatternFill patternFill6 = new PatternFill() { PatternType = PatternValues.Solid};
+            ForegroundColor foregroundColor6 = new ForegroundColor() { Rgb = "FFE53935" };
+            BackgroundColor backgroundColor6 = new BackgroundColor() { Indexed = (UInt32Value)64U };
+            patternFill6.Append(foregroundColor6);
+            patternFill6.Append(backgroundColor6);
+            fill6.Append(patternFill6);
+
             fills1.Append(fill1);
             fills1.Append(fill2);
             fills1.Append(fill3);
             fills1.Append(fill4);
             fills1.Append(fill5);
+            fills1.Append(fill6);
 
             Borders borders1 = new Borders() { Count = (UInt32Value)1U };
 
@@ -130,8 +140,8 @@ namespace openstig_read_api.Models
             CellStyleFormats cellStyleFormats1 = new CellStyleFormats() { Count = (UInt32Value)1U };
             CellFormat cellFormat1 = new CellFormat() { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)0U, BorderId = (UInt32Value)0U };
             cellStyleFormats1.Append(cellFormat1);
-
             CellFormats cellFormats1 = new CellFormats() { Count = (UInt32Value)4U };
+
             // style index 0:  normal font and wrapping of text for cell rows
             CellFormat cellFormat2 = new CellFormat(new Alignment() { WrapText = true }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)0U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U };
             // style index 1:  normal font with numerical format
@@ -143,7 +153,7 @@ namespace openstig_read_api.Models
 
             // fill colors based on the fillx variables above to match the 4 statuses of the checklist vulnerabilities
             // red or Open
-            CellFormat cellFormat6 = new CellFormat(new Alignment() { WrapText = true }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)1U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U };
+            CellFormat cellFormat6 = new CellFormat(new Alignment() { WrapText = true }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)5U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U };
             // blue or Not Applicable
             CellFormat cellFormat7 = new CellFormat(new Alignment() { WrapText = true }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)2U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U };
             // green or Not a Finding
@@ -164,7 +174,7 @@ namespace openstig_read_api.Models
             CellStyles cellStyles1 = new CellStyles() { Count = (UInt32Value)1U };
             CellStyle cellStyle1 = new CellStyle() { Name = "Normal", FormatId = 0, BuiltinId = 0 };
             cellStyles1.Append(cellStyle1);
-            
+
             DifferentialFormats differentialFormats1 = new DifferentialFormats() { Count = 0 };
             TableStyles tableStyles1 = new TableStyles() { Count = 0, DefaultTableStyle = "TableStyleMedium2", DefaultPivotStyle = "PivotStyleLight16" };
 
