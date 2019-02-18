@@ -64,18 +64,52 @@ namespace openstig_read_api.Models
 
             Fills fills1 = new Fills() { Count = (UInt32Value)2U };
 
+            // no BG color just normal Excel
             Fill fill1 = new Fill();
             PatternFill patternFill1 = new PatternFill() { PatternType = PatternValues.None };
-
             fill1.Append(patternFill1);
 
+            // red or open
             Fill fill2 = new Fill();
-            PatternFill patternFill2 = new PatternFill() { PatternType = PatternValues.Gray125 };
-
+            PatternFill patternFill2 = new PatternFill() { PatternType = PatternValues.Solid};
+            ForegroundColor foregroundColor2 = new ForegroundColor() { Rgb = "FFE53935" };
+            BackgroundColor backgroundColor2 = new BackgroundColor() { Indexed = (UInt32Value)64U };
+            patternFill2.Append(foregroundColor2);
+            patternFill2.Append(backgroundColor2);
             fill2.Append(patternFill2);
+
+            // blue or N/A
+            Fill fill3 = new Fill();
+            PatternFill patternFill3 = new PatternFill() { PatternType = PatternValues.None};
+            ForegroundColor foregroundColor3 = new ForegroundColor() { Rgb = "FF039BE5" };
+            BackgroundColor backgroundColor3 = new BackgroundColor() { Indexed = (UInt32Value)64U };
+            patternFill3.Append(foregroundColor3);
+            patternFill3.Append(backgroundColor3);
+            fill3.Append(patternFill3);
+
+            // green or NaF
+            Fill fill4 = new Fill();
+            PatternFill patternFill4 = new PatternFill() { PatternType = PatternValues.None};
+            ForegroundColor foregroundColor4 = new ForegroundColor() { Rgb = "FF50CC83" };
+            BackgroundColor backgroundColor4 = new BackgroundColor() { Indexed = (UInt32Value)64U };
+            patternFill4.Append(foregroundColor4);
+            patternFill4.Append(backgroundColor4);
+            fill4.Append(patternFill4);
+
+            // silver or Not Reviewed
+            Fill fill5 = new Fill();
+            PatternFill patternFill5 = new PatternFill() { PatternType = PatternValues.None};
+            ForegroundColor foregroundColor5 = new ForegroundColor() { Rgb = "FFCCCCCC" };
+            BackgroundColor backgroundColor5 = new BackgroundColor() { Indexed = (UInt32Value)64U };
+            patternFill5.Append(foregroundColor5);
+            patternFill5.Append(backgroundColor5);
+            fill5.Append(patternFill5);
 
             fills1.Append(fill1);
             fills1.Append(fill2);
+            fills1.Append(fill3);
+            fills1.Append(fill4);
+            fills1.Append(fill5);
 
             Borders borders1 = new Borders() { Count = (UInt32Value)1U };
 
@@ -98,10 +132,14 @@ namespace openstig_read_api.Models
             cellStyleFormats1.Append(cellFormat1);
 
             CellFormats cellFormats1 = new CellFormats() { Count = (UInt32Value)4U };
-            CellFormat cellFormat2 = new CellFormat(new Alignment() { WrapText = true }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)0U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U };
+            // style index 0:  normal font and wrapping of text for cell rows
+            CellFormat cellFormat2 = new CellFormat(new Alignment() { WrapText = true }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)3U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U };
+            // style index 1:  normal font with numerical format
             CellFormat cellFormat3 = new CellFormat() { NumberFormatId = (UInt32Value)2U, FontId = (UInt32Value)0U, FillId = (UInt32Value)0U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U, ApplyNumberFormat = true };
+            // style index 2:  title font of 30 bold
             CellFormat cellFormat4 = new CellFormat() { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)2U, FillId = (UInt32Value)0U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U, ApplyFont = true };
-            CellFormat cellFormat5 = new CellFormat() { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)1U, FillId = (UInt32Value)0U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U, ApplyFont = true };
+            // style index 3:  info row under title font bold size 18
+            CellFormat cellFormat5 = new CellFormat() { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)1U, FillId = (UInt32Value)1U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U, ApplyFont = true };
             cellFormats1.Append(cellFormat2);
             cellFormats1.Append(cellFormat3);
             cellFormats1.Append(cellFormat4);
