@@ -146,7 +146,7 @@ namespace openstig_read_api.Data {
             try
             {
                 var query = await _context.Artifacts.FindAsync(artifact => artifact.system == system);
-                return query.ToList();
+                return query.ToList().OrderBy(x => x.title);
             }
             catch (Exception ex)
             {
