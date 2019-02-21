@@ -72,6 +72,25 @@ namespace openstig_read_api.Controllers
             }
         }
         
+        // GET the list of checklist records for a systems
+        [HttpGet("systems/{term}")]
+        public async Task<IActionResult> ListArtifactsBySystem(string term)
+        {
+            if (!string.IsNullOrEmpty(term)) {
+                try {
+                    IEnumerable<Artifact> systemChecklists;
+                    systemChecklists = await _artifactRepo.GetSystemArtifacts(term);
+                    return Ok(systemChecklists);
+                }
+                catch (Exception ex) {
+                    _logger.LogError(ex, "Error listing all checklists for system {0}", term);
+                    return BadRequest();
+                }
+            }
+            else
+                return BadRequest(); // no term entered
+        }
+        
         // GET /value
         [HttpGet("{id}")]
         public async Task<IActionResult> GetArtifact(string id)
