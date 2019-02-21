@@ -9,6 +9,9 @@ namespace openstig_read_api.Data {
         Task<IEnumerable<Artifact>> GetAllArtifacts();
         Task<Artifact> GetArtifact(string id);
 
+        // return a distinct list of Systems
+        Task<List<string>> GetAllSystems();
+
         // query after multiple parameters
         Task<IEnumerable<Artifact>> GetArtifact(string bodyText, DateTime updatedFrom, long headerSizeLimit);
 

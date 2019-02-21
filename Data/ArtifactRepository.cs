@@ -35,6 +35,25 @@ namespace openstig_read_api.Data {
             }
         }
 
+        public async Task<List<string>> GetAllSystems() 
+        {
+            try
+            {
+                var filter = new BsonDocument();
+                var result = await _context.Artifacts.DistinctAsync<string>("system", filter);
+                List<string> systems = result.ToList();
+                // take out the None value
+                systems.RemoveAt(systems.IndexOf("None"));
+                // return it in alpha order
+                return systems.OrderBy(x => x).ToList();
+            }
+            catch (Exception ex)
+            {
+                // log or manage the exception
+                throw ex;
+            }
+        }
+
         private ObjectId GetInternalId(string id)
         {
             ObjectId internalId;
