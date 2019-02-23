@@ -57,6 +57,40 @@ namespace openstig_read_api.Controllers
             }
         }
 
+        // GET the distinct list of systems
+        [HttpGet("systems")]
+        public async Task<IActionResult> ListArtifactSystems()
+        {
+            try {
+                IEnumerable<string> systems;
+                systems = await _artifactRepo.GetAllSystems();
+                return Ok(systems);
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "Error listing all checklist systems");
+                return BadRequest();
+            }
+        }
+        
+        // GET the list of checklist records for a systems
+        [HttpGet("systems/{term}")]
+        public async Task<IActionResult> ListArtifactsBySystem(string term)
+        {
+            if (!string.IsNullOrEmpty(term)) {
+                try {
+                    IEnumerable<Artifact> systemChecklists;
+                    systemChecklists = await _artifactRepo.GetSystemArtifacts(term);
+                    return Ok(systemChecklists);
+                }
+                catch (Exception ex) {
+                    _logger.LogError(ex, "Error listing all checklists for system {0}", term);
+                    return BadRequest();
+                }
+            }
+            else
+                return BadRequest(); // no term entered
+        }
+        
         // GET /value
         [HttpGet("{id}")]
         public async Task<IActionResult> GetArtifact(string id)
@@ -100,7 +134,7 @@ namespace openstig_read_api.Controllers
                     art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist);
 
                     // starting row number for data
-                    uint rowNumber = 8;
+                    uint rowNumber = 9;
 
                     // create the XLSX in memory and send it out
                     var memory = new MemoryStream();
@@ -168,13 +202,15 @@ namespace openstig_read_api.Controllers
 
                         DocumentFormat.OpenXml.Spreadsheet.Row row = MakeTitleRow("openSTIG by Cingulara");
                         sheetData.Append(row);
-                        row = MakeChecklistInfoRow("Checklist Name", art.title,2);
+                        row = MakeChecklistInfoRow("System Name", art.system,2);
                         sheetData.Append(row);
-                        row = MakeChecklistInfoRow("Description", art.description,3);
+                        row = MakeChecklistInfoRow("Checklist Name", art.title,3);
                         sheetData.Append(row);
-                        row = MakeChecklistInfoRow("Type", art.typeTitle,4);
+                        row = MakeChecklistInfoRow("Description", art.description,4);
                         sheetData.Append(row);
-                        row = MakeChecklistInfoRow("Last Updated", art.updatedOn.Value.ToString("MM/dd/yy hh:mm tt"),5);
+                        row = MakeChecklistInfoRow("Type", art.typeTitle,5);
+                        sheetData.Append(row);
+                        row = MakeChecklistInfoRow("Last Updated", art.updatedOn.Value.ToString("MM/dd/yy hh:mm tt"),6);
                         sheetData.Append(row);
                         row = MakeHeaderRows(rowNumber);
                         sheetData.Append(row);
@@ -601,11 +637,11 @@ namespace openstig_read_api.Controllers
         
         // GET /latest
         [HttpGet("counttype")]
-        public async Task<IActionResult> GetCountByType()
+        public async Task<IActionResult> GetCountByType(string system)
         {
             try {
                 IEnumerable<Object> artifacts;
-                artifacts = await _artifactRepo.GetCountByType();
+                artifacts = await _artifactRepo.GetCountByType(system);
                 return Ok(artifacts);
             }
             catch (Exception ex) {

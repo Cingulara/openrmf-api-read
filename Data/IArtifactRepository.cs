@@ -13,6 +13,14 @@ namespace openstig_read_api.Data {
         Task<IEnumerable<Artifact>> GetArtifact(string bodyText, DateTime updatedFrom, long headerSizeLimit);
 
         /******************************************** 
+         System specific calls
+        ********************************************/
+        // return a distinct list of Systems
+        Task<List<string>> GetAllSystems();
+        // return checklist records for a given system
+        Task<IEnumerable<Artifact>> GetSystemArtifacts(string system);
+
+        /******************************************** 
          Dashboard specific calls
         ********************************************/
         // get the # of checklists for the dashboard listing
@@ -23,6 +31,6 @@ namespace openstig_read_api.Data {
         /******************************************** 
          Reports specific calls
         ********************************************/
-        Task<IEnumerable<object>> GetCountByType();
+        Task<IEnumerable<object>> GetCountByType(string system);
     }
 }
