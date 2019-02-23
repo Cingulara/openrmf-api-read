@@ -134,11 +134,12 @@ namespace openstig_read_api.Data {
         {
             try
             {
+                List<string> systems = new List<string>();
                 var filter = new BsonDocument();
                 var result = await _context.Artifacts.DistinctAsync<string>("system", filter);
-                List<string> systems = result.ToList();
+                if (result != null) systems = result.ToList();
                 // take out the None value
-                systems.RemoveAt(systems.IndexOf("None"));
+                if (systems.IndexOf("None") >= 0) systems.RemoveAt(systems.IndexOf("None"));
                 // return it in alpha order
                 return systems.OrderBy(x => x).ToList();
             }
