@@ -31,6 +31,6 @@ namespace openstig_read_api.Data {
         /******************************************** 
          Reports specific calls
         ********************************************/
-        Task<IEnumerable<object>> GetCountByType();
+        Task<IEnumerable<object>> GetCountByType(string system);
     }
 }

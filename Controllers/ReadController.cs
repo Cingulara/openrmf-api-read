@@ -637,11 +637,11 @@ namespace openstig_read_api.Controllers
         
         // GET /latest
         [HttpGet("counttype")]
-        public async Task<IActionResult> GetCountByType()
+        public async Task<IActionResult> GetCountByType(string system)
         {
             try {
                 IEnumerable<Object> artifacts;
-                artifacts = await _artifactRepo.GetCountByType();
+                artifacts = await _artifactRepo.GetCountByType(system);
                 return Ok(artifacts);
             }
             catch (Exception ex) {
