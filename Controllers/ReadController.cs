@@ -206,9 +206,9 @@ namespace openstig_read_api.Controllers
                         sheetData.Append(row);
                         row = MakeChecklistInfoRow("Checklist Name", art.title,3);
                         sheetData.Append(row);
-                        row = MakeChecklistInfoRow("Description", art.description,4);
+                        row = MakeChecklistInfoRow("Type", art.stigType,4);
                         sheetData.Append(row);
-                        row = MakeChecklistInfoRow("Type", art.typeTitle,5);
+                        row = MakeChecklistInfoRow("Release", art.stigRelease,5);
                         sheetData.Append(row);
                         row = MakeChecklistInfoRow("Last Updated", art.updatedOn.Value.ToString("MM/dd/yy hh:mm tt"),6);
                         sheetData.Append(row);
@@ -381,7 +381,7 @@ namespace openstig_read_api.Controllers
         } 
 
         private string CreateXLSXFilename(string title) {
-            return title.Replace(" ", "-") + ".xlsx";
+            return title.Trim().Replace(" ", "-") + ".xlsx";
         }
 
         #region XLSX Formatting

@@ -110,14 +110,14 @@ namespace openstig_read_api.Data {
                 // show them all by type
                 if (string.IsNullOrEmpty(system)) {
                     var groupArtifactItemsByType = _context.Artifacts.Aggregate()
-                            .Group(s => s.type,
-                            g => new ArtifactCount {type = g.Key, count = g.Count()}).ToListAsync();
+                            .Group(s => s.stigType,
+                            g => new ArtifactCount {stigType = g.Key, count = g.Count()}).ToListAsync();
                     return await groupArtifactItemsByType;
                 }
                 else {
                     var groupArtifactItemsByType = _context.Artifacts.Aggregate().Match(artifact => artifact.system == system)
-                            .Group(s => s.type,
-                            g => new ArtifactCount {type = g.Key, count = g.Count()}).ToListAsync();
+                            .Group(s => s.stigType,
+                            g => new ArtifactCount {stigType = g.Key, count = g.Count()}).ToListAsync();
                     return await groupArtifactItemsByType;
                 }
             }

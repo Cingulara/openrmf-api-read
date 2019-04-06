@@ -16,10 +16,6 @@ namespace openstig_read_api.Classes
             CHECKLIST myChecklist = new CHECKLIST();
             XmlSerializer serializer = new XmlSerializer(typeof(CHECKLIST));
             rawChecklist = rawChecklist.Replace("\n","").Replace("\t","");
-            // using (TextReader reader = new StringReader(rawChecklist))
-            // {
-            //     myChecklist = (CHECKLIST)serializer.Deserialize(reader);
-            // }
             XmlDocument xmlDoc = new XmlDocument();
             xmlDoc.LoadXml(rawChecklist);
             XmlNodeList assetList = xmlDoc.GetElementsByTagName("ASSET");
@@ -92,7 +88,7 @@ namespace openstig_read_api.Classes
             foreach (XmlElement child in node.ChildNodes) {
                 // get the SI_DATA record for SID_DATA and SID_NAME and then return them
                 // each SI_DATA has 2
-                data = new SI_DATA();                
+                data = new SI_DATA();
                 foreach (XmlElement siddata in child.ChildNodes) {
                     if (siddata.Name == "SID_NAME")
                         data.SID_NAME = siddata.InnerText;
