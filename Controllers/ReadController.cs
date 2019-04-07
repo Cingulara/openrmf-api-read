@@ -365,9 +365,13 @@ namespace openstig_read_api.Controllers
                         workbookpart.Workbook.Save();
                         // Close the document.
                         spreadSheet.Close();
-
+                        // set the filename
+                        string filename = art.title;
+                        if (!string.IsNullOrEmpty(art.system) && art.system.ToLower().Trim() == "none")
+                            filename = art.system.Trim() + "-" + filename; // add the system onto the front
+                        // return the file
                         memory.Seek(0, SeekOrigin.Begin);
-                        return File(memory, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", CreateXLSXFilename(art.title));
+                        return File(memory, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", CreateXLSXFilename());
                     }
                 }
                 else {
