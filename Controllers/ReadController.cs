@@ -381,7 +381,7 @@ namespace openstig_read_api.Controllers
         } 
 
         private string CreateXLSXFilename(string title) {
-            return title.Trim().Replace(" ", "-") + ".xlsx";
+            return title.Trim().Replace(" ", "_") + ".xlsx";
         }
 
         #region XLSX Formatting
