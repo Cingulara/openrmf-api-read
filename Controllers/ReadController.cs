@@ -371,7 +371,7 @@ namespace openstig_read_api.Controllers
                             filename = art.system.Trim() + "-" + filename; // add the system onto the front
                         // return the file
                         memory.Seek(0, SeekOrigin.Begin);
-                        return File(memory, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", CreateXLSXFilename());
+                        return File(memory, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", CreateXLSXFilename(filename));
                     }
                 }
                 else {
