@@ -34,7 +34,7 @@
                 "ASPNETCORE_URLS": "http://*:8084",
                 "mongoConnection": "mongodb://openstig:openstig1234!@localhost/openstig?authSource=admin",
                 "mongodb": "openstig",
-                "natsserverurl" : "nats://192.168.11.46:4222"
+                "natsserverurl" : "nats://192.168.11.52:4222"
             },
             "sourceFileMap": {
                 "/Views": "${workspaceFolder}/Views"
@@ -46,5 +46,5 @@
             "request": "attach",
             "processId": "${command:pickProcess}"
         }
-    ,]
+    ]
 }

@@ -57,6 +57,122 @@ namespace openstig_read_api.Controllers
             }
         }
 
+        // GET /export
+        [HttpGet("export")]
+        public async Task<IActionResult> ExportChecklistListing()
+        {
+            try {
+                IEnumerable<Artifact> artifacts;
+                artifacts = await _artifactRepo.GetAllArtifacts();
+                if (artifacts != null && artifacts.Count() > 0) {
+                    // starting row number for data
+                    uint rowNumber = 6;
+
+                    // create the XLSX in memory and send it out
+                    var memory = new MemoryStream();
+                    using (SpreadsheetDocument spreadSheet = SpreadsheetDocument.Create(memory, SpreadsheetDocumentType.Workbook))
+                    {
+                        // Add a WorkbookPart to the document.
+                        WorkbookPart workbookpart = spreadSheet.AddWorkbookPart();
+                        workbookpart.Workbook = new Workbook();
+                        
+                        // add styles to workbook
+                        WorkbookStylesPart wbsp = workbookpart.AddNewPart<WorkbookStylesPart>();
+
+                        // Add a WorksheetPart to the WorkbookPart.
+                        WorksheetPart worksheetPart = workbookpart.AddNewPart<WorksheetPart>();
+                        worksheetPart.Worksheet = new Worksheet(new SheetData());
+
+                        // add stylesheet to use cell formats 1 - 4
+                        wbsp.Stylesheet = ExcelStyleSheet.GenerateStylesheet();
+
+                        DocumentFormat.OpenXml.Spreadsheet.Columns lstColumns = worksheetPart.Worksheet.GetFirstChild<DocumentFormat.OpenXml.Spreadsheet.Columns>();
+                        if (lstColumns == null) { // generate the column listings we need with custom widths
+                            lstColumns = new DocumentFormat.OpenXml.Spreadsheet.Columns();
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 1, Max = 1, Width = 30, CustomWidth = true }); // col System
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 2, Max = 2, Width = 100, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 3, Max = 3, Width = 20, CustomWidth = true }); // NaF
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 4, Max = 4, Width = 20, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 5, Max = 5, Width = 20, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 6, Max = 6, Width = 20, CustomWidth = true }); // N/R
+                            worksheetPart.Worksheet.InsertAt(lstColumns, 0);
+                        }
+
+                        // Add Sheets to the Workbook.
+                        Sheets sheets = spreadSheet.WorkbookPart.Workbook.AppendChild<Sheets>(new Sheets());
+
+                        // Append a new worksheet and associate it with the workbook.
+                        Sheet sheet = new Sheet() { Id = spreadSheet.WorkbookPart.
+                            GetIdOfPart(worksheetPart), SheetId = 1, Name = "ChecklistListing" };
+                        sheets.Append(sheet);
+                        // Get the sheetData cell table.
+                        SheetData sheetData = worksheetPart.Worksheet.GetFirstChild<SheetData>();
+                        DocumentFormat.OpenXml.Spreadsheet.Cell refCell = null;
+                        DocumentFormat.OpenXml.Spreadsheet.Cell newCell = null;
+
+                        DocumentFormat.OpenXml.Spreadsheet.Row row = MakeTitleRow("openSTIG by Cingulara");
+                        sheetData.Append(row);
+                        row = MakeChecklistInfoRow("Checklist Listing", "All", 2);
+                        sheetData.Append(row);
+                        row = MakeChecklistInfoRow("Printed Date", DateTime.Now.ToString("MM/dd/yy hh:mm"),3);
+                        sheetData.Append(row);
+                        row = MakeChecklistListingHeaderRows(rowNumber);
+                        sheetData.Append(row);
+
+                        uint styleIndex = 0; // use this for 4, 5, 6, or 7 for status
+                        // cycle through the checklists
+                        foreach (Artifact art in artifacts) {
+                            art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist);
+                            rowNumber++;
+                            // make a new row for this set of items
+                            row = MakeDataRow(rowNumber, "A", art.system.Trim().ToLower() != "none"? art.system : "", styleIndex);
+                            // now cycle through the rest of the items
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "B" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue(art.title);
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = 0;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "C" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue("0");
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = 6;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "D" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue("0");
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = 5;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue("0");
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = 4;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "F" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue("0");
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = 7;                            
+                            sheetData.Append(row);
+                        }
+
+                        // Save the new worksheet.
+                        workbookpart.Workbook.Save();
+                        // Close the document.
+                        spreadSheet.Close();
+                        memory.Seek(0, SeekOrigin.Begin);
+                        return File(memory, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "ChecklistListing.xlsx");
+                    }
+                }
+                else {
+                    return NotFound();
+                }
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "Error Retrieving Artifacts for Exporting");
+                return NotFound();
+            }
+        } 
+
         // GET the distinct list of systems
         [HttpGet("systems")]
         public async Task<IActionResult> ListArtifactSystems()
@@ -212,7 +328,7 @@ namespace openstig_read_api.Controllers
                         sheetData.Append(row);
                         row = MakeChecklistInfoRow("Last Updated", art.updatedOn.Value.ToString("MM/dd/yy hh:mm tt"),6);
                         sheetData.Append(row);
-                        row = MakeHeaderRows(rowNumber);
+                        row = MakeChecklistHeaderRows(rowNumber);
                         sheetData.Append(row);
 
                         uint styleIndex = 0; // use this for 4, 5, 6, or 7 for status
@@ -379,7 +495,7 @@ namespace openstig_read_api.Controllers
                 }
             }
             catch (Exception ex) {
-                _logger.LogError(ex, "Error Retrieving Artifact for Download");
+                _logger.LogError(ex, "Error Retrieving Artifact for Exporting");
                 return NotFound();
             }
         } 
@@ -414,7 +530,7 @@ namespace openstig_read_api.Controllers
             newCell.StyleIndex = 3;
             return row;
         }
-        private DocumentFormat.OpenXml.Spreadsheet.Row MakeHeaderRows(uint rowindex) {
+        private DocumentFormat.OpenXml.Spreadsheet.Row MakeChecklistHeaderRows(uint rowindex) {
             DocumentFormat.OpenXml.Spreadsheet.Cell refCell = null;
             DocumentFormat.OpenXml.Spreadsheet.Row row = new DocumentFormat.OpenXml.Spreadsheet.Row() { RowIndex = rowindex };
             DocumentFormat.OpenXml.Spreadsheet.Cell newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "A" + rowindex.ToString() };
@@ -589,7 +705,48 @@ namespace openstig_read_api.Controllers
             newCell.StyleIndex = styleIndex;
             return row;
         }
+        private DocumentFormat.OpenXml.Spreadsheet.Row MakeChecklistListingHeaderRows(uint rowindex) {
+            DocumentFormat.OpenXml.Spreadsheet.Cell refCell = null;
+            DocumentFormat.OpenXml.Spreadsheet.Row row = new DocumentFormat.OpenXml.Spreadsheet.Row() { RowIndex = rowindex };
+            DocumentFormat.OpenXml.Spreadsheet.Cell newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "A" + rowindex.ToString() };
+            uint styleIndex = 3;
 
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("System");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "B" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Title");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "C" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Not a Finding");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = 6;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "D" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Not Applicable");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = 5;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Open");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = 4;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "F" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Not Reviewed");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = 7;
+            return row;
+        }
         private uint GetVulnerabilitiStatus(string status) {
             // open = 4, N/A = 5, NaF = 6, Not Reviewed = 7
             if (status.ToLower() == "not_reviewed")
