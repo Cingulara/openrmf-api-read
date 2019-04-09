@@ -120,10 +120,14 @@ namespace openstig_read_api.Controllers
                         sheetData.Append(row);
 
                         uint styleIndex = 0; // use this for 4, 5, 6, or 7 for status
-                        // cycle through the checklists
+                        Score checklistScore;
+
+                        // cycle through the checklists and grab the score for each individually
                         foreach (Artifact art in artifacts) {
                             art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist);
+                            checklistScore = WebClient.GetChecklistScore(art.InternalId.ToString()).GetAwaiter().GetResult();
                             rowNumber++;
+
                             // make a new row for this set of items
                             row = MakeDataRow(rowNumber, "A", art.system.Trim().ToLower() != "none"? art.system : "", styleIndex);
                             // now cycle through the rest of the items
@@ -134,24 +138,110 @@ namespace openstig_read_api.Controllers
                             newCell.StyleIndex = 0;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "C" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
-                            newCell.CellValue = new CellValue("0");
-                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.CellValue = new CellValue(checklistScore.totalNotAFinding.ToString());
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
                             newCell.StyleIndex = 6;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "D" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
-                            newCell.CellValue = new CellValue("0");
-                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.CellValue = new CellValue(checklistScore.totalNotApplicable.ToString());
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
                             newCell.StyleIndex = 5;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
-                            newCell.CellValue = new CellValue("0");
-                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.CellValue = new CellValue(checklistScore.totalOpen.ToString());
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
                             newCell.StyleIndex = 4;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "F" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
-                            newCell.CellValue = new CellValue("0");
+                            newCell.CellValue = new CellValue(checklistScore.totalNotReviewed.ToString());
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                            newCell.StyleIndex = 7;
+                            sheetData.Append(row);
+
+                            // now add the cat 1, 2, and 3 findings
+                            rowNumber++; // CAT 1
+                            row = MakeDataRow(rowNumber, "A", "", styleIndex);
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "B" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue("CAT 1");
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                            newCell.StyleIndex = 7;                            
+                            newCell.StyleIndex = 0;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "C" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue(checklistScore.totalCat1NotAFinding.ToString());
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                            newCell.StyleIndex = 6;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "D" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue(checklistScore.totalCat1NotApplicable.ToString());
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                            newCell.StyleIndex = 5;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue(checklistScore.totalCat1Open.ToString());
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                            newCell.StyleIndex = 4;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "F" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue(checklistScore.totalCat1NotReviewed.ToString());
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                            newCell.StyleIndex = 7;
+                            sheetData.Append(row);
+                            rowNumber++; // CAT 2
+                            row = MakeDataRow(rowNumber, "A", "", styleIndex);
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "B" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue("CAT 2");
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = 0;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "C" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue(checklistScore.totalCat2NotAFinding.ToString());
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                            newCell.StyleIndex = 6;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "D" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue(checklistScore.totalCat2NotApplicable.ToString());
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                            newCell.StyleIndex = 5;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue(checklistScore.totalCat2Open.ToString());
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                            newCell.StyleIndex = 4;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "F" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue(checklistScore.totalCat2NotReviewed.ToString());
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                            newCell.StyleIndex = 7;
+                            sheetData.Append(row);
+                            rowNumber++; // CAT 3
+                            row = MakeDataRow(rowNumber, "A", "", styleIndex);
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "B" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue("CAT 3");
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = 0;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "C" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue(checklistScore.totalCat3NotAFinding.ToString());
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                            newCell.StyleIndex = 6;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "D" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue(checklistScore.totalCat3NotApplicable.ToString());
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                            newCell.StyleIndex = 5;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue(checklistScore.totalCat3Open.ToString());
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                            newCell.StyleIndex = 4;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "F" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue(checklistScore.totalCat3NotReviewed.ToString());
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                            newCell.StyleIndex = 7;
                             sheetData.Append(row);
                         }
 
