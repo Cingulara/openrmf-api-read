@@ -617,7 +617,7 @@ namespace openstig_read_api.Controllers
                                 vulnIds.Add(v.STIG_DATA.Where(y => y.VULN_ATTRIBUTE == "Vuln_Num").FirstOrDefault().ATTRIBUTE_DATA); // add the V-xxxx number
                             }
                         }
-                        return Ok(vulnIds);
+                        return Ok(vulnIds.Distinct().OrderBy(z => z).ToList());
                     }
                     else
                         return BadRequest();
