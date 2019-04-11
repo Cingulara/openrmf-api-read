@@ -35,7 +35,8 @@
                 "mongoConnection": "mongodb://openstig:openstig1234!@localhost/openstig?authSource=admin",
                 "mongodb": "openstig",
                 "natsserverurl" : "nats://192.168.11.52:4222",
-                "openstig-api-score-server": "http://localhost:8090"
+                "openstig-api-score-server": "http://localhost:8090",
+                "openstig-api-compliance-server": "http://localhost:8092"
             },
             "sourceFileMap": {
                 "/Views": "${workspaceFolder}/Views"

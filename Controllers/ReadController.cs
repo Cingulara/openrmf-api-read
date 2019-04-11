@@ -594,6 +594,48 @@ namespace openstig_read_api.Controllers
             return title.Trim().Replace(" ", "_") + ".xlsx";
         }
 
+        // GET /value
+        [HttpGet("{id}/control/{control}")]
+        public async Task<IActionResult> GetArtifactVulnIdsByControl(string id, string control)
+        {
+            try {
+                if (!string.IsNullOrEmpty(id) && !string.IsNullOrEmpty(control)) {
+                    _logger.LogInformation("Invalid Artifact Id {0} or Control {1}", id, control);
+                    Artifact art = new Artifact();
+                    art = await _artifactRepo.GetArtifact(id);
+                    art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist);
+                    // go get the list of CCIs to look for
+                    List<string> cciList = WebClient.GetCCIListing(control).GetAwaiter().GetResult();
+                    if (cciList != null) {
+                        List<string> vulnIds = new List<string>();
+                        // for each string in the listing, find all VULN Ids where you have the CCI listed
+                        foreach (VULN v in art.CHECKLIST.STIGS.iSTIG.VULN){
+                            // see if the CCI_REF is in the 
+                            if (v.STIG_DATA.Where(x => x.VULN_ATTRIBUTE == "CCI_REF" && cciList.Contains(x.ATTRIBUTE_DATA)).FirstOrDefault() != null) {
+                                // the CCI is in this VULN so pull the VULN_ID and add to the list
+                                // the Vuln_Num is required so it will be there, otherwise this checklist is invalid
+                                vulnIds.Add(v.STIG_DATA.Where(y => y.VULN_ATTRIBUTE == "Vuln_Num").FirstOrDefault().ATTRIBUTE_DATA); // add the V-xxxx number
+                            }
+                        }
+                        return Ok(vulnIds);
+                    }
+                    else
+                        return BadRequest();
+                }
+                else {
+                    // log the values passed in
+                    _logger.LogWarning("Invalid Artifact Id {0} or Control {1}", 
+                        !string.IsNullOrEmpty(id)? id : "null", !string.IsNullOrEmpty(control)? control : "null");
+                    return BadRequest();    
+                }
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "Error Retrieving Artifact");
+                return NotFound();
+            }
+        }
+
+
         #region XLSX Formatting
         private DocumentFormat.OpenXml.Spreadsheet.Row MakeTitleRow(string title) {
             DocumentFormat.OpenXml.Spreadsheet.Row row = new DocumentFormat.OpenXml.Spreadsheet.Row() { RowIndex = 1 };
