@@ -35,6 +35,7 @@ namespace openstig_read_api.Data {
             }
         }
 
+
         private ObjectId GetInternalId(string id)
         {
             ObjectId internalId;
@@ -102,15 +103,23 @@ namespace openstig_read_api.Data {
             }
         }
 
-        public async Task<IEnumerable<object>> GetCountByType()
+        public async Task<IEnumerable<object>> GetCountByType(string system)
         {
             try
             {
-                var groupArtifactItemsByType = _context.Artifacts.Aggregate()
-                        .Group(s => s.type,
-                        g => new ArtifactCount {type = g.Key, count = g.Count()}).ToListAsync();
-
-                return await groupArtifactItemsByType;
+                // show them all by type
+                if (string.IsNullOrEmpty(system)) {
+                    var groupArtifactItemsByType = _context.Artifacts.Aggregate()
+                            .Group(s => s.stigType,
+                            g => new ArtifactCount {stigType = g.Key, count = g.Count()}).ToListAsync();
+                    return await groupArtifactItemsByType;
+                }
+                else {
+                    var groupArtifactItemsByType = _context.Artifacts.Aggregate().Match(artifact => artifact.system == system)
+                            .Group(s => s.stigType,
+                            g => new ArtifactCount {stigType = g.Key, count = g.Count()}).ToListAsync();
+                    return await groupArtifactItemsByType;
+                }
             }
             catch (Exception ex)
             {
@@ -118,5 +127,42 @@ namespace openstig_read_api.Data {
                 throw ex;
             }
         }
+    
+    
+        #region Systems
+        public async Task<List<string>> GetAllSystems() 
+        {
+            try
+            {
+                List<string> systems = new List<string>();
+                var filter = new BsonDocument();
+                var result = await _context.Artifacts.DistinctAsync<string>("system", filter);
+                if (result != null) systems = result.ToList();
+                // take out the None value
+                if (systems.IndexOf("None") >= 0) systems.RemoveAt(systems.IndexOf("None"));
+                // return it in alpha order
+                return systems.OrderBy(x => x).ToList();
+            }
+            catch (Exception ex)
+            {
+                // log or manage the exception
+                throw ex;
+            }
+        }
+
+        public async Task<IEnumerable<Artifact>> GetSystemArtifacts(string system)
+        {
+            try
+            {
+                var query = await _context.Artifacts.FindAsync(artifact => artifact.system == system);
+                return query.ToList().OrderBy(x => x.title);
+            }
+            catch (Exception ex)
+            {
+                // log or manage the exception
+                throw ex;
+            }
+        }
+        #endregion
     }
 }

@@ -10,8 +10,7 @@ namespace openstig_read_api.Models
     {
         public ArtifactCount () {
         }
-        public STIGtype type { get; set; }
-        public string typeTitle { get { return Enum.GetName(typeof(STIGtype), type);} }
+        public string stigType { get; set; }
 
         public int count { get; set; }
     }

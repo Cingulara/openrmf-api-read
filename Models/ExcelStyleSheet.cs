@@ -78,10 +78,10 @@ namespace openstig_read_api.Models
             patternFill2.Append(backgroundColor2);
             fill2.Append(patternFill2);
 
-            // blue or N/A
+            // silver or N/A
             Fill fill3 = new Fill();
             PatternFill patternFill3 = new PatternFill() { PatternType = PatternValues.Solid};
-            ForegroundColor foregroundColor3 = new ForegroundColor() { Rgb = "FF039BE5" };
+            ForegroundColor foregroundColor3 = new ForegroundColor() { Rgb = "FFCCCCCC" };
             BackgroundColor backgroundColor3 = new BackgroundColor() { Indexed = (UInt32Value)64U };
             patternFill3.Append(foregroundColor3);
             patternFill3.Append(backgroundColor3);
@@ -96,10 +96,10 @@ namespace openstig_read_api.Models
             patternFill4.Append(backgroundColor4);
             fill4.Append(patternFill4);
 
-            // silver or Not Reviewed
+            // blue or Not Reviewed
             Fill fill5 = new Fill();
             PatternFill patternFill5 = new PatternFill() { PatternType = PatternValues.Solid};
-            ForegroundColor foregroundColor5 = new ForegroundColor() { Rgb = "FFCCCCCC" };
+            ForegroundColor foregroundColor5 = new ForegroundColor() { Rgb = "FF039BE5" };
             BackgroundColor backgroundColor5 = new BackgroundColor() { Indexed = (UInt32Value)64U };
             patternFill5.Append(foregroundColor5);
             patternFill5.Append(backgroundColor5);
@@ -154,11 +154,11 @@ namespace openstig_read_api.Models
             // fill colors based on the fillx variables above to match the 4 statuses of the checklist vulnerabilities
             // red or Open
             CellFormat cellFormat6 = new CellFormat(new Alignment() { WrapText = true }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)5U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U };
-            // blue or Not Applicable
+            // silver or Not Applicable
             CellFormat cellFormat7 = new CellFormat(new Alignment() { WrapText = true }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)2U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U };
             // green or Not a Finding
             CellFormat cellFormat8 = new CellFormat(new Alignment() { WrapText = true }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)3U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U };
-            // silver or Not Reviewed
+            // blue or Not Reviewed
             CellFormat cellFormat9 = new CellFormat(new Alignment() { WrapText = true }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)4U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U };
 
             // add all these formats
