@@ -10,7 +10,7 @@
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/bin/Debug/netcoreapp2.2/openstig-api-read.dll",
+            "program": "${workspaceFolder}/bin/Debug/netcoreapp2.2/openrmf-api-read.dll",
             "args": [],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,
@@ -32,11 +32,11 @@
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development",
                 "ASPNETCORE_URLS": "http://*:8084",
-                "mongoConnection": "mongodb://openstig:openstig1234!@localhost/openstig?authSource=admin",
-                "mongodb": "openstig",
+                "mongoConnection": "mongodb://openrmf:openrmf1234!@localhost/openrmf?authSource=admin",
+                "mongodb": "openrmf",
                 "natsserverurl" : "nats://192.168.11.52:4222",
-                "openstig-api-score-server": "http://localhost:8090",
-                "openstig-api-compliance-server": "http://localhost:8092"
+                "openrmf-api-score-server": "http://localhost:8090",
+                "openrmf-api-compliance-server": "http://localhost:8092"
             },
             "sourceFileMap": {
                 "/Views": "${workspaceFolder}/Views"

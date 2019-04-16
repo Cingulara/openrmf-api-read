@@ -22,7 +22,7 @@ namespace openstig_read_api.Classes
                 {
                     client.DefaultRequestHeaders.Accept.Clear();
                     client.DefaultRequestHeaders.Add("Accept", "application/json");
-                    string hosturl = Environment.GetEnvironmentVariable("openstig-api-score-server");
+                    string hosturl = Environment.GetEnvironmentVariable("openrmf-api-score-server");
                     HttpResponseMessage response = await client.GetAsync(hosturl + "/artifact/" + System.Uri.EscapeUriString(artifactId));
                     response.EnsureSuccessStatusCode();
                     string responseBody = await response.Content.ReadAsStringAsync();
@@ -52,7 +52,7 @@ namespace openstig_read_api.Classes
                 {
                     client.DefaultRequestHeaders.Accept.Clear();
                     client.DefaultRequestHeaders.Add("Accept", "application/json");
-                    string hosturl = Environment.GetEnvironmentVariable("openstig-api-compliance-server");
+                    string hosturl = Environment.GetEnvironmentVariable("openrmf-api-compliance-server");
                     HttpResponseMessage response = await client.GetAsync(hosturl + "/cci/" + System.Uri.EscapeUriString(control));
                     response.EnsureSuccessStatusCode();
                     string responseBody = await response.Content.ReadAsStringAsync();

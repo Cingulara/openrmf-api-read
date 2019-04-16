@@ -110,7 +110,7 @@ namespace openstig_read_api.Controllers
                         DocumentFormat.OpenXml.Spreadsheet.Cell refCell = null;
                         DocumentFormat.OpenXml.Spreadsheet.Cell newCell = null;
 
-                        DocumentFormat.OpenXml.Spreadsheet.Row row = MakeTitleRow("openSTIG by Cingulara");
+                        DocumentFormat.OpenXml.Spreadsheet.Row row = MakeTitleRow("openRMF by Cingulara");
                         sheetData.Append(row);
                         row = MakeChecklistInfoRow("Checklist Listing", "All", 2);
                         sheetData.Append(row);
