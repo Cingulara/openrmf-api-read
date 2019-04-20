@@ -3,13 +3,13 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp2.2</TargetFramework>
     <AspNetCoreHostingModel>InProcess</AspNetCoreHostingModel>
-    <RootNamespace>openstig_read_api</RootNamespace>
+    <RootNamespace>openrmf_read_api</RootNamespace>
     <PublishWithAspNetCoreTargetManifest>false</PublishWithAspNetCoreTargetManifest>
     <ProjectGuid>{6589fd80-18ff-45c9-bf50-f7007fa66bc2}</ProjectGuid>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);1591</NoWarn>
-    <Version>0.6</Version>
-    <InformationalVersion>This is an alpha of the openSTIG Tool Read API from Cingulara</InformationalVersion>
+    <Version>0.7</Version>
+    <InformationalVersion>This is an alpha of the openRMF Tool Read API from Cingulara</InformationalVersion>
   </PropertyGroup>
 
   <ItemGroup>

@@ -2,13 +2,13 @@ using System;
 using System.Threading.Tasks;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using openstig_read_api.Models;
+using openrmf_read_api.Models;
 using System.IO;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using System.Xml.Serialization;
 
-namespace openstig_read_api.Classes
+namespace openrmf_read_api.Classes
 {
     public static class WebClient 
     {

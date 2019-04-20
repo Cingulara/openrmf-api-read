@@ -1,8 +1,8 @@
 using MongoDB.Driver;
-using openstig_read_api.Models;
+using openrmf_read_api.Models;
 using Microsoft.Extensions.Options;
 
-namespace openstig_read_api.Data
+namespace openrmf_read_api.Data
 {
     public class ArtifactContext
     {

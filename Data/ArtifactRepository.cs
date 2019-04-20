@@ -1,4 +1,4 @@
-using openstig_read_api.Models;
+using openrmf_read_api.Models;
 using System.Collections.Generic;
 using System;
 using System.Threading.Tasks;
@@ -11,7 +11,7 @@ using MongoDB.Driver.Linq;
 using MongoDB.Driver.Linq.Translators;
 using Microsoft.Extensions.Options;
 
-namespace openstig_read_api.Data {
+namespace openrmf_read_api.Data {
     public class ArtifactRepository : IArtifactRepository
     {
         private readonly ArtifactContext _context = null;

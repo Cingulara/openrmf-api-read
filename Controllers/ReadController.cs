@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using openstig_read_api.Classes;
-using openstig_read_api.Models;
+using openrmf_read_api.Classes;
+using openrmf_read_api.Models;
 using System.IO;
 using System.Text;
 using Microsoft.AspNetCore;
@@ -22,9 +22,9 @@ using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 
-using openstig_read_api.Data;
+using openrmf_read_api.Data;
 
-namespace openstig_read_api.Controllers
+namespace openrmf_read_api.Controllers
 {
     //[Route("[controller]")]
     [Route("/")]

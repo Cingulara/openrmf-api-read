@@ -2,7 +2,7 @@ using System;
 using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Bson;
 
-namespace openstig_read_api.Models
+namespace openrmf_read_api.Models
 {
     /// <summary>
     /// This is the class that shows the score of the STIG for all categories

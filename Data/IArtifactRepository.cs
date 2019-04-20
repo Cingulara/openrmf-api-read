@@ -1,9 +1,9 @@
-using openstig_read_api.Models;
+using openrmf_read_api.Models;
 using System.Collections.Generic;
 using System;
 using System.Threading.Tasks;
 
-namespace openstig_read_api.Data {
+namespace openrmf_read_api.Data {
     public interface IArtifactRepository
     {
         Task<IEnumerable<Artifact>> GetAllArtifacts();

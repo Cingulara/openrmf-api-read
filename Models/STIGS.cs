@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace openstig_read_api.Models
+namespace openrmf_read_api.Models
 {
 
     public class STIGS {

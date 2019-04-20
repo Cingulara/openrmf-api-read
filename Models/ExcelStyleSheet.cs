@@ -3,7 +3,7 @@ using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 
-namespace openstig_read_api.Models
+namespace openrmf_read_api.Models
 {
     public static class ExcelStyleSheet 
     {
