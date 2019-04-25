@@ -8,7 +8,8 @@ GET to /download/{id} to download the CKL file to use in the STIG viewer
 /swagger/ gives you the API structure.
 
 ## Making your local Docker image
-docker build --rm -t openrmf-api-read:0.1 .
+* make build
+* make latest
 
 ## creating the user
 * ~/mongodb/bin/mongo 'mongodb://root:myp2ssw0rd@localhost'

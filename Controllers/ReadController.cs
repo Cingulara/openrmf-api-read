@@ -49,7 +49,7 @@ namespace openrmf_read_api.Controllers
                 foreach (Artifact a in artifacts) {
                     a.rawChecklist = string.Empty;
                 }
-                return Ok(artifacts);
+                return Ok(artifacts.OrderBy(x => x.title).OrderBy(y => y.system).ToList());
             }
             catch (Exception ex) {
                 _logger.LogError(ex, "Error listing all artifacts and deserializing the checklist XML");
@@ -59,11 +59,20 @@ namespace openrmf_read_api.Controllers
 
         // GET /export
         [HttpGet("export")]
-        public async Task<IActionResult> ExportChecklistListing()
+        public async Task<IActionResult> ExportChecklistListing(string system = null)
         {
             try {
                 IEnumerable<Artifact> artifacts;
-                artifacts = await _artifactRepo.GetAllArtifacts();
+                // if they pass in a system, get all for that system
+                if (string.IsNullOrEmpty(system))
+                {
+                    _logger.LogInformation("Getting a listing of all checklists to export to XLSX");
+                    artifacts = await _artifactRepo.GetAllArtifacts();
+                }
+                else {
+                    _logger.LogInformation(string.Format("Getting a listing of all {0} checklists to export to XLSX", system));
+                    artifacts = await _artifactRepo.GetSystemArtifacts(system);
+                }
                 if (artifacts != null && artifacts.Count() > 0) {
                     // starting row number for data
                     uint rowNumber = 6;
@@ -123,7 +132,7 @@ namespace openrmf_read_api.Controllers
                         Score checklistScore;
 
                         // cycle through the checklists and grab the score for each individually
-                        foreach (Artifact art in artifacts) {
+                        foreach (Artifact art in artifacts.OrderBy(x => x.title).OrderBy(y => y.system).ToList()) {
                             art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist);
                             checklistScore = WebClient.GetChecklistScore(art.InternalId.ToString()).GetAwaiter().GetResult();
                             rowNumber++;
