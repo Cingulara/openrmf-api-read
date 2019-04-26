@@ -423,7 +423,7 @@ namespace openrmf_read_api.Controllers
                             sheetData.Append(row);
                             row = MakeChecklistInfoRow("Checklist Name", art.title,3);
                             sheetData.Append(row);
-                            row = MakeChecklistInfoRow("Checklist Name", art.hostName,4);
+                            row = MakeChecklistInfoRow("Host Name", art.hostName,4);
                             sheetData.Append(row);
                             row = MakeChecklistInfoRow("Type", art.stigType,5);
                             sheetData.Append(row);
