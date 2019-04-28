@@ -149,22 +149,22 @@ namespace openrmf_read_api.Controllers
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(checklistScore.totalNotAFinding.ToString());
                             newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
-                            newCell.StyleIndex = 6;
+                            newCell.StyleIndex = 10;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "D" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(checklistScore.totalNotApplicable.ToString());
                             newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
-                            newCell.StyleIndex = 5;
+                            newCell.StyleIndex = 9;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(checklistScore.totalOpen.ToString());
                             newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
-                            newCell.StyleIndex = 4;
+                            newCell.StyleIndex = 8;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "F" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(checklistScore.totalNotReviewed.ToString());
                             newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
-                            newCell.StyleIndex = 7;
+                            newCell.StyleIndex = 11;
                             sheetData.Append(row);
 
                             // now add the cat 1, 2, and 3 findings
@@ -903,25 +903,25 @@ namespace openrmf_read_api.Controllers
             row.InsertBefore(newCell, refCell);
             newCell.CellValue = new CellValue("Not a Finding");
             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-            newCell.StyleIndex = 6;
+            newCell.StyleIndex = 10;
             // next column
             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "D" + rowindex.ToString() };
             row.InsertBefore(newCell, refCell);
             newCell.CellValue = new CellValue("Not Applicable");
             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-            newCell.StyleIndex = 5;
+            newCell.StyleIndex = 9;
             // next column
             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowindex.ToString() };
             row.InsertBefore(newCell, refCell);
             newCell.CellValue = new CellValue("Open");
             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-            newCell.StyleIndex = 4;
+            newCell.StyleIndex = 8;
             // next column
             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "F" + rowindex.ToString() };
             row.InsertBefore(newCell, refCell);
             newCell.CellValue = new CellValue("Not Reviewed");
             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-            newCell.StyleIndex = 7;
+            newCell.StyleIndex = 11;
             return row;
         }
         private uint GetVulnerabilitiStatus(string status) {

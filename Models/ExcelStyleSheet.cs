@@ -114,7 +114,7 @@ namespace openrmf_read_api.Models
             patternFill6.Append(backgroundColor6);
             fill6.Append(patternFill6);
 
-            fills1.Append(fill1);
+            fills1.Append(fill1); // these are 0 based when you include in the CellFormat statements below, so 1 off
             fills1.Append(fill2);
             fills1.Append(fill3);
             fills1.Append(fill4);
@@ -152,14 +152,24 @@ namespace openrmf_read_api.Models
             CellFormat cellFormat5 = new CellFormat() { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)1U, FillId = (UInt32Value)0U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U, ApplyFont = true };
 
             // fill colors based on the fillx variables above to match the 4 statuses of the checklist vulnerabilities
-            // red or Open
+            // style index 4: red or Open
             CellFormat cellFormat6 = new CellFormat(new Alignment() { WrapText = true }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)5U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U };
-            // silver or Not Applicable
+            // style index 5: silver or Not Applicable
             CellFormat cellFormat7 = new CellFormat(new Alignment() { WrapText = true }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)2U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U };
-            // green or Not a Finding
+            // style index 6: green or Not a Finding
             CellFormat cellFormat8 = new CellFormat(new Alignment() { WrapText = true }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)3U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U };
-            // blue or Not Reviewed
+            // style index 7: blue or Not Reviewed
             CellFormat cellFormat9 = new CellFormat(new Alignment() { WrapText = true }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)4U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U };
+
+            // CENTER The content for listings versus the excel export of a checklist above
+            // style index 8: red or Open centered content
+            CellFormat cellFormat10 = new CellFormat(new Alignment() { WrapText = true, Horizontal = HorizontalAlignmentValues.Center }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)5U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U };
+            // style index 9: silver or Not Applicable
+            CellFormat cellFormat11= new CellFormat(new Alignment() { WrapText = true, Horizontal = HorizontalAlignmentValues.Center }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)2U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U };
+            // style index 10: green or Not a Finding
+            CellFormat cellFormat12 = new CellFormat(new Alignment() { WrapText = true, Horizontal = HorizontalAlignmentValues.Center }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)3U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U };
+            // style index 11: blue or Not Reviewed
+            CellFormat cellFormat13 = new CellFormat(new Alignment() { WrapText = true, Horizontal = HorizontalAlignmentValues.Center }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)4U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U };
 
             // add all these formats
             cellFormats1.Append(cellFormat2);
@@ -170,6 +180,10 @@ namespace openrmf_read_api.Models
             cellFormats1.Append(cellFormat7);
             cellFormats1.Append(cellFormat8);
             cellFormats1.Append(cellFormat9);
+            cellFormats1.Append(cellFormat10);
+            cellFormats1.Append(cellFormat11);
+            cellFormats1.Append(cellFormat12);
+            cellFormats1.Append(cellFormat13);
 
             CellStyles cellStyles1 = new CellStyles() { Count = (UInt32Value)1U };
             CellStyle cellStyle1 = new CellStyle() { Name = "Normal", FormatId = 0, BuiltinId = 0 };
