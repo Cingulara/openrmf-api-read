@@ -130,18 +130,27 @@ namespace openrmf_read_api.Data {
     
     
         #region Systems
-        public async Task<List<string>> GetAllSystems() 
+        public async Task<List<ChecklistSystem>> GetAllSystems() 
         {
             try
             {
-                List<string> systems = new List<string>();
-                var filter = new BsonDocument();
-                var result = await _context.Artifacts.DistinctAsync<string>("system", filter);
-                if (result != null) systems = result.ToList();
-                // take out the None value
-                if (systems.IndexOf("None") >= 0) systems.RemoveAt(systems.IndexOf("None"));
+                List<ChecklistSystem> systems = new List<ChecklistSystem>();
+                var match = new BsonDocument();
+                var group = new BsonDocument{
+                    {"_id", "$system"},
+                    {"checklistCount", new BsonDocument {{"$sum", 1}}}
+                };
+                var results = await _context.Artifacts.Aggregate().Match(match).Group(group).ToListAsync();
+                if (results != null) {
+                   foreach (BsonDocument item in results)
+                    {                    
+                        systems.Add(new ChecklistSystem() { 
+                            system = item.Elements.ElementAtOrDefault(0).Value.AsString, 
+                            checklistCount = item.Elements.ElementAtOrDefault(1).Value.AsInt32 }); 
+                    }
+                }
                 // return it in alpha order
-                return systems.OrderBy(x => x).ToList();
+                return systems.OrderBy(x => x.system).ToList();
             }
             catch (Exception ex)
             {

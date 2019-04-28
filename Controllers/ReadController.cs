@@ -277,7 +277,7 @@ namespace openrmf_read_api.Controllers
         public async Task<IActionResult> ListArtifactSystems()
         {
             try {
-                IEnumerable<string> systems;
+                IEnumerable<ChecklistSystem> systems;
                 systems = await _artifactRepo.GetAllSystems();
                 return Ok(systems);
             }

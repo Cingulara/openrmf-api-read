@@ -16,7 +16,8 @@ namespace openrmf_read_api.Data {
          System specific calls
         ********************************************/
         // return a distinct list of Systems
-        Task<List<string>> GetAllSystems();
+        Task<List<ChecklistSystem>> GetAllSystems();
+
         // return checklist records for a given system
         Task<IEnumerable<Artifact>> GetSystemArtifacts(string system);
 
@@ -25,6 +26,7 @@ namespace openrmf_read_api.Data {
         ********************************************/
         // get the # of checklists for the dashboard listing
         Task<long> CountChecklists();
+
         // get the last 5 checklists being edited in a sort order by last updated
         Task<IEnumerable<Artifact>> GetLatestArtifacts(int number);
 
