@@ -121,7 +121,7 @@ namespace openrmf_read_api.Controllers
 
                         DocumentFormat.OpenXml.Spreadsheet.Row row = MakeTitleRow("openRMF by Cingulara");
                         sheetData.Append(row);
-                        row = MakeChecklistInfoRow("Checklist Listing", "All", 2);
+                        row = MakeChecklistInfoRow("Checklist Listing", system, 2);
                         sheetData.Append(row);
                         row = MakeChecklistInfoRow("Printed Date", DateTime.Now.ToString("MM/dd/yy hh:mm"),3);
                         sheetData.Append(row);
