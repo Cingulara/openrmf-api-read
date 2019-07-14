@@ -34,9 +34,11 @@
                 "ASPNETCORE_URLS": "http://*:8084",
                 "mongoConnection": "mongodb://openrmf:openrmf1234!@localhost/openrmf?authSource=admin",
                 "mongodb": "openrmf",
-                "natsserverurl" : "nats://192.168.11.39:4222",
+                "natsserverurl" : "nats://127.0.0.1:4222",
                 "openrmf-api-score-server": "http://localhost:8090",
-                "openrmf-api-compliance-server": "http://localhost:8092"
+                "openrmf-api-compliance-server": "http://localhost:8092",
+                "JWT-AUTHORITY" : "http://192.168.11.36:9001/auth/realms/openrmf",
+                "JWT-CLIENT": "openrmfapi"
             },
             "sourceFileMap": {
                 "/Views": "${workspaceFolder}/Views"

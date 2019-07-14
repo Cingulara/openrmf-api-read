@@ -6,16 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using openrmf_read_api.Classes;
 using openrmf_read_api.Models;
 using System.IO;
-using System.Text;
-using Microsoft.AspNetCore;
-using Microsoft.AspNetCore.Hosting;
-using System.Xml.Serialization;
-using System.Xml;
-using Microsoft.AspNetCore.Cors.Infrastructure;
-using Newtonsoft.Json;
-using Microsoft.Extensions.Options;
-using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Logging;
 
 using DocumentFormat.OpenXml;
@@ -41,6 +32,7 @@ namespace openrmf_read_api.Controllers
 
         // GET the listing with Ids of the Checklist artifacts, but without all the extra XML
         [HttpGet]
+        [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
         public async Task<IActionResult> ListArtifacts()
         {
             try {
@@ -59,6 +51,7 @@ namespace openrmf_read_api.Controllers
 
         // GET /export
         [HttpGet("export")]
+        [Authorize(Roles = "Administrator,Reader,Assessor")]
         public async Task<IActionResult> ExportChecklistListing(string system = null)
         {
             try {
@@ -274,6 +267,7 @@ namespace openrmf_read_api.Controllers
 
         // GET the distinct list of systems
         [HttpGet("systems")]
+        [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
         public async Task<IActionResult> ListArtifactSystems()
         {
             try {
@@ -289,6 +283,7 @@ namespace openrmf_read_api.Controllers
         
         // GET the list of checklist records for a systems
         [HttpGet("systems/{term}")]
+        [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
         public async Task<IActionResult> ListArtifactsBySystem(string term)
         {
             if (!string.IsNullOrEmpty(term)) {
@@ -308,6 +303,7 @@ namespace openrmf_read_api.Controllers
         
         // GET /value
         [HttpGet("{id}")]
+        [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
         public async Task<IActionResult> GetArtifact(string id)
         {
             try {
@@ -325,6 +321,7 @@ namespace openrmf_read_api.Controllers
         
         // GET /download/value
         [HttpGet("download/{id}")]
+        [Authorize(Roles = "Administrator,Editor,Assessor")]
         public async Task<IActionResult> DownloadChecklist(string id)
         {
             try {
@@ -340,6 +337,7 @@ namespace openrmf_read_api.Controllers
         
         // GET /export/value
         [HttpGet("export/{id}")]
+        [Authorize(Roles = "Administrator,Editor,Assessor")]
         public async Task<IActionResult> ExportChecklist(string id, bool nf, bool open, bool na, bool nr, string ctrl)
         {
             try {
@@ -641,6 +639,7 @@ namespace openrmf_read_api.Controllers
 
         // GET /value
         [HttpGet("{id}/control/{control}")]
+        [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
         public async Task<IActionResult> GetArtifactVulnIdsByControl(string id, string control)
         {
             try {
@@ -943,6 +942,8 @@ namespace openrmf_read_api.Controllers
         #region Dashboard APIs
         // GET /count
         [HttpGet("count")]
+        //[Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
+        [Authorize]
         public async Task<IActionResult> CountArtifacts(string id)
         {
             try {
@@ -956,6 +957,8 @@ namespace openrmf_read_api.Controllers
         }
         // GET /latest
         [HttpGet("latest/{number}")]
+        //[Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
+        [Authorize]
         public async Task<IActionResult> GetLatestArtifacts(int number)
         {
             try {
@@ -975,6 +978,7 @@ namespace openrmf_read_api.Controllers
         
         // GET /latest
         [HttpGet("counttype")]
+        [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
         public async Task<IActionResult> GetCountByType(string system)
         {
             try {

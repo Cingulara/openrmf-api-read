@@ -4,15 +4,13 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Swashbuckle.AspNetCore.Swagger;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata;
 
 using openrmf_read_api.Models;
 using openrmf_read_api.Data;
@@ -53,6 +51,47 @@ namespace openrmf_read_api
                     } });
             });
 
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            }).AddJwtBearer(o =>
+            {
+                o.Authority = Environment.GetEnvironmentVariable("JWT-AUTHORITY");
+                o.Audience = Environment.GetEnvironmentVariable("JWT-CLIENT");
+                o.IncludeErrorDetails = true;
+                o.RequireHttpsMetadata = false;
+                o.TokenValidationParameters = new TokenValidationParameters()
+                {
+                    ValidateAudience = false,
+                    ValidateIssuerSigningKey = true,
+                    ValidateIssuer = true,
+                    ValidIssuer = Environment.GetEnvironmentVariable("JWT-AUTHORITY"),
+                    ValidateLifetime = true
+                };
+
+                o.Events = new JwtBearerEvents()
+                {
+                    OnAuthenticationFailed = c =>
+                    {
+                        c.NoResult();
+                        c.Response.StatusCode = 401;
+                        c.Response.ContentType = "text/plain";
+
+                        return c.Response.WriteAsync(c.Exception.ToString());
+                    }
+                };
+            });
+
+            // setup the RBAC for this
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("Administrator", policy => policy.RequireClaim("user_client_roles", "[Administrator]"));
+                options.AddPolicy("Editor", policy => policy.RequireClaim("user_client_roles", "[Editor]"));
+                options.AddPolicy("Reader", policy => policy.RequireClaim("user_client_roles", "[Reader]"));
+                options.AddPolicy("Assessor", policy => policy.RequireClaim("user_client_roles", "[Assessor]"));
+            });
+
             // ********************
             // USE CORS
             // ********************
@@ -68,6 +107,7 @@ namespace openrmf_read_api
                         .AllowCredentials();
                     });
             });
+
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
                 .AddXmlSerializerFormatters();
         }
@@ -98,7 +138,7 @@ namespace openrmf_read_api
             // USE CORS
             // ********************
             app.UseCors("AllowAll");
-
+            app.UseAuthentication();
             app.UseHttpsRedirection();
             app.UseMvc();
         }
