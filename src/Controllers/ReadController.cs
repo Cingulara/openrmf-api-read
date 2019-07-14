@@ -942,7 +942,6 @@ namespace openrmf_read_api.Controllers
         #region Dashboard APIs
         // GET /count
         [HttpGet("count")]
-        //[Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
         [Authorize]
         public async Task<IActionResult> CountArtifacts(string id)
         {
@@ -957,8 +956,8 @@ namespace openrmf_read_api.Controllers
         }
         // GET /latest
         [HttpGet("latest/{number}")]
-        //[Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
-        [Authorize]
+        [Authorize(Roles = "Reader")]
+        //[Authorize]
         public async Task<IActionResult> GetLatestArtifacts(int number)
         {
             try {
