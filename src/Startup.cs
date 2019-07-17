@@ -86,10 +86,10 @@ namespace openrmf_read_api
             // setup the RBAC for this
             services.AddAuthorization(options =>
             {
-                options.AddPolicy("Administrator", policy => policy.RequireClaim("roles", "[Administrator]"));
-                options.AddPolicy("Editor", policy => policy.RequireClaim("roles", "[Editor]"));
-                options.AddPolicy("Reader", policy => policy.RequireClaim("roles", "[Reader]"));
-                options.AddPolicy("Assessor", policy => policy.RequireClaim("roles", "[Assessor]"));
+                options.AddPolicy("Administrator", policy => policy.RequireRole("roles", "[Administrator]"));
+                options.AddPolicy("Editor", policy => policy.RequireRole("roles", "[Editor]"));
+                options.AddPolicy("Reader", policy => policy.RequireRole("roles", "[Reader]"));
+                options.AddPolicy("Assessor", policy => policy.RequireRole("roles", "[Assessor]"));
             });
 
             // ********************

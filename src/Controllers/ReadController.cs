@@ -321,7 +321,7 @@ namespace openrmf_read_api.Controllers
         
         // GET /download/value
         [HttpGet("download/{id}")]
-        [Authorize(Roles = "Administrator,Editor,Assessor")]
+        [Authorize(Roles = "Administrator,Editor,Assessor,Reader")]
         public async Task<IActionResult> DownloadChecklist(string id)
         {
             try {
@@ -337,7 +337,7 @@ namespace openrmf_read_api.Controllers
         
         // GET /export/value
         [HttpGet("export/{id}")]
-        [Authorize(Roles = "Administrator,Editor,Assessor")]
+        [Authorize(Roles = "Administrator,Editor,Assessor,Reader")]
         public async Task<IActionResult> ExportChecklist(string id, bool nf, bool open, bool na, bool nr, string ctrl)
         {
             try {
@@ -942,7 +942,7 @@ namespace openrmf_read_api.Controllers
         #region Dashboard APIs
         // GET /count
         [HttpGet("count")]
-        [Authorize]
+        [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
         public async Task<IActionResult> CountArtifacts(string id)
         {
             try {
@@ -956,8 +956,7 @@ namespace openrmf_read_api.Controllers
         }
         // GET /latest
         [HttpGet("latest/{number}")]
-        [Authorize(Roles = "Reader")]
-        //[Authorize]
+        [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
         public async Task<IActionResult> GetLatestArtifacts(int number)
         {
             try {
