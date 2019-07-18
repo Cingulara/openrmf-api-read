@@ -17,7 +17,6 @@ using openrmf_read_api.Data;
 
 namespace openrmf_read_api.Controllers
 {
-    //[Route("[controller]")]
     [Route("/")]
     public class ReadController : Controller
     {
