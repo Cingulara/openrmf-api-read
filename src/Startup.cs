@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.IdentityModel.Tokens;
@@ -41,8 +38,8 @@ namespace openrmf_read_api
             // Register the Swagger generator, defining one or more Swagger documents
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new Info { Title = "openRMF Read API", Version = "v1", 
-                    Description = "The Read API that goes with the openRMF tool",
+                c.SwaggerDoc("v1", new Info { Title = "OpenRMF Read API", Version = "v1", 
+                    Description = "The Read API that goes with the OpenRMF tool",
                     Contact = new Contact
                     {
                         Name = "Dale Bingham",
