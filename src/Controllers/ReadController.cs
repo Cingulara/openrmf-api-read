@@ -319,6 +319,7 @@ namespace openrmf_read_api.Controllers
         }
         
         // GET /download/value
+        // export the checklist .CKL file to use in the JAVA viewer
         [HttpGet("download/{id}")]
         [Authorize(Roles = "Administrator,Editor,Assessor,Reader")]
         public async Task<IActionResult> DownloadChecklist(string id)
@@ -335,7 +336,8 @@ namespace openrmf_read_api.Controllers
         }
         
         // GET /export/value
-        [HttpGet("export/{id}")]
+        // export the checklist data to an EXCEL XLSX file
+        [HttpPost("export/{id}")]
         [Authorize(Roles = "Administrator,Editor,Assessor,Reader")]
         public async Task<IActionResult> ExportChecklist(string id, bool nf, bool open, bool na, bool nr, string ctrl)
         {
