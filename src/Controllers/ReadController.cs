@@ -126,7 +126,13 @@ namespace openrmf_read_api.Controllers
                         // cycle through the checklists and grab the score for each individually
                         foreach (Artifact art in artifacts.OrderBy(x => x.title).OrderBy(y => y.system).ToList()) {
                             art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist);
-                            checklistScore = WebClient.GetChecklistScore(art.InternalId.ToString()).GetAwaiter().GetResult();
+                            try {
+                                checklistScore = NATSClient.GetChecklistScore(art.InternalId.ToString());
+                            }
+                            catch (Exception ex) {
+                                _logger.LogWarning(ex, "No score found for artifact {0}", art.InternalId.ToString());
+                                checklistScore = new Score();
+                            }
                             rowNumber++;
 
                             // make a new row for this set of items
