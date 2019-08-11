@@ -295,6 +295,11 @@ namespace openrmf_read_api.Controllers
                 try {
                     IEnumerable<Artifact> systemChecklists;
                     systemChecklists = await _artifactRepo.GetSystemArtifacts(term);
+                    // we do not need all the data for the raw checklist in the listing
+                    foreach(Artifact a in systemChecklists) {
+                        a.rawChecklist = "";
+                    }
+
                     return Ok(systemChecklists);
                 }
                 catch (Exception ex) {
