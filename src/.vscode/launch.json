@@ -35,9 +35,7 @@
                 "mongoConnection": "mongodb://openrmf:openrmf1234!@localhost/openrmf?authSource=admin",
                 "mongodb": "openrmf",
                 "natsserverurl" : "nats://127.0.0.1:4222",
-                "openrmf-api-score-server": "http://localhost:8090",
-                "openrmf-api-compliance-server": "http://localhost:8092",
-                "JWT-AUTHORITY" : "http://192.168.11.39:9001/auth/realms/openrmf",
+                "JWT-AUTHORITY" : "http://192.168.11.23:9001/auth/realms/openrmf",
                 "JWT-CLIENT": "openrmf"
             },
             "sourceFileMap": {

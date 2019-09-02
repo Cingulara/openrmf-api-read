@@ -448,7 +448,7 @@ namespace openrmf_read_api.Controllers
                             // if this is from a compliance generated listing link to a checklist, go grab all the CCIs for that control
                             // as we are only exporting through VULN IDs that are related to that CCI
                             if (!string.IsNullOrEmpty(ctrl))
-                                cciList = WebClient.GetCCIListing(ctrl).GetAwaiter().GetResult();
+                                cciList = NATSClient.GetCCIListing(ctrl);
 
                             // cycle through the vulnerabilities to export into columns
                             foreach (VULN v in art.CHECKLIST.STIGS.iSTIG.VULN) {
@@ -661,7 +661,7 @@ namespace openrmf_read_api.Controllers
                     art = await _artifactRepo.GetArtifact(id);
                     art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist);
                     // go get the list of CCIs to look for
-                    List<string> cciList = WebClient.GetCCIListing(control).GetAwaiter().GetResult();
+                    List<string> cciList = NATSClient.GetCCIListing(control);
                     if (cciList != null) {
                         List<string> vulnIds = new List<string>();
                         // for each string in the listing, find all VULN Ids where you have the CCI listed
