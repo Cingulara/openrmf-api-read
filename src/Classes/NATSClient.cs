@@ -49,7 +49,7 @@ namespace openrmf_read_api.Classes
             // Creates a live connection to the default NATS Server running locally
             IConnection c = cf.CreateConnection(Environment.GetEnvironmentVariable("natsserverurl"));
             // send the message with data of the control as the only payload (small)
-            Msg reply = c.Request("openrmf.controls.cci", Encoding.UTF8.GetBytes(control), 30000);
+            Msg reply = c.Request("openrmf.compliance.cci.control", Encoding.UTF8.GetBytes(control), 30000);
             // save the reply and get back the checklist to score
             if (reply != null) {
                 listing = JsonConvert.DeserializeObject<List<string>>(Compression.DecompressString(Encoding.UTF8.GetString(reply.Data)));
