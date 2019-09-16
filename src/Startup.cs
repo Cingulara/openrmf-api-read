@@ -29,8 +29,8 @@ namespace openrmf_read_api
             // Register the database components
             services.Configure<Settings>(options =>
             {
-                options.ConnectionString = Environment.GetEnvironmentVariable("mongoConnection");
-                options.Database = Environment.GetEnvironmentVariable("mongodb");
+                options.ConnectionString = Environment.GetEnvironmentVariable("MONGODBCONNECTION");
+                options.Database = Environment.GetEnvironmentVariable("MONGODB");
             });
             
             services.AddTransient<IArtifactRepository, ArtifactRepository>();
