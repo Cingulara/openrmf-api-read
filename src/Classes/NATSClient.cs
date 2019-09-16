@@ -23,7 +23,7 @@ namespace openrmf_read_api.Classes
             ConnectionFactory cf = new ConnectionFactory();
 
             // Creates a live connection to the default NATS Server running locally
-            IConnection c = cf.CreateConnection(Environment.GetEnvironmentVariable("natsserverurl"));
+            IConnection c = cf.CreateConnection(Environment.GetEnvironmentVariable("NATSSERVERURL"));
 
             Msg reply = c.Request("openrmf.score.read", Encoding.UTF8.GetBytes(id), 30000); // publish to get this Artifact checklist back via ID
             c.Flush();
@@ -47,7 +47,7 @@ namespace openrmf_read_api.Classes
             // Create a new connection factory to create a connection.
             ConnectionFactory cf = new ConnectionFactory();
             // Creates a live connection to the default NATS Server running locally
-            IConnection c = cf.CreateConnection(Environment.GetEnvironmentVariable("natsserverurl"));
+            IConnection c = cf.CreateConnection(Environment.GetEnvironmentVariable("NATSSERVERURL"));
             // send the message with data of the control as the only payload (small)
             Msg reply = c.Request("openrmf.compliance.cci.control", Encoding.UTF8.GetBytes(control), 30000);
             // save the reply and get back the checklist to score
