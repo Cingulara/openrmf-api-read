@@ -3,12 +3,9 @@ using System.Collections.Generic;
 using System;
 using System.Threading.Tasks;
 using System.Linq;
-using System.Linq.Expressions;
 using MongoDB.Driver;
 using MongoDB.Bson;
-using MongoDB.Bson.Serialization;
 using MongoDB.Driver.Linq;
-using MongoDB.Driver.Linq.Translators;
 using Microsoft.Extensions.Options;
 
 namespace openrmf_read_api.Data {

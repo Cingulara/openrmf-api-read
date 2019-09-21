@@ -32,11 +32,11 @@
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development",
                 "ASPNETCORE_URLS": "http://*:8084",
-                "mongoConnection": "mongodb://openrmf:openrmf1234!@localhost/openrmf?authSource=admin",
-                "mongodb": "openrmf",
-                "natsserverurl" : "nats://192.168.11.39:4222",
-                "openrmf-api-score-server": "http://localhost:8090",
-                "openrmf-api-compliance-server": "http://localhost:8092"
+                "MONGODBCONNECTION": "mongodb://openrmf:openrmf1234!@localhost/openrmf?authSource=admin",
+                "MONGODB": "openrmf",
+                "NATSSERVERURL" : "nats://127.0.0.1:4222",
+                "JWT-AUTHORITY" : "http://192.168.11.29:9001/auth/realms/openrmf",
+                "JWT-CLIENT": "openrmf"
             },
             "sourceFileMap": {
                 "/Views": "${workspaceFolder}/Views"

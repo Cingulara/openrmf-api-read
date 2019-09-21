@@ -6,16 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using openrmf_read_api.Classes;
 using openrmf_read_api.Models;
 using System.IO;
-using System.Text;
-using Microsoft.AspNetCore;
-using Microsoft.AspNetCore.Hosting;
-using System.Xml.Serialization;
-using System.Xml;
-using Microsoft.AspNetCore.Cors.Infrastructure;
-using Newtonsoft.Json;
-using Microsoft.Extensions.Options;
-using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Logging;
 
 using DocumentFormat.OpenXml;
@@ -26,7 +17,6 @@ using openrmf_read_api.Data;
 
 namespace openrmf_read_api.Controllers
 {
-    //[Route("[controller]")]
     [Route("/")]
     public class ReadController : Controller
     {
@@ -41,6 +31,7 @@ namespace openrmf_read_api.Controllers
 
         // GET the listing with Ids of the Checklist artifacts, but without all the extra XML
         [HttpGet]
+        [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
         public async Task<IActionResult> ListArtifacts()
         {
             try {
@@ -59,6 +50,7 @@ namespace openrmf_read_api.Controllers
 
         // GET /export
         [HttpGet("export")]
+        [Authorize(Roles = "Administrator,Reader,Assessor")]
         public async Task<IActionResult> ExportChecklistListing(string system = null)
         {
             try {
@@ -134,7 +126,13 @@ namespace openrmf_read_api.Controllers
                         // cycle through the checklists and grab the score for each individually
                         foreach (Artifact art in artifacts.OrderBy(x => x.title).OrderBy(y => y.system).ToList()) {
                             art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist);
-                            checklistScore = WebClient.GetChecklistScore(art.InternalId.ToString()).GetAwaiter().GetResult();
+                            try {
+                                checklistScore = NATSClient.GetChecklistScore(art.InternalId.ToString());
+                            }
+                            catch (Exception ex) {
+                                _logger.LogWarning(ex, "No score found for artifact {0}", art.InternalId.ToString());
+                                checklistScore = new Score();
+                            }
                             rowNumber++;
 
                             // make a new row for this set of items
@@ -274,6 +272,7 @@ namespace openrmf_read_api.Controllers
 
         // GET the distinct list of systems
         [HttpGet("systems")]
+        [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
         public async Task<IActionResult> ListArtifactSystems()
         {
             try {
@@ -289,12 +288,18 @@ namespace openrmf_read_api.Controllers
         
         // GET the list of checklist records for a systems
         [HttpGet("systems/{term}")]
+        [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
         public async Task<IActionResult> ListArtifactsBySystem(string term)
         {
             if (!string.IsNullOrEmpty(term)) {
                 try {
                     IEnumerable<Artifact> systemChecklists;
                     systemChecklists = await _artifactRepo.GetSystemArtifacts(term);
+                    // we do not need all the data for the raw checklist in the listing
+                    foreach(Artifact a in systemChecklists) {
+                        a.rawChecklist = "";
+                    }
+
                     return Ok(systemChecklists);
                 }
                 catch (Exception ex) {
@@ -308,12 +313,13 @@ namespace openrmf_read_api.Controllers
         
         // GET /value
         [HttpGet("{id}")]
+        [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
         public async Task<IActionResult> GetArtifact(string id)
         {
             try {
                 Artifact art = new Artifact();
                 art = await _artifactRepo.GetArtifact(id);
-                art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist);
+                art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist.Replace("\t","").Replace(">\n<","><"));
                 art.rawChecklist = string.Empty;
                 return Ok(art);
             }
@@ -324,7 +330,9 @@ namespace openrmf_read_api.Controllers
         }
         
         // GET /download/value
+        // export the checklist .CKL file to use in the JAVA viewer
         [HttpGet("download/{id}")]
+        [Authorize(Roles = "Administrator,Editor,Assessor,Reader")]
         public async Task<IActionResult> DownloadChecklist(string id)
         {
             try {
@@ -339,7 +347,9 @@ namespace openrmf_read_api.Controllers
         }
         
         // GET /export/value
-        [HttpGet("export/{id}")]
+        // export the checklist data to an EXCEL XLSX file
+        [HttpPost("export/{id}")]
+        [Authorize(Roles = "Administrator,Editor,Assessor,Reader")]
         public async Task<IActionResult> ExportChecklist(string id, bool nf, bool open, bool na, bool nr, string ctrl)
         {
             try {
@@ -438,7 +448,7 @@ namespace openrmf_read_api.Controllers
                             // if this is from a compliance generated listing link to a checklist, go grab all the CCIs for that control
                             // as we are only exporting through VULN IDs that are related to that CCI
                             if (!string.IsNullOrEmpty(ctrl))
-                                cciList = WebClient.GetCCIListing(ctrl).GetAwaiter().GetResult();
+                                cciList = NATSClient.GetCCIListing(ctrl);
 
                             // cycle through the vulnerabilities to export into columns
                             foreach (VULN v in art.CHECKLIST.STIGS.iSTIG.VULN) {
@@ -641,6 +651,7 @@ namespace openrmf_read_api.Controllers
 
         // GET /value
         [HttpGet("{id}/control/{control}")]
+        [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
         public async Task<IActionResult> GetArtifactVulnIdsByControl(string id, string control)
         {
             try {
@@ -650,7 +661,7 @@ namespace openrmf_read_api.Controllers
                     art = await _artifactRepo.GetArtifact(id);
                     art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist);
                     // go get the list of CCIs to look for
-                    List<string> cciList = WebClient.GetCCIListing(control).GetAwaiter().GetResult();
+                    List<string> cciList = NATSClient.GetCCIListing(control);
                     if (cciList != null) {
                         List<string> vulnIds = new List<string>();
                         // for each string in the listing, find all VULN Ids where you have the CCI listed
@@ -943,6 +954,7 @@ namespace openrmf_read_api.Controllers
         #region Dashboard APIs
         // GET /count
         [HttpGet("count")]
+        [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
         public async Task<IActionResult> CountArtifacts(string id)
         {
             try {
@@ -956,6 +968,7 @@ namespace openrmf_read_api.Controllers
         }
         // GET /latest
         [HttpGet("latest/{number}")]
+        [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
         public async Task<IActionResult> GetLatestArtifacts(int number)
         {
             try {
@@ -975,6 +988,7 @@ namespace openrmf_read_api.Controllers
         
         // GET /latest
         [HttpGet("counttype")]
+        [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
         public async Task<IActionResult> GetCountByType(string system)
         {
             try {
