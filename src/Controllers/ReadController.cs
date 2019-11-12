@@ -111,7 +111,7 @@ namespace openrmf_read_api.Controllers
                         DocumentFormat.OpenXml.Spreadsheet.Cell refCell = null;
                         DocumentFormat.OpenXml.Spreadsheet.Cell newCell = null;
 
-                        DocumentFormat.OpenXml.Spreadsheet.Row row = MakeTitleRow("openRMF by Cingulara");
+                        DocumentFormat.OpenXml.Spreadsheet.Row row = MakeTitleRow("openRMF by Cingulara and Tutela");
                         sheetData.Append(row);
                         row = MakeChecklistInfoRow("Checklist Listing", system, 2);
                         sheetData.Append(row);
@@ -427,7 +427,7 @@ namespace openrmf_read_api.Controllers
                             DocumentFormat.OpenXml.Spreadsheet.Cell refCell = null;
                             DocumentFormat.OpenXml.Spreadsheet.Cell newCell = null;
 
-                            DocumentFormat.OpenXml.Spreadsheet.Row row = MakeTitleRow("openRMF by Cingulara");
+                            DocumentFormat.OpenXml.Spreadsheet.Row row = MakeTitleRow("openRMF by Cingulara and Tutela");
                             sheetData.Append(row);
                             row = MakeChecklistInfoRow("System Name", art.system,2);
                             sheetData.Append(row);
