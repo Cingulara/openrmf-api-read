@@ -21,12 +21,14 @@ namespace openrmf_read_api.Controllers
     public class ReadController : Controller
     {
 	    private readonly IArtifactRepository _artifactRepo;
+        private readonly ISystemGroupRepository _systemGroupRepo;
         private readonly ILogger<ReadController> _logger;
 
-        public ReadController(IArtifactRepository artifactRepo, ILogger<ReadController> logger)
+        public ReadController(IArtifactRepository artifactRepo, ISystemGroupRepository systemGroupRepo, ILogger<ReadController> logger)
         {
             _logger = logger;
             _artifactRepo = artifactRepo;
+            _systemGroupRepo = systemGroupRepo;
         }
 
         // GET the listing with Ids of the Checklist artifacts, but without all the extra XML
@@ -40,7 +42,7 @@ namespace openrmf_read_api.Controllers
                 foreach (Artifact a in artifacts) {
                     a.rawChecklist = string.Empty;
                 }
-                return Ok(artifacts.OrderBy(x => x.title).OrderBy(y => y.system).ToList());
+                return Ok(artifacts.OrderBy(x => x.title).OrderBy(y => y.systemGroupId).ToList());
             }
             catch (Exception ex) {
                 _logger.LogError(ex, "Error listing all artifacts and deserializing the checklist XML");
@@ -124,7 +126,7 @@ namespace openrmf_read_api.Controllers
                         Score checklistScore;
 
                         // cycle through the checklists and grab the score for each individually
-                        foreach (Artifact art in artifacts.OrderBy(x => x.title).OrderBy(y => y.system).ToList()) {
+                        foreach (Artifact art in artifacts.OrderBy(x => x.title).OrderBy(y => y.systemGroupId).ToList()) {
                             art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist);
                             try {
                                 checklistScore = NATSClient.GetChecklistScore(art.InternalId.ToString());
@@ -136,7 +138,7 @@ namespace openrmf_read_api.Controllers
                             rowNumber++;
 
                             // make a new row for this set of items
-                            row = MakeDataRow(rowNumber, "A", art.system.Trim().ToLower() != "none"? art.system : "", styleIndex);
+                            row = MakeDataRow(rowNumber, "A", art.systemGroupId.Trim().ToLower() != "none"? art.systemGroupId : "", styleIndex);
                             // now cycle through the rest of the items
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "B" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
@@ -276,8 +278,8 @@ namespace openrmf_read_api.Controllers
         public async Task<IActionResult> ListArtifactSystems()
         {
             try {
-                IEnumerable<ChecklistSystem> systems;
-                systems = await _artifactRepo.GetAllSystems();
+                IEnumerable<SystemGroup> systems;
+                systems = await _systemGroupRepo.GetAllSystemGroups();
                 return Ok(systems);
             }
             catch (Exception ex) {
@@ -429,7 +431,7 @@ namespace openrmf_read_api.Controllers
 
                             DocumentFormat.OpenXml.Spreadsheet.Row row = MakeTitleRow("openRMF by Cingulara and Tutela");
                             sheetData.Append(row);
-                            row = MakeChecklistInfoRow("System Name", art.system,2);
+                            row = MakeChecklistInfoRow("System Name", art.systemGroupId,2);
                             sheetData.Append(row);
                             row = MakeChecklistInfoRow("Checklist Name", art.title,3);
                             sheetData.Append(row);
@@ -608,8 +610,8 @@ namespace openrmf_read_api.Controllers
                             spreadSheet.Close();
                             // set the filename
                             string filename = art.title;
-                            if (!string.IsNullOrEmpty(art.system) && art.system.ToLower().Trim() == "none")
-                                filename = art.system.Trim() + "-" + filename; // add the system onto the front
+                            if (!string.IsNullOrEmpty(art.systemGroupId) && art.systemGroupId.ToLower().Trim() == "none")
+                                filename = art.systemGroupId.Trim() + "-" + filename; // add the system onto the front
                             // return the file
                             memory.Seek(0, SeekOrigin.Begin);
                             return File(memory, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", CreateXLSXFilename(filename));

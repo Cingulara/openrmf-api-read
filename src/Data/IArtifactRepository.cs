@@ -15,8 +15,6 @@ namespace openrmf_read_api.Data {
         /******************************************** 
          System specific calls
         ********************************************/
-        // return a distinct list of Systems
-        Task<List<ChecklistSystem>> GetAllSystems();
 
         // return checklist records for a given system
         Task<IEnumerable<Artifact>> GetSystemArtifacts(string system);
