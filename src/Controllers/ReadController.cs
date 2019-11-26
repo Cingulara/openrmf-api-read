@@ -115,7 +115,11 @@ namespace openrmf_read_api.Controllers
 
                         DocumentFormat.OpenXml.Spreadsheet.Row row = MakeTitleRow("OpenRMF by Cingulara and Tutela");
                         sheetData.Append(row);
-                        row = MakeChecklistInfoRow("Checklist Listing", system, 2);
+                        if (artifacts != null && artifacts.Count() > 0) {
+                            row = MakeChecklistInfoRow("Checklist Listing", artifacts.FirstOrDefault().systemTitle, 2);
+                        } else {
+                            row = MakeChecklistInfoRow("Checklist Listing", system, 2);
+                        }
                         sheetData.Append(row);
                         row = MakeChecklistInfoRow("Printed Date", DateTime.Now.ToString("MM/dd/yy hh:mm"),3);
                         sheetData.Append(row);
