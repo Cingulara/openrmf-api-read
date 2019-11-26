@@ -42,7 +42,7 @@ namespace openrmf_read_api.Controllers
                 foreach (Artifact a in artifacts) {
                     a.rawChecklist = string.Empty;
                 }
-                return Ok(artifacts.OrderBy(x => x.title).OrderBy(y => y.systemGroupId).ToList());
+                return Ok(artifacts.OrderBy(x => x.title).OrderBy(y => y.systemTitle).ToList());
             }
             catch (Exception ex) {
                 _logger.LogError(ex, "Error listing all artifacts and deserializing the checklist XML");
@@ -113,7 +113,7 @@ namespace openrmf_read_api.Controllers
                         DocumentFormat.OpenXml.Spreadsheet.Cell refCell = null;
                         DocumentFormat.OpenXml.Spreadsheet.Cell newCell = null;
 
-                        DocumentFormat.OpenXml.Spreadsheet.Row row = MakeTitleRow("openRMF by Cingulara and Tutela");
+                        DocumentFormat.OpenXml.Spreadsheet.Row row = MakeTitleRow("OpenRMF by Cingulara and Tutela");
                         sheetData.Append(row);
                         row = MakeChecklistInfoRow("Checklist Listing", system, 2);
                         sheetData.Append(row);
@@ -126,7 +126,7 @@ namespace openrmf_read_api.Controllers
                         Score checklistScore;
 
                         // cycle through the checklists and grab the score for each individually
-                        foreach (Artifact art in artifacts.OrderBy(x => x.title).OrderBy(y => y.systemGroupId).ToList()) {
+                        foreach (Artifact art in artifacts.OrderBy(x => x.title).OrderBy(y => y.systemTitle).ToList()) {
                             art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist);
                             try {
                                 checklistScore = NATSClient.GetChecklistScore(art.InternalId.ToString());
@@ -138,7 +138,7 @@ namespace openrmf_read_api.Controllers
                             rowNumber++;
 
                             // make a new row for this set of items
-                            row = MakeDataRow(rowNumber, "A", art.systemGroupId.Trim().ToLower() != "none"? art.systemGroupId : "", styleIndex);
+                            row = MakeDataRow(rowNumber, "A", art.systemTitle.Trim().ToLower() != "none"? art.systemTitle : "", styleIndex);
                             // now cycle through the rest of the items
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "B" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
@@ -429,9 +429,9 @@ namespace openrmf_read_api.Controllers
                             DocumentFormat.OpenXml.Spreadsheet.Cell refCell = null;
                             DocumentFormat.OpenXml.Spreadsheet.Cell newCell = null;
 
-                            DocumentFormat.OpenXml.Spreadsheet.Row row = MakeTitleRow("openRMF by Cingulara and Tutela");
+                            DocumentFormat.OpenXml.Spreadsheet.Row row = MakeTitleRow("OpenRMF by Cingulara and Tutela");
                             sheetData.Append(row);
-                            row = MakeChecklistInfoRow("System Name", art.systemGroupId,2);
+                            row = MakeChecklistInfoRow("System Name", art.systemTitle,2);
                             sheetData.Append(row);
                             row = MakeChecklistInfoRow("Checklist Name", art.title,3);
                             sheetData.Append(row);
@@ -610,8 +610,8 @@ namespace openrmf_read_api.Controllers
                             spreadSheet.Close();
                             // set the filename
                             string filename = art.title;
-                            if (!string.IsNullOrEmpty(art.systemGroupId) && art.systemGroupId.ToLower().Trim() == "none")
-                                filename = art.systemGroupId.Trim() + "-" + filename; // add the system onto the front
+                            if (!string.IsNullOrEmpty(art.systemTitle) && art.systemTitle.ToLower().Trim() == "none")
+                                filename = art.systemTitle.Trim() + "-" + filename; // add the system onto the front
                             // return the file
                             memory.Seek(0, SeekOrigin.Begin);
                             return File(memory, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", CreateXLSXFilename(filename));
