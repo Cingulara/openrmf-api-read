@@ -293,14 +293,14 @@ namespace openrmf_read_api.Controllers
         }
         
         // GET the list of checklist records for a systems
-        [HttpGet("systems/{term}")]
+        [HttpGet("systems/{systemGroupId}")]
         [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
-        public async Task<IActionResult> ListArtifactsBySystem(string term)
+        public async Task<IActionResult> ListArtifactsBySystem(string systemGroupId)
         {
-            if (!string.IsNullOrEmpty(term)) {
+            if (!string.IsNullOrEmpty(systemGroupId)) {
                 try {
                     IEnumerable<Artifact> systemChecklists;
-                    systemChecklists = await _artifactRepo.GetSystemArtifacts(term);
+                    systemChecklists = await _artifactRepo.GetSystemArtifacts(systemGroupId);
                     // we do not need all the data for the raw checklist in the listing
                     foreach(Artifact a in systemChecklists) {
                         a.rawChecklist = "";
@@ -309,16 +309,36 @@ namespace openrmf_read_api.Controllers
                     return Ok(systemChecklists);
                 }
                 catch (Exception ex) {
-                    _logger.LogError(ex, "Error listing all checklists for system {0}", term);
+                    _logger.LogError(ex, "Error listing all checklists for system {0}", systemGroupId);
                     return BadRequest();
                 }
             }
             else
-                return BadRequest(); // no term entered
+                return BadRequest(); // no systemGroupId entered
+        }
+        
+        // GET the list of checklist records for a systems
+        [HttpGet("system/{systemGroupId}")]
+        [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
+        public async Task<IActionResult> GetSystem(string systemGroupId)
+        {
+            if (!string.IsNullOrEmpty(systemGroupId)) {
+                try {
+                    SystemGroup systemRecord;
+                    systemRecord = await _systemGroupRepo.GetSystemGroup(systemGroupId);
+                    return Ok(systemRecord);
+                }
+                catch (Exception ex) {
+                    _logger.LogError(ex, "Error getting the system record for {0}", systemGroupId);
+                    return BadRequest();
+                }
+            }
+            else
+                return BadRequest(); // no systemGroupId entered
         }
         
         // GET /value
-        [HttpGet("{id}")]
+        [HttpGet("artifact/{id}")]
         [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
         public async Task<IActionResult> GetArtifact(string id)
         {
