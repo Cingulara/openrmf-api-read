@@ -31,24 +31,7 @@ namespace openrmf_read_api.Controllers
             _systemGroupRepo = systemGroupRepo;
         }
 
-        // GET the listing with Ids of the Checklist artifacts, but without all the extra XML
-        [HttpGet]
-        [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
-        public async Task<IActionResult> ListArtifacts()
-        {
-            try {
-                IEnumerable<Artifact> artifacts;
-                artifacts = await _artifactRepo.GetAllArtifacts();
-                foreach (Artifact a in artifacts) {
-                    a.rawChecklist = string.Empty;
-                }
-                return Ok(artifacts.OrderBy(x => x.title).OrderBy(y => y.systemTitle).ToList());
-            }
-            catch (Exception ex) {
-                _logger.LogError(ex, "Error listing all artifacts and deserializing the checklist XML");
-                return BadRequest();
-            }
-        }
+        #region System Functions and API calls
 
         // GET /export
         [HttpGet("export")]
@@ -336,7 +319,53 @@ namespace openrmf_read_api.Controllers
             else
                 return BadRequest(); // no systemGroupId entered
         }
-        
+
+        // download the Nessus scan file in XML to *.nessus
+        [HttpGet("/system/downloadnessus/{systemGroupId}")]
+        [Authorize(Roles = "Administrator,Editor,Download")]
+        public async Task<IActionResult> DownloadSystemNessus(string systemGroupId)
+        {
+            try {
+                SystemGroup sg = new SystemGroup();
+                sg = await _systemGroupRepo.GetSystemGroup(systemGroupId);
+                if (sg != null) {
+                    if (!string.IsNullOrEmpty(sg.rawNessusFile))
+                        return Ok(sg.rawNessusFile);
+                    else
+                        return NotFound();
+                }
+                else 
+                    return NotFound();
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "Error Retrieving System Nessus file for Download");
+                return NotFound();
+            }
+        }
+
+        #endregion
+
+        #region Artifacts and Checklists
+
+        // GET the listing with Ids of the Checklist artifacts, but without all the extra XML
+        [HttpGet]
+        [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
+        public async Task<IActionResult> ListArtifacts()
+        {
+            try {
+                IEnumerable<Artifact> artifacts;
+                artifacts = await _artifactRepo.GetAllArtifacts();
+                foreach (Artifact a in artifacts) {
+                    a.rawChecklist = string.Empty;
+                }
+                return Ok(artifacts.OrderBy(x => x.title).OrderBy(y => y.systemTitle).ToList());
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "Error listing all artifacts and deserializing the checklist XML");
+                return BadRequest();
+            }
+        }
+
         // GET /value
         [HttpGet("artifact/{id}")]
         [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
@@ -717,6 +746,7 @@ namespace openrmf_read_api.Controllers
             }
         }
 
+        #endregion
 
         #region XLSX Formatting
         private DocumentFormat.OpenXml.Spreadsheet.Row MakeTitleRow(string title) {
