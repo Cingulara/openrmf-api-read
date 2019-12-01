@@ -6,7 +6,7 @@ namespace openrmf_read_api.Models
     [Serializable]
     public class ChecklistSystem
     {
-        public string system { get; set; }
+        public string systemGroupId { get; set; }
         public int checklistCount { get; set; }
     }
 
