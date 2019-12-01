@@ -19,11 +19,41 @@ namespace openrmf_read_api.Classes
         public static Score GetChecklistScore(string id)
         {
             Score score = new Score();
+
             // Create a new connection factory to create a connection.
             ConnectionFactory cf = new ConnectionFactory();
+            // add the options for the server, reconnecting, and the handler events
+            Options opts = ConnectionFactory.GetDefaultOptions();
+            opts.MaxReconnect = -1;
+            opts.ReconnectWait = 1000;
+            opts.Url = Environment.GetEnvironmentVariable("NATSSERVERURL");
+            opts.AsyncErrorEventHandler += (sender, events) =>
+            {
+                Console.WriteLine(string.Format("NATS client error. Server: {0}. Message: {1}. Subject: {2}", events.Conn.ConnectedUrl, events.Error, events.Subscription.Subject));
+            };
 
-            // Creates a live connection to the default NATS Server running locally
-            IConnection c = cf.CreateConnection(Environment.GetEnvironmentVariable("NATSSERVERURL"));
+            opts.ServerDiscoveredEventHandler += (sender, events) =>
+            {
+                Console.WriteLine(string.Format("A new server has joined the cluster: {0}", events.Conn.DiscoveredServers));
+            };
+
+            opts.ClosedEventHandler += (sender, events) =>
+            {
+                Console.WriteLine(string.Format("Connection Closed: {0}", events.Conn.ConnectedUrl));
+            };
+
+            opts.ReconnectedEventHandler += (sender, events) =>
+            {
+                Console.WriteLine(string.Format("Connection Reconnected: {0}", events.Conn.ConnectedUrl));
+            };
+
+            opts.DisconnectedEventHandler += (sender, events) =>
+            {
+                Console.WriteLine(string.Format("Connection Disconnected: {0}", events.Conn.ConnectedUrl));
+            };
+            
+            // Creates a live connection to the NATS Server with the above options
+            IConnection c = cf.CreateConnection(opts);
 
             Msg reply = c.Request("openrmf.score.read", Encoding.UTF8.GetBytes(id), 30000); // publish to get this Artifact checklist back via ID
             c.Flush();
@@ -46,8 +76,39 @@ namespace openrmf_read_api.Classes
             List<string> listing = new List<string>();
             // Create a new connection factory to create a connection.
             ConnectionFactory cf = new ConnectionFactory();
-            // Creates a live connection to the default NATS Server running locally
-            IConnection c = cf.CreateConnection(Environment.GetEnvironmentVariable("NATSSERVERURL"));
+            // add the options for the server, reconnecting, and the handler events
+            Options opts = ConnectionFactory.GetDefaultOptions();
+            opts.MaxReconnect = -1;
+            opts.ReconnectWait = 1000;
+            opts.Url = Environment.GetEnvironmentVariable("NATSSERVERURL");
+            opts.AsyncErrorEventHandler += (sender, events) =>
+            {
+                Console.WriteLine(string.Format("NATS client error. Server: {0}. Message: {1}. Subject: {2}", events.Conn.ConnectedUrl, events.Error, events.Subscription.Subject));
+            };
+
+            opts.ServerDiscoveredEventHandler += (sender, events) =>
+            {
+                Console.WriteLine(string.Format("A new server has joined the cluster: {0}", events.Conn.DiscoveredServers));
+            };
+
+            opts.ClosedEventHandler += (sender, events) =>
+            {
+                Console.WriteLine(string.Format("Connection Closed: {0}", events.Conn.ConnectedUrl));
+            };
+
+            opts.ReconnectedEventHandler += (sender, events) =>
+            {
+                Console.WriteLine(string.Format("Connection Reconnected: {0}", events.Conn.ConnectedUrl));
+            };
+
+            opts.DisconnectedEventHandler += (sender, events) =>
+            {
+                Console.WriteLine(string.Format("Connection Disconnected: {0}", events.Conn.ConnectedUrl));
+            };
+            
+            // Creates a live connection to the NATS Server with the above options
+            IConnection c = cf.CreateConnection(opts);
+            
             // send the message with data of the control as the only payload (small)
             Msg reply = c.Request("openrmf.compliance.cci.control", Encoding.UTF8.GetBytes(control), 30000);
             // save the reply and get back the checklist to score

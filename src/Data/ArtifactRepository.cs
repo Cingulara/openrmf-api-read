@@ -100,19 +100,19 @@ namespace openrmf_read_api.Data {
             }
         }
 
-        public async Task<IEnumerable<object>> GetCountByType(string system)
+        public async Task<IEnumerable<object>> GetCountByType(string systemGroupId)
         {
             try
             {
                 // show them all by type
-                if (string.IsNullOrEmpty(system)) {
+                if (string.IsNullOrEmpty(systemGroupId)) {
                     var groupArtifactItemsByType = _context.Artifacts.Aggregate()
                             .Group(s => s.stigType,
                             g => new ArtifactCount {stigType = g.Key, count = g.Count()}).ToListAsync();
                     return await groupArtifactItemsByType;
                 }
                 else {
-                    var groupArtifactItemsByType = _context.Artifacts.Aggregate().Match(artifact => artifact.system == system)
+                    var groupArtifactItemsByType = _context.Artifacts.Aggregate().Match(artifact => artifact.systemGroupId == systemGroupId)
                             .Group(s => s.stigType,
                             g => new ArtifactCount {stigType = g.Key, count = g.Count()}).ToListAsync();
                     return await groupArtifactItemsByType;
@@ -127,40 +127,12 @@ namespace openrmf_read_api.Data {
     
     
         #region Systems
-        public async Task<List<ChecklistSystem>> GetAllSystems() 
-        {
-            try
-            {
-                List<ChecklistSystem> systems = new List<ChecklistSystem>();
-                var match = new BsonDocument();
-                var group = new BsonDocument{
-                    {"_id", "$system"},
-                    {"checklistCount", new BsonDocument {{"$sum", 1}}}
-                };
-                var results = await _context.Artifacts.Aggregate().Match(match).Group(group).ToListAsync();
-                if (results != null) {
-                   foreach (BsonDocument item in results)
-                    {                    
-                        systems.Add(new ChecklistSystem() { 
-                            system = item.Elements.ElementAtOrDefault(0).Value.AsString, 
-                            checklistCount = item.Elements.ElementAtOrDefault(1).Value.AsInt32 }); 
-                    }
-                }
-                // return it in alpha order
-                return systems.OrderBy(x => x.system).ToList();
-            }
-            catch (Exception ex)
-            {
-                // log or manage the exception
-                throw ex;
-            }
-        }
 
-        public async Task<IEnumerable<Artifact>> GetSystemArtifacts(string system)
+        public async Task<IEnumerable<Artifact>> GetSystemArtifacts(string systemGroupId)
         {
             try
             {
-                var query = await _context.Artifacts.FindAsync(artifact => artifact.system == system);
+                var query = await _context.Artifacts.FindAsync(artifact => artifact.systemGroupId == systemGroupId);
                 return query.ToList().OrderBy(x => x.title);
             }
             catch (Exception ex)

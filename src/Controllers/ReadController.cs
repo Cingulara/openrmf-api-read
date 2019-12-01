@@ -21,32 +21,17 @@ namespace openrmf_read_api.Controllers
     public class ReadController : Controller
     {
 	    private readonly IArtifactRepository _artifactRepo;
+        private readonly ISystemGroupRepository _systemGroupRepo;
         private readonly ILogger<ReadController> _logger;
 
-        public ReadController(IArtifactRepository artifactRepo, ILogger<ReadController> logger)
+        public ReadController(IArtifactRepository artifactRepo, ISystemGroupRepository systemGroupRepo, ILogger<ReadController> logger)
         {
             _logger = logger;
             _artifactRepo = artifactRepo;
+            _systemGroupRepo = systemGroupRepo;
         }
 
-        // GET the listing with Ids of the Checklist artifacts, but without all the extra XML
-        [HttpGet]
-        [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
-        public async Task<IActionResult> ListArtifacts()
-        {
-            try {
-                IEnumerable<Artifact> artifacts;
-                artifacts = await _artifactRepo.GetAllArtifacts();
-                foreach (Artifact a in artifacts) {
-                    a.rawChecklist = string.Empty;
-                }
-                return Ok(artifacts.OrderBy(x => x.title).OrderBy(y => y.system).ToList());
-            }
-            catch (Exception ex) {
-                _logger.LogError(ex, "Error listing all artifacts and deserializing the checklist XML");
-                return BadRequest();
-            }
-        }
+        #region System Functions and API calls
 
         // GET /export
         [HttpGet("export")]
@@ -111,9 +96,13 @@ namespace openrmf_read_api.Controllers
                         DocumentFormat.OpenXml.Spreadsheet.Cell refCell = null;
                         DocumentFormat.OpenXml.Spreadsheet.Cell newCell = null;
 
-                        DocumentFormat.OpenXml.Spreadsheet.Row row = MakeTitleRow("openRMF by Cingulara and Tutela");
+                        DocumentFormat.OpenXml.Spreadsheet.Row row = MakeTitleRow("OpenRMF by Cingulara and Tutela");
                         sheetData.Append(row);
-                        row = MakeChecklistInfoRow("Checklist Listing", system, 2);
+                        if (artifacts != null && artifacts.Count() > 0) {
+                            row = MakeChecklistInfoRow("Checklist Listing", artifacts.FirstOrDefault().systemTitle, 2);
+                        } else {
+                            row = MakeChecklistInfoRow("Checklist Listing", system, 2);
+                        }
                         sheetData.Append(row);
                         row = MakeChecklistInfoRow("Printed Date", DateTime.Now.ToString("MM/dd/yy hh:mm"),3);
                         sheetData.Append(row);
@@ -124,7 +113,7 @@ namespace openrmf_read_api.Controllers
                         Score checklistScore;
 
                         // cycle through the checklists and grab the score for each individually
-                        foreach (Artifact art in artifacts.OrderBy(x => x.title).OrderBy(y => y.system).ToList()) {
+                        foreach (Artifact art in artifacts.OrderBy(x => x.title).OrderBy(y => y.systemTitle).ToList()) {
                             art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist);
                             try {
                                 checklistScore = NATSClient.GetChecklistScore(art.InternalId.ToString());
@@ -136,7 +125,7 @@ namespace openrmf_read_api.Controllers
                             rowNumber++;
 
                             // make a new row for this set of items
-                            row = MakeDataRow(rowNumber, "A", art.system.Trim().ToLower() != "none"? art.system : "", styleIndex);
+                            row = MakeDataRow(rowNumber, "A", art.systemTitle.Trim().ToLower() != "none"? art.systemTitle : "", styleIndex);
                             // now cycle through the rest of the items
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "B" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
@@ -276,8 +265,8 @@ namespace openrmf_read_api.Controllers
         public async Task<IActionResult> ListArtifactSystems()
         {
             try {
-                IEnumerable<ChecklistSystem> systems;
-                systems = await _artifactRepo.GetAllSystems();
+                IEnumerable<SystemGroup> systems;
+                systems = await _systemGroupRepo.GetAllSystemGroups();
                 return Ok(systems);
             }
             catch (Exception ex) {
@@ -287,14 +276,14 @@ namespace openrmf_read_api.Controllers
         }
         
         // GET the list of checklist records for a systems
-        [HttpGet("systems/{term}")]
+        [HttpGet("systems/{systemGroupId}")]
         [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
-        public async Task<IActionResult> ListArtifactsBySystem(string term)
+        public async Task<IActionResult> ListArtifactsBySystem(string systemGroupId)
         {
-            if (!string.IsNullOrEmpty(term)) {
+            if (!string.IsNullOrEmpty(systemGroupId)) {
                 try {
                     IEnumerable<Artifact> systemChecklists;
-                    systemChecklists = await _artifactRepo.GetSystemArtifacts(term);
+                    systemChecklists = await _artifactRepo.GetSystemArtifacts(systemGroupId);
                     // we do not need all the data for the raw checklist in the listing
                     foreach(Artifact a in systemChecklists) {
                         a.rawChecklist = "";
@@ -303,16 +292,82 @@ namespace openrmf_read_api.Controllers
                     return Ok(systemChecklists);
                 }
                 catch (Exception ex) {
-                    _logger.LogError(ex, "Error listing all checklists for system {0}", term);
+                    _logger.LogError(ex, "Error listing all checklists for system {0}", systemGroupId);
                     return BadRequest();
                 }
             }
             else
-                return BadRequest(); // no term entered
+                return BadRequest(); // no systemGroupId entered
         }
         
+        // GET the list of checklist records for a systems
+        [HttpGet("system/{systemGroupId}")]
+        [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
+        public async Task<IActionResult> GetSystem(string systemGroupId)
+        {
+            if (!string.IsNullOrEmpty(systemGroupId)) {
+                try {
+                    SystemGroup systemRecord;
+                    systemRecord = await _systemGroupRepo.GetSystemGroup(systemGroupId);
+                    return Ok(systemRecord);
+                }
+                catch (Exception ex) {
+                    _logger.LogError(ex, "Error getting the system record for {0}", systemGroupId);
+                    return BadRequest();
+                }
+            }
+            else
+                return BadRequest(); // no systemGroupId entered
+        }
+
+        // download the Nessus scan file in XML to *.nessus
+        [HttpGet("/system/downloadnessus/{systemGroupId}")]
+        [Authorize(Roles = "Administrator,Editor,Download")]
+        public async Task<IActionResult> DownloadSystemNessus(string systemGroupId)
+        {
+            try {
+                SystemGroup sg = new SystemGroup();
+                sg = await _systemGroupRepo.GetSystemGroup(systemGroupId);
+                if (sg != null) {
+                    if (!string.IsNullOrEmpty(sg.rawNessusFile))
+                        return Ok(sg.rawNessusFile);
+                    else
+                        return NotFound();
+                }
+                else 
+                    return NotFound();
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "Error Retrieving System Nessus file for Download");
+                return NotFound();
+            }
+        }
+
+        #endregion
+
+        #region Artifacts and Checklists
+
+        // GET the listing with Ids of the Checklist artifacts, but without all the extra XML
+        [HttpGet]
+        [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
+        public async Task<IActionResult> ListArtifacts()
+        {
+            try {
+                IEnumerable<Artifact> artifacts;
+                artifacts = await _artifactRepo.GetAllArtifacts();
+                foreach (Artifact a in artifacts) {
+                    a.rawChecklist = string.Empty;
+                }
+                return Ok(artifacts.OrderBy(x => x.title).OrderBy(y => y.systemTitle).ToList());
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "Error listing all artifacts and deserializing the checklist XML");
+                return BadRequest();
+            }
+        }
+
         // GET /value
-        [HttpGet("{id}")]
+        [HttpGet("artifact/{id}")]
         [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
         public async Task<IActionResult> GetArtifact(string id)
         {
@@ -427,9 +482,9 @@ namespace openrmf_read_api.Controllers
                             DocumentFormat.OpenXml.Spreadsheet.Cell refCell = null;
                             DocumentFormat.OpenXml.Spreadsheet.Cell newCell = null;
 
-                            DocumentFormat.OpenXml.Spreadsheet.Row row = MakeTitleRow("openRMF by Cingulara and Tutela");
+                            DocumentFormat.OpenXml.Spreadsheet.Row row = MakeTitleRow("OpenRMF by Cingulara and Tutela");
                             sheetData.Append(row);
-                            row = MakeChecklistInfoRow("System Name", art.system,2);
+                            row = MakeChecklistInfoRow("System Name", art.systemTitle,2);
                             sheetData.Append(row);
                             row = MakeChecklistInfoRow("Checklist Name", art.title,3);
                             sheetData.Append(row);
@@ -608,8 +663,8 @@ namespace openrmf_read_api.Controllers
                             spreadSheet.Close();
                             // set the filename
                             string filename = art.title;
-                            if (!string.IsNullOrEmpty(art.system) && art.system.ToLower().Trim() == "none")
-                                filename = art.system.Trim() + "-" + filename; // add the system onto the front
+                            if (!string.IsNullOrEmpty(art.systemTitle) && art.systemTitle.ToLower().Trim() == "none")
+                                filename = art.systemTitle.Trim() + "-" + filename; // add the system onto the front
                             // return the file
                             memory.Seek(0, SeekOrigin.Begin);
                             return File(memory, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", CreateXLSXFilename(filename));
@@ -691,6 +746,7 @@ namespace openrmf_read_api.Controllers
             }
         }
 
+        #endregion
 
         #region XLSX Formatting
         private DocumentFormat.OpenXml.Spreadsheet.Row MakeTitleRow(string title) {

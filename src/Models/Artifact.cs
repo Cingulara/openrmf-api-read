@@ -18,7 +18,8 @@ namespace openrmf_read_api.Models
         
         // if this is part of a system, list that system.
         // if empty this is just a standalone checklist
-        public string system { get; set; }
+        public string systemGroupId { get; set; }
+        public string systemTitle { get; set; }
         public string hostName { get; set;}
         public string stigType { get; set; }
         public string stigRelease { get; set; }
