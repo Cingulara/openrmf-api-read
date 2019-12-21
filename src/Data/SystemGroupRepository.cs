@@ -21,7 +21,7 @@ namespace openrmf_read_api.Data {
             try
             {
                 return await _context.SystemGroups
-                        .Find(_ => true).ToListAsync();
+                        .Find(_ => true).SortBy(x => x.title).ToListAsync();
             }
             catch (Exception ex)
             {
