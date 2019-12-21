@@ -8,5 +8,11 @@ namespace openrmf_read_api.Data {
     {
         Task<IEnumerable<SystemGroup>> GetAllSystemGroups();
         Task<SystemGroup> GetSystemGroup(string id);
+
+        /******************************************** 
+         Dashboard specific calls
+        ********************************************/
+        // get the # of checklists for the dashboard listing
+        Task<long> CountSystems();
     }
 }

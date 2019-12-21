@@ -1008,10 +1008,10 @@ namespace openrmf_read_api.Controllers
         * Dashboard Specific API calls
         */
         #region Dashboard APIs
-        // GET /count
-        [HttpGet("count")]
+        // GET /count/artifact
+        [HttpGet("count/artifacts")]
         [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
-        public async Task<IActionResult> CountArtifacts(string id)
+        public async Task<IActionResult> CountArtifacts()
         {
             try {
                 long result = await _artifactRepo.CountChecklists();
@@ -1022,25 +1022,40 @@ namespace openrmf_read_api.Controllers
                 return NotFound();
             }
         }
-        // GET /latest
-        [HttpGet("latest/{number}")]
+
+        // GET /count/artifact
+        [HttpGet("count/systems")]
         [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
-        public async Task<IActionResult> GetLatestArtifacts(int number)
+        public async Task<IActionResult> CountSystems()
         {
             try {
-                IEnumerable<Artifact> artifacts;
-                artifacts = await _artifactRepo.GetLatestArtifacts(number);
-                foreach (Artifact a in artifacts) {
-                    a.rawChecklist = string.Empty;
-                }
-                return Ok(artifacts);
+                long result = await _systemGroupRepo.CountSystems();
+                return Ok(result);
             }
             catch (Exception ex) {
-                _logger.LogError(ex, "Error listing latest {0} artifacts and deserializing the checklist XML", number.ToString());
-                return BadRequest();
+                _logger.LogError(ex, "Error Retrieving System Count in MongoDB");
+                return NotFound();
             }
         }
 
+        // // GET /latest
+        // [HttpGet("latest/{number}")]
+        // [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
+        // public async Task<IActionResult> GetLatestArtifacts(int number)
+        // {
+        //     try {
+        //         IEnumerable<Artifact> artifacts;
+        //         artifacts = await _artifactRepo.GetLatestArtifacts(number);
+        //         foreach (Artifact a in artifacts) {
+        //             a.rawChecklist = string.Empty;
+        //         }
+        //         return Ok(artifacts);
+        //     }
+        //     catch (Exception ex) {
+        //         _logger.LogError(ex, "Error listing latest {0} artifacts and deserializing the checklist XML", number.ToString());
+        //         return BadRequest();
+        //     }
+        // }
         
         // GET /latest
         [HttpGet("counttype")]

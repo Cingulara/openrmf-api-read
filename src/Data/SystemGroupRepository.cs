@@ -55,5 +55,19 @@ namespace openrmf_read_api.Data {
                 throw ex;
             }
         }
+
+
+        public async Task<long> CountSystems(){
+            try {
+                long result = await _context.SystemGroups.CountDocumentsAsync(Builders<SystemGroup>.Filter.Empty);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                // log or manage the exception
+                throw ex;
+            }
+        }
+
     }
 }
