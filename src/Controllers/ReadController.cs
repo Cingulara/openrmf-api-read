@@ -394,7 +394,7 @@ namespace openrmf_read_api.Controllers
         /// <response code="200">Returns the Nessus file in XML format</response>
         /// <response code="400">If the item did not query correctly</response>
         /// <response code="404">If the ID passed in is not valid or the Nessus file is not there</response>
-        [HttpGet("/system/downloadnessus/{systemGroupId}")]
+        [HttpGet("/system/{systemGroupId}/downloadnessus")]
         [Authorize(Roles = "Administrator,Editor,Download")]
         public async Task<IActionResult> DownloadSystemNessus(string systemGroupId)
         {
@@ -423,6 +423,58 @@ namespace openrmf_read_api.Controllers
             }
         }
 
+
+        // readAPI + "/system/" + encodeURIComponent(systemId) + "/nessuspatchsummary/"
+                /// <summary>
+        /// GET The list of checklists for the given System ID
+        /// </summary>
+        /// <param name="systemGroupId">The ID of the system to use</param>
+        /// <returns>
+        /// HTTP Status showing it was found or that there is an error. And the list of checklists records.
+        /// </returns>
+        /// <response code="200">Returns the Artifact List of records</response>
+        /// <response code="400">If the item did not query correctly</response>
+        /// <response code="404">If the ID passed in is not valid</response>
+        [HttpGet("system/{systemGroupId}/nessuspatchsummary")]
+        [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
+        public async Task<IActionResult> GetNessusPatchSummary(string systemGroupId)
+        {
+            if (!string.IsNullOrEmpty(systemGroupId)) {
+                try {
+                    _logger.LogInformation("Calling GetNessusPatchSummary({0})", systemGroupId);
+                    SystemGroup sg = new SystemGroup();
+                    sg = await _systemGroupRepo.GetSystemGroup(systemGroupId);
+                    if (sg == null) {
+                        _logger.LogWarning("GetNessusPatchSummary({0}) an invalid system record");
+                        return NotFound();
+                    }
+                    if (string.IsNullOrEmpty(sg.rawNessusFile)) {
+                        _logger.LogWarning("GetNessusPatchSummary({0}) system record has no Nessus patch file to use");
+                        return NotFound();
+                    }
+                    // load the NessusPatch XML into a List
+                    // do a count of Critical, High, and Medium and Low items
+                    // return the class of numbers for this
+                    NessusPatchSummary summary = new NessusPatchSummary();
+                    summary.totalCriticalOpen = 2;
+                    summary.totalHighOpen = 10;
+                    summary.totalMediumOpen = 15;
+                    summary.totalLowOpen = 45;
+
+                    _logger.LogInformation("Called GetNessusPatchSummary({0}) successfully", systemGroupId);
+                    return Ok(summary);
+                }
+                catch (Exception ex) {
+                    _logger.LogError(ex, "GetNessusPatchSummary() Error listing all checklists for system {0}", systemGroupId);
+                    return BadRequest();
+                }
+            }
+            else {
+                _logger.LogWarning("Called GetNessusPatchSummary() with no system ID");
+                return BadRequest(); // no systemGroupId entered
+            }
+        }
+        
         #endregion
 
         #region Artifacts and Checklists
