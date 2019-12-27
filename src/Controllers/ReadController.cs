@@ -36,7 +36,16 @@ namespace openrmf_read_api.Controllers
 
         #region System Functions and API calls
 
-        // GET /export
+        /// <summary>
+        /// GET The list of checklists for the given System ID
+        /// </summary>
+        /// <param name="system">The ID of the system to use</param>
+        /// <returns>
+        /// HTTP Status showing it was found or that there is an error. And the list of system records 
+        /// exported to an XLSX file to download.
+        /// </returns>
+        /// <response code="200">Returns the Artifact List of records for the passed in system in XLSX format</response>
+        /// <response code="400">If the item did not query correctly</response>
         [HttpGet("export")]
         [Authorize(Roles = "Administrator,Reader,Assessor")]
         public async Task<IActionResult> ExportChecklistListing(string system = null)
@@ -261,8 +270,15 @@ namespace openrmf_read_api.Controllers
                 return NotFound();
             }
         } 
-
-        // GET the distinct list of systems
+        
+        /// <summary>
+        /// GET The list of systems in the database
+        /// </summary>
+        /// <returns>
+        /// HTTP Status showing it was found or that there is an error. And the list of system records.
+        /// </returns>
+        /// <response code="200">Returns the System List of records</response>
+        /// <response code="400">If the item did not query correctly</response>
         [HttpGet("systems")]
         [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
         public async Task<IActionResult> ListArtifactSystems()
@@ -278,7 +294,16 @@ namespace openrmf_read_api.Controllers
             }
         }
         
-        // GET the list of checklist records for a systems
+        /// <summary>
+        /// GET The list of checklists for the given System ID
+        /// </summary>
+        /// <param name="systemGroupId">The ID of the system to use</param>
+        /// <returns>
+        /// HTTP Status showing it was found or that there is an error. And the list of checklists records.
+        /// </returns>
+        /// <response code="200">Returns the Artifact List of records</response>
+        /// <response code="400">If the item did not query correctly</response>
+        /// <response code="404">If the ID passed in is not valid</response>
         [HttpGet("systems/{systemGroupId}")]
         [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
         public async Task<IActionResult> ListArtifactsBySystem(string systemGroupId)
@@ -287,11 +312,13 @@ namespace openrmf_read_api.Controllers
                 try {
                     IEnumerable<Artifact> systemChecklists;
                     systemChecklists = await _artifactRepo.GetSystemArtifacts(systemGroupId);
-                    // we do not need all the data for the raw checklist in the listing
+                    if (systemChecklists == null) {
+                        return NotFound();
+                    }
+                    // we do not need all the data for the raw checklist in the listing, too bloated
                     foreach(Artifact a in systemChecklists) {
                         a.rawChecklist = "";
                     }
-
                     return Ok(systemChecklists);
                 }
                 catch (Exception ex) {
@@ -303,7 +330,16 @@ namespace openrmf_read_api.Controllers
                 return BadRequest(); // no systemGroupId entered
         }
         
-        // GET the list of checklist records for a systems
+        /// <summary>
+        /// GET The system record based on the ID.
+        /// </summary>
+        /// <param name="systemGroupId">The ID of the system to use</param>
+        /// <returns>
+        /// HTTP Status showing it was found or that there is an error. And the system record data.
+        /// </returns>
+        /// <response code="200">Returns the SystemGroup record</response>
+        /// <response code="400">If the item did not query correctly</response>
+        /// <response code="404">If the ID passed in is not valid</response>
         [HttpGet("system/{systemGroupId}")]
         [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
         public async Task<IActionResult> GetSystem(string systemGroupId)
@@ -312,6 +348,9 @@ namespace openrmf_read_api.Controllers
                 try {
                     SystemGroup systemRecord;
                     systemRecord = await _systemGroupRepo.GetSystemGroup(systemGroupId);
+                    if (systemRecord == null) {
+                        return NotFound();
+                    }
                     return Ok(systemRecord);
                 }
                 catch (Exception ex) {
@@ -323,7 +362,17 @@ namespace openrmf_read_api.Controllers
                 return BadRequest(); // no systemGroupId entered
         }
 
-        // download the Nessus scan file in XML to *.nessus
+        /// <summary>
+        /// GET Download the Nessus file for the system, if any
+        /// </summary>
+        /// <param name="systemGroupId">The ID of the system to use</param>
+        /// <returns>
+        /// HTTP Status showing it was found or that there is an error. And the nessus file downloaded as a 
+        /// .nessus text file, basically XML.
+        /// </returns>
+        /// <response code="200">Returns the Nessus file in XML format</response>
+        /// <response code="400">If the item did not query correctly</response>
+        /// <response code="404">If the ID passed in is not valid or the Nessus file is not there</response>
         [HttpGet("/system/downloadnessus/{systemGroupId}")]
         [Authorize(Roles = "Administrator,Editor,Download")]
         public async Task<IActionResult> DownloadSystemNessus(string systemGroupId)
@@ -350,26 +399,17 @@ namespace openrmf_read_api.Controllers
 
         #region Artifacts and Checklists
 
-        // GET the listing with Ids of the Checklist artifacts, but without all the extra XML
-        [HttpGet]
-        [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
-        public async Task<IActionResult> ListArtifacts()
-        {
-            try {
-                IEnumerable<Artifact> artifacts;
-                artifacts = await _artifactRepo.GetAllArtifacts();
-                foreach (Artifact a in artifacts) {
-                    a.rawChecklist = string.Empty;
-                }
-                return Ok(artifacts.OrderBy(x => x.title).OrderBy(y => y.systemTitle).ToList());
-            }
-            catch (Exception ex) {
-                _logger.LogError(ex, "Error listing all artifacts and deserializing the checklist XML");
-                return BadRequest();
-            }
-        }
-
-        // GET /value
+        /// <summary>
+        /// GET Called from the OpenRMF UI (or external access) to return a checklist record . 
+        /// </summary>
+        /// <param name="id">The ID of the checklist to use</param>
+        /// <returns>
+        /// HTTP Status showing it was generated or that there is an error. And the checklist full record
+        /// with all metadata.
+        /// </returns>
+        /// <response code="200">Returns the checklist data in CKL/XML format</response>
+        /// <response code="400">If the item did not query correctly</response>
+        /// <response code="404">If the ID passed in is not valid</response>
         [HttpGet("artifact/{id}")]
         [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
         public async Task<IActionResult> GetArtifact(string id)
@@ -377,18 +417,30 @@ namespace openrmf_read_api.Controllers
             try {
                 Artifact art = new Artifact();
                 art = await _artifactRepo.GetArtifact(id);
+                if (art == null) {
+                    return NotFound();
+                }
                 art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist.Replace("\t","").Replace(">\n<","><"));
                 art.rawChecklist = string.Empty;
                 return Ok(art);
             }
             catch (Exception ex) {
                 _logger.LogError(ex, "Error Retrieving Artifact");
-                return NotFound();
+                return BadRequest();
             }
         }
-        
-        // GET /download/value
-        // export the checklist .CKL file to use in the JAVA viewer
+
+        /// <summary>
+        /// GET Called from the OpenRMF UI (or external access) to export a checklist to its native CKL format. 
+        /// </summary>
+        /// <param name="id">The ID of the checklist to use</param>
+        /// <returns>
+        /// HTTP Status showing it was generated or that there is an error. And the checklist in a valid 
+        /// CKL file downloaded to the user. This file can be used elsewhere as in the DISA Java STIG viewer.
+        /// </returns>
+        /// <response code="200">Returns the checklist data in CKL/XML format</response>
+        /// <response code="400">If the item did not query correctly</response>
+        /// <response code="404">If the ID passed in is not valid</response>
         [HttpGet("download/{id}")]
         [Authorize(Roles = "Administrator,Editor,Assessor,Reader")]
         public async Task<IActionResult> DownloadChecklist(string id)
@@ -396,16 +448,34 @@ namespace openrmf_read_api.Controllers
             try {
                 Artifact art = new Artifact();
                 art = await _artifactRepo.GetArtifact(id);
+                if (art == null) {
+                    return NotFound();
+                }
                 return Ok(art.rawChecklist);
             }
             catch (Exception ex) {
                 _logger.LogError(ex, "Error Retrieving Artifact for Download");
-                return NotFound();
+                return BadRequest();
             }
         }
-        
-        // GET /export/value
-        // export the checklist data to an EXCEL XLSX file
+
+        /// <summary>
+        /// GET Called from the OpenRMF UI (or external access) to export a checklist and the valid vulnerabilities to 
+        /// MS Excel format. 
+        /// </summary>
+        /// <param name="id">The ID of the checklist to use</param>
+        /// <param name="nf">Include Not a Finding Vulnerabilities</param>
+        /// <param name="open">Include Open Vulnerabilities</param>
+        /// <param name="na">Include Not Applicable Vulnerabilities</param>
+        /// <param name="nr">Include Not Reviewed Vulnerabilities</param>
+        /// <param name="ctrl">Include Vulnerabilities only linked to a specific control</param>
+        /// <returns>
+        /// HTTP Status showing it was generated or that there is an error. And the checklist with all relevant
+        /// vulnerabilities in a valid XLSX file downloaded to the user.
+        /// </returns>
+        /// <response code="200">Returns the checklist data in XLSX format</response>
+        /// <response code="400">If the item did not query correctly</response>
+        /// <response code="404">If the ID passed in is not valid</response>
         [HttpPost("export/{id}")]
         [Authorize(Roles = "Administrator,Editor,Assessor,Reader")]
         public async Task<IActionResult> ExportChecklist(string id, bool nf, bool open, bool na, bool nr, string ctrl)
@@ -684,7 +754,7 @@ namespace openrmf_read_api.Controllers
             }
             catch (Exception ex) {
                 _logger.LogError(ex, "Error Retrieving Artifact for Exporting");
-                return NotFound();
+                return BadRequest();
             }
         } 
 
@@ -707,7 +777,20 @@ namespace openrmf_read_api.Controllers
             return false;
         }
 
-        // GET /value
+        /// <summary>
+        /// GET Called from the OpenRMF UI (or external access) to return the list of vulnerability IDs in 
+        /// a checklist filtered by the control they are linked to.
+        /// </summary>
+        /// <param name="id">The ID of the checklist to use</param>
+        /// <param name="control">The control to filter the vulnerabilities on</param>
+        /// <returns>
+        /// HTTP Status showing it was generated or that there is an error. And the list of VULN IDs for
+        /// this control on this checklist. Usually called from clicking an individual checklist on the 
+        /// Compliance page in the UI.
+        /// </returns>
+        /// <response code="200">Returns the list of vulnerability IDs for the control</response>
+        /// <response code="400">If the item did not query correctly</response>
+        /// <response code="404">If the ID passed in is not valid</response>
         [HttpGet("{id}/control/{control}")]
         [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
         public async Task<IActionResult> GetArtifactVulnIdsByControl(string id, string control)
@@ -734,18 +817,18 @@ namespace openrmf_read_api.Controllers
                         return Ok(vulnIds.Distinct().OrderBy(z => z).ToList());
                     }
                     else
-                        return BadRequest();
+                        return NotFound();
                 }
                 else {
                     // log the values passed in
                     _logger.LogWarning("Invalid Artifact Id {0} or Control {1}", 
                         !string.IsNullOrEmpty(id)? id : "null", !string.IsNullOrEmpty(control)? control : "null");
-                    return BadRequest();    
+                    return NotFound();    
                 }
             }
             catch (Exception ex) {
                 _logger.LogError(ex, "Error Retrieving Artifact");
-                return NotFound();
+                return BadRequest();
             }
         }
 
@@ -1009,9 +1092,18 @@ namespace openrmf_read_api.Controllers
 
         /******************************************
         * Dashboard Specific API calls
-        */
+        ******************************************/
         #region Dashboard APIs
-        // GET /count/artifact
+
+        /// <summary>
+        /// GET Called from the OpenRMF UI (or external access) dashboard to return the number of 
+        /// total artifacts/checklists within the database.
+        /// </summary>
+        /// <returns>
+        /// HTTP Status showing it was searched correctly and the count of the artifacts. Or that there is an error.
+        /// </returns>
+        /// <response code="200">Returns the list of checklists and their count</response>
+        /// <response code="400">If the item did not search correctly</response>
         [HttpGet("count/artifacts")]
         [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
         public async Task<IActionResult> CountArtifacts()
@@ -1022,11 +1114,19 @@ namespace openrmf_read_api.Controllers
             }
             catch (Exception ex) {
                 _logger.LogError(ex, "Error Retrieving Artifact Count in MongoDB");
-                return NotFound();
+                return BadRequest();
             }
         }
 
-        // GET /count/artifact
+        /// <summary>
+        /// GET Called from the OpenRMF UI (or external access) dashboard to return the number of 
+        /// systems within the database.
+        /// </summary>
+        /// <returns>
+        /// HTTP Status showing it was searched correctly and the count of the systems. Or that there is an error.
+        /// </returns>
+        /// <response code="200">Returns the list of checklist types and their count</response>
+        /// <response code="400">If the item did not search correctly</response>
         [HttpGet("count/systems")]
         [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
         public async Task<IActionResult> CountSystems()
@@ -1037,30 +1137,21 @@ namespace openrmf_read_api.Controllers
             }
             catch (Exception ex) {
                 _logger.LogError(ex, "Error Retrieving System Count in MongoDB");
-                return NotFound();
+                return BadRequest();
             }
         }
 
-        // // GET /latest
-        // [HttpGet("latest/{number}")]
-        // [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
-        // public async Task<IActionResult> GetLatestArtifacts(int number)
-        // {
-        //     try {
-        //         IEnumerable<Artifact> artifacts;
-        //         artifacts = await _artifactRepo.GetLatestArtifacts(number);
-        //         foreach (Artifact a in artifacts) {
-        //             a.rawChecklist = string.Empty;
-        //         }
-        //         return Ok(artifacts);
-        //     }
-        //     catch (Exception ex) {
-        //         _logger.LogError(ex, "Error listing latest {0} artifacts and deserializing the checklist XML", number.ToString());
-        //         return BadRequest();
-        //     }
-        // }
-        
-        // GET /latest
+        /// <summary>
+        /// GET Called from the OpenRMF UI (or external access) to return a count of each type of checklist. 
+        /// If you pass in the system Id it does this per system.
+        /// </summary>
+        /// <param name="system">The ID of the system for generating the count</param>
+        /// <returns>
+        /// HTTP Status showing it was searched correctly and the count per STIG type or that there is an error.
+        /// </returns>
+        /// <response code="200">Returns the list of checklist types and their count</response>
+        /// <response code="400">If the item did not search correctly</response>
+        /// <response code="404">If the ID passed in is not valid</response>
         [HttpGet("counttype")]
         [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
         public async Task<IActionResult> GetCountByType(string system)
@@ -1068,6 +1159,9 @@ namespace openrmf_read_api.Controllers
             try {
                 IEnumerable<Object> artifacts;
                 artifacts = await _artifactRepo.GetCountByType(system);
+                if (artifacts == null) {
+                    NotFound();
+                }
                 return Ok(artifacts);
             }
             catch (Exception ex) {
