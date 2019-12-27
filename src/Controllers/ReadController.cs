@@ -51,15 +51,16 @@ namespace openrmf_read_api.Controllers
         public async Task<IActionResult> ExportChecklistListing(string system = null)
         {
             try {
+                _logger.LogInformation("Calling ExportChecklistListing({0})", system);
                 IEnumerable<Artifact> artifacts;
                 // if they pass in a system, get all for that system
                 if (string.IsNullOrEmpty(system))
                 {
-                    _logger.LogInformation("Getting a listing of all checklists to export to XLSX");
+                    _logger.LogInformation("ExportChecklistListing() Getting a listing of all checklists to export to XLSX");
                     artifacts = await _artifactRepo.GetAllArtifacts();
                 }
                 else {
-                    _logger.LogInformation(string.Format("Getting a listing of all {0} checklists to export to XLSX", system));
+                    _logger.LogInformation(string.Format("ExportChecklistListing() Getting a listing of all {0} checklists to export to XLSX", system));
                     artifacts = await _artifactRepo.GetSystemArtifacts(system);
                 }
                 if (artifacts != null && artifacts.Count() > 0) {
@@ -125,6 +126,7 @@ namespace openrmf_read_api.Controllers
                         Score checklistScore;
 
                         // cycle through the checklists and grab the score for each individually
+                        _logger.LogInformation("ExportChecklistListing({0}) cycling through checklists to list", system);
                         foreach (Artifact art in artifacts.OrderBy(x => x.title).OrderBy(y => y.systemTitle).ToList()) {
                             art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist);
                             try {
@@ -258,15 +260,17 @@ namespace openrmf_read_api.Controllers
                         // Close the document.
                         spreadSheet.Close();
                         memory.Seek(0, SeekOrigin.Begin);
+                        _logger.LogInformation("Called ExportChecklistListing({0}) successfully", system);
                         return File(memory, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "ChecklistListing.xlsx");
                     }
                 }
                 else {
+                    _logger.LogInformation("Calling ExportChecklistListing({0}) but had no checklists to show", system);
                     return NotFound();
                 }
             }
             catch (Exception ex) {
-                _logger.LogError(ex, "Error Retrieving Artifacts for Exporting");
+                _logger.LogError(ex, "ExportChecklistListing({0}) Error Retrieving Artifacts for Exporting", system);
                 return NotFound();
             }
         } 
@@ -279,17 +283,24 @@ namespace openrmf_read_api.Controllers
         /// </returns>
         /// <response code="200">Returns the System List of records</response>
         /// <response code="400">If the item did not query correctly</response>
+        /// <response code="404">If there are no systems yet</response>
         [HttpGet("systems")]
         [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
         public async Task<IActionResult> ListArtifactSystems()
         {
             try {
+                _logger.LogInformation("Calling ListArtifactSystems()");
                 IEnumerable<SystemGroup> systems;
                 systems = await _systemGroupRepo.GetAllSystemGroups();
+                if (systems == null) {
+                    _logger.LogWarning("Calling ListArtifactSystems() returned 0 systems");
+                    return NotFound();
+                }
+                _logger.LogInformation("Called ListArtifactSystems() successfully");
                 return Ok(systems);
             }
             catch (Exception ex) {
-                _logger.LogError(ex, "Error listing all checklist systems");
+                _logger.LogError(ex, "ListArtifactSystems() Error listing all checklist systems");
                 return BadRequest();
             }
         }
@@ -310,24 +321,29 @@ namespace openrmf_read_api.Controllers
         {
             if (!string.IsNullOrEmpty(systemGroupId)) {
                 try {
+                    _logger.LogInformation("Calling ListArtifactsBySystem({0})", systemGroupId);
                     IEnumerable<Artifact> systemChecklists;
                     systemChecklists = await _artifactRepo.GetSystemArtifacts(systemGroupId);
                     if (systemChecklists == null) {
+                        _logger.LogWarning("Calling ListArtifactsBySystem({0}) returned no checklists", systemGroupId);
                         return NotFound();
                     }
                     // we do not need all the data for the raw checklist in the listing, too bloated
                     foreach(Artifact a in systemChecklists) {
                         a.rawChecklist = "";
                     }
+                    _logger.LogInformation("Called ListArtifactsBySystem({0}) successfully", systemGroupId);
                     return Ok(systemChecklists);
                 }
                 catch (Exception ex) {
-                    _logger.LogError(ex, "Error listing all checklists for system {0}", systemGroupId);
+                    _logger.LogError(ex, "ListArtifactsBySystem() Error listing all checklists for system {0}", systemGroupId);
                     return BadRequest();
                 }
             }
-            else
+            else {
+                _logger.LogWarning("Called ListArtifactsBySystem() with no system ID");
                 return BadRequest(); // no systemGroupId entered
+            }
         }
         
         /// <summary>
@@ -344,22 +360,27 @@ namespace openrmf_read_api.Controllers
         [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
         public async Task<IActionResult> GetSystem(string systemGroupId)
         {
+            _logger.LogInformation("Calling GetSystem({0})", systemGroupId);
             if (!string.IsNullOrEmpty(systemGroupId)) {
                 try {
                     SystemGroup systemRecord;
                     systemRecord = await _systemGroupRepo.GetSystemGroup(systemGroupId);
-                    if (systemRecord == null) {
+                    if (systemRecord == null) {                        
+                        _logger.LogWarning("Calling GetSystem({0}) with an invalid system ID", systemGroupId);
                         return NotFound();
                     }
+                    _logger.LogInformation("Called GetSystem({0}) successfully", systemGroupId);
                     return Ok(systemRecord);
                 }
                 catch (Exception ex) {
-                    _logger.LogError(ex, "Error getting the system record for {0}", systemGroupId);
+                    _logger.LogError(ex, "GetSystem() Error getting the system record for {0}", systemGroupId);
                     return BadRequest();
                 }
             }
-            else
+            else {
+                _logger.LogWarning("Calling GetSystem() with no System ID");
                 return BadRequest(); // no systemGroupId entered
+            }
         }
 
         /// <summary>
@@ -378,19 +399,26 @@ namespace openrmf_read_api.Controllers
         public async Task<IActionResult> DownloadSystemNessus(string systemGroupId)
         {
             try {
+                _logger.LogInformation("Calling DownloadSystemNessus({0})", systemGroupId);
                 SystemGroup sg = new SystemGroup();
                 sg = await _systemGroupRepo.GetSystemGroup(systemGroupId);
                 if (sg != null) {
-                    if (!string.IsNullOrEmpty(sg.rawNessusFile))
+                    if (!string.IsNullOrEmpty(sg.rawNessusFile)) {
+                        _logger.LogInformation("Called DownloadSystemNessus({0}) successfully", systemGroupId);
                         return Ok(sg.rawNessusFile);
-                    else
+                    }
+                    else {
+                        _logger.LogWarning("Calling DownloadSystemNessus({0}) returned an empty Nessus file", systemGroupId);
                         return NotFound();
+                    }
                 }
-                else 
+                else {
+                    _logger.LogWarning("Calling DownloadSystemNessus({0}) with an invalid System ID", systemGroupId);
                     return NotFound();
+                }
             }
             catch (Exception ex) {
-                _logger.LogError(ex, "Error Retrieving System Nessus file for Download");
+                _logger.LogError(ex, "DownloadSystemNessus() Error Retrieving System Nessus file for Download");
                 return NotFound();
             }
         }
@@ -415,17 +443,20 @@ namespace openrmf_read_api.Controllers
         public async Task<IActionResult> GetArtifact(string id)
         {
             try {
+                _logger.LogInformation("Calling GetArtifact({0})", id);
                 Artifact art = new Artifact();
                 art = await _artifactRepo.GetArtifact(id);
                 if (art == null) {
+                    _logger.LogWarning("Called GetArtifact({0}) with an invalid Artifact ID", id);
                     return NotFound();
                 }
                 art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist.Replace("\t","").Replace(">\n<","><"));
                 art.rawChecklist = string.Empty;
+                _logger.LogInformation("Called GetArtifact({0}) successfully", id);
                 return Ok(art);
             }
             catch (Exception ex) {
-                _logger.LogError(ex, "Error Retrieving Artifact");
+                _logger.LogError(ex, "GetArtifact({0}) Error Retrieving Artifact", id);
                 return BadRequest();
             }
         }
@@ -446,15 +477,18 @@ namespace openrmf_read_api.Controllers
         public async Task<IActionResult> DownloadChecklist(string id)
         {
             try {
+                _logger.LogInformation("Calling DownloadChecklist({0})", id);
                 Artifact art = new Artifact();
                 art = await _artifactRepo.GetArtifact(id);
                 if (art == null) {
+                    _logger.LogWarning("Called DownloadChecklist({0}) with an invalid Artifact ID", id);
                     return NotFound();
                 }
+                _logger.LogInformation("Called DownloadChecklist({0}) successfully", id);
                 return Ok(art.rawChecklist);
             }
             catch (Exception ex) {
-                _logger.LogError(ex, "Error Retrieving Artifact for Download");
+                _logger.LogError(ex, "DownloadChecklist({0}) Error Retrieving Artifact for Download", id);
                 return BadRequest();
             }
         }
@@ -481,13 +515,15 @@ namespace openrmf_read_api.Controllers
         public async Task<IActionResult> ExportChecklist(string id, bool nf, bool open, bool na, bool nr, string ctrl)
         {
             try {
+                _logger.LogInformation("Calling ExportChecklist({0}, {1}, {2}, {3}, {4}, {5})", id, nf.ToString(), open.ToString(), na.ToString(), nr.ToString(), ctrl);
                 if (!string.IsNullOrEmpty(id)) {
                     Artifact art = new Artifact();
                     art = await _artifactRepo.GetArtifact(id);
                     if (art != null && art.CHECKLIST != null) {
                         List<string> cciList = new List<string>();
+                        _logger.LogInformation("ExportChecklist({0}....) formatting the checklist to XML from the raw string format");
                         art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist);
-
+                        _logger.LogInformation("ExportChecklist({0}....) checklist formatted");
                         // starting row number for data
                         uint rowNumber = 10;
 
@@ -575,10 +611,13 @@ namespace openrmf_read_api.Controllers
                             uint styleIndex = 0; // use this for 4, 5, 6, or 7 for status
                             // if this is from a compliance generated listing link to a checklist, go grab all the CCIs for that control
                             // as we are only exporting through VULN IDs that are related to that CCI
-                            if (!string.IsNullOrEmpty(ctrl))
+                            if (!string.IsNullOrEmpty(ctrl)) {
+                                _logger.LogInformation("ExportChecklist() generating the CCI Listing for {0}", ctrl);
                                 cciList = NATSClient.GetCCIListing(ctrl);
+                            }
 
-                            // cycle through the vulnerabilities to export into columns
+                            // cycle through the vulnerabilities to export into columns                            
+                            _logger.LogInformation("ExportChecklist() cycling through all the vulnerabilities");
                             foreach (VULN v in art.CHECKLIST.STIGS.iSTIG.VULN) {
                                 // if this is a regular checklist, make sure the filter for VULN ID is checked before we add this to the list
                                 // if this is from a compliance listing, only add the VULN IDs from the control to the listing
@@ -740,20 +779,22 @@ namespace openrmf_read_api.Controllers
                                 filename = art.systemTitle.Trim() + "-" + filename; // add the system onto the front
                             // return the file
                             memory.Seek(0, SeekOrigin.Begin);
+                            _logger.LogInformation("Called ExportChecklist({0}, {1}, {2}, {3}, {4}, {5}) successfully", id, nf.ToString(), open.ToString(), na.ToString(), nr.ToString(), ctrl);
                             return File(memory, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", CreateXLSXFilename(filename));
                         }
                     }
-                    else {
+                    else {                        
+                        _logger.LogWarning("Calling ExportChecklist({0}, {1}, {2}, {3}, {4}, {5}) with an invalid Artifact ID", id, nf.ToString(), open.ToString(), na.ToString(), nr.ToString(), ctrl);
                         return NotFound();
                     }
                 }
                 else { // did not pass in an id
-                    _logger.LogInformation("Did not pass in an id in the Export of a single checklist.");
+                    _logger.LogWarning("ExportChecklist() Did not pass in an Artifact ID in the Export of a single checklist.");
                     return BadRequest();
                 }
             }
             catch (Exception ex) {
-                _logger.LogError(ex, "Error Retrieving Artifact for Exporting");
+                _logger.LogError(ex, "ExportChecklist({0} Error Retrieving Artifact for Exporting", id);
                 return BadRequest();
             }
         } 
@@ -796,8 +837,9 @@ namespace openrmf_read_api.Controllers
         public async Task<IActionResult> GetArtifactVulnIdsByControl(string id, string control)
         {
             try {
+                _logger.LogInformation("Calling GetArtifactVulnIdsByControl({0}, {1})", id, control);
                 if (!string.IsNullOrEmpty(id) && !string.IsNullOrEmpty(control)) {
-                    _logger.LogInformation("Invalid Artifact Id {0} or Control {1}", id, control);
+                    _logger.LogInformation("GetArtifactVulnIdsByControl() Invalid Artifact Id {0} or Control {1}", id, control);
                     Artifact art = new Artifact();
                     art = await _artifactRepo.GetArtifact(id);
                     art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist);
@@ -814,20 +856,23 @@ namespace openrmf_read_api.Controllers
                                 vulnIds.Add(v.STIG_DATA.Where(y => y.VULN_ATTRIBUTE == "Vuln_Num").FirstOrDefault().ATTRIBUTE_DATA); // add the V-xxxx number
                             }
                         }
+                        _logger.LogInformation("Called GetArtifactVulnIdsByControl({0}, {1}) successfully", id, control);
                         return Ok(vulnIds.Distinct().OrderBy(z => z).ToList());
                     }
-                    else
+                    else {
+                        _logger.LogWarning("Called GetArtifactVulnIdsByControl({0}, {1}) but returned an empty CCI Listing", id, control);
                         return NotFound();
+                    }
                 }
                 else {
                     // log the values passed in
-                    _logger.LogWarning("Invalid Artifact Id {0} or Control {1}", 
+                    _logger.LogWarning("GetArtifactVulnIdsByControl() Invalid Artifact Id {0} or Control {1}", 
                         !string.IsNullOrEmpty(id)? id : "null", !string.IsNullOrEmpty(control)? control : "null");
                     return NotFound();    
                 }
             }
             catch (Exception ex) {
-                _logger.LogError(ex, "Error Retrieving Artifact");
+                _logger.LogError(ex, "Called GetArtifactVulnIdsByControl({0}, {1}) Error Retrieving Artifact", id, control);
                 return BadRequest();
             }
         }
@@ -1109,11 +1154,13 @@ namespace openrmf_read_api.Controllers
         public async Task<IActionResult> CountArtifacts()
         {
             try {
+                _logger.LogInformation("Calling CountArtifacts()");
                 long result = await _artifactRepo.CountChecklists();
+                _logger.LogInformation("Called CountArtifacts() successfully for {0} items", result.ToString());
                 return Ok(result);
             }
             catch (Exception ex) {
-                _logger.LogError(ex, "Error Retrieving Artifact Count in MongoDB");
+                _logger.LogError(ex, "CountArtifacts() Error Retrieving Artifact Count in MongoDB");
                 return BadRequest();
             }
         }
@@ -1132,11 +1179,13 @@ namespace openrmf_read_api.Controllers
         public async Task<IActionResult> CountSystems()
         {
             try {
+                _logger.LogInformation("Calling CountSystems()");
                 long result = await _systemGroupRepo.CountSystems();
+                _logger.LogInformation("Called CountSystems() successfully for {0} items", result.ToString());
                 return Ok(result);
             }
             catch (Exception ex) {
-                _logger.LogError(ex, "Error Retrieving System Count in MongoDB");
+                _logger.LogError(ex, "CountSystems() Error Retrieving System Count in MongoDB");
                 return BadRequest();
             }
         }
@@ -1157,15 +1206,18 @@ namespace openrmf_read_api.Controllers
         public async Task<IActionResult> GetCountByType(string system)
         {
             try {
+                _logger.LogInformation("Calling GetCountByType('{0}')", system);
                 IEnumerable<Object> artifacts;
                 artifacts = await _artifactRepo.GetCountByType(system);
-                if (artifacts == null) {
+                _logger.LogInformation("Called GetCountByType('{0}')", system);
+                if (artifacts == null) {                    
+                    _logger.LogWarning("Calling GetCountByType('{0}') returned null", system);
                     NotFound();
                 }
                 return Ok(artifacts);
             }
             catch (Exception ex) {
-                _logger.LogError(ex, "Error getting the counts by type for the Reports page");
+                _logger.LogError(ex, "GetCountByType() Error getting the counts by type for the Reports page");
                 return BadRequest();
             }
         }
