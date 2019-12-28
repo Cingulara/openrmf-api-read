@@ -459,14 +459,17 @@ namespace openrmf_read_api.Controllers
                     NessusPatchData patchData = NessusPatchLoader.LoadPatchData(sg.rawNessusFile);
                     _logger.LogInformation("GetNessusPatchSummary({0}) querying Nessus patch data file for counts", systemGroupId);
 
-                    NessusPatchCount summary = new NessusPatchCount();
-                    summary.totalCriticalOpen = 2;
-                    summary.totalHighOpen = 10;
-                    summary.totalMediumOpen = 15;
-                    summary.totalLowOpen = 45;
+                    NessusPatchCount patchCount = new NessusPatchCount();
+                    if (patchData.summary.Count > 0) {
+                        patchCount.totalCriticalOpen = patchData.summary.Where(x => x.severity == 4).Count();
+                        patchCount.totalHighOpen = patchData.summary.Where(x => x.severity == 3).Count();
+                        patchCount.totalMediumOpen = patchData.summary.Where(x => x.severity == 2).Count();
+                        patchCount.totalLowOpen = patchData.summary.Where(x => x.severity == 1).Count();;
+                        patchCount.totalInfoOpen = patchData.summary.Where(x => x.severity == 0).Count();
+                    }
 
                     _logger.LogInformation("Called GetNessusPatchSummary({0}) successfully", systemGroupId);
-                    return Ok(summary);
+                    return Ok(patchCount);
                 }
                 catch (Exception ex) {
                     _logger.LogError(ex, "GetNessusPatchSummary() Error listing all checklists for system {0}", systemGroupId);

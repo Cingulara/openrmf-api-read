@@ -15,5 +15,6 @@ namespace openrmf_read_api.Models
         public int totalHighOpen { get; set; }
         public int totalMediumOpen { get; set; }
         public int totalLowOpen { get; set; }
+        public int totalInfoOpen { get; set; }
     }
 }
