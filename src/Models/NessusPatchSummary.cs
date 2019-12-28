@@ -9,11 +9,26 @@ namespace openrmf_read_api.Models
 
     public class NessusPatchSummary
     {
-
         public NessusPatchSummary () {        }
-        public int totalCriticalOpen { get; set; }
-        public int totalHighOpen { get; set; }
-        public int totalMediumOpen { get; set; }
-        public int totalLowOpen { get; set; }
+        public string pluginId { get; set; }
+        public string pluginName { get; set; }
+        public string family { get; set; }
+        public int severity { get; set; }
+        public string severityName { get {
+            if (severity == 4)
+                return "Critical";
+            else if (severity == 3)
+                return "High";
+            else if (severity == 2)
+                return "Medium";
+            else if (severity == 1)
+                return "Low";
+            else
+                return "Informational";
+        }}
+        // how many hosts have this pluginId
+        public int hostTotal { get; set; }
+        // how many times has this pluginId come up in total
+        public int total { get; set; }
     }
 }

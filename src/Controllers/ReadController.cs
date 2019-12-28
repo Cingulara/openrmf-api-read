@@ -455,7 +455,11 @@ namespace openrmf_read_api.Controllers
                     // load the NessusPatch XML into a List
                     // do a count of Critical, High, and Medium and Low items
                     // return the class of numbers for this
-                    NessusPatchSummary summary = new NessusPatchSummary();
+                    _logger.LogInformation("GetNessusPatchSummary({0}) loading Nessus patch data file", systemGroupId);
+                    NessusPatchData patchData = NessusPatchLoader.LoadPatchData(sg.rawNessusFile);
+                    _logger.LogInformation("GetNessusPatchSummary({0}) querying Nessus patch data file for counts", systemGroupId);
+
+                    NessusPatchCount summary = new NessusPatchCount();
                     summary.totalCriticalOpen = 2;
                     summary.totalHighOpen = 10;
                     summary.totalMediumOpen = 15;
