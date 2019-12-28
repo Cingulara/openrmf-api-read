@@ -12,6 +12,13 @@ namespace openrmf_read_api.Models
         public NessusPatchSummary () {        }
         public string hostname { get; set;}
         public string pluginId { get; set; }
+
+        public string pluginIdSort { get {
+            if (pluginId.Length >= 6)
+                return pluginId;
+            else 
+                return "0" + pluginId;
+        }}
         public string pluginName { get; set; }
         public string family { get; set; }
         public int severity { get; set; }

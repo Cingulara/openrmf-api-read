@@ -519,7 +519,7 @@ namespace openrmf_read_api.Controllers
                     // generate the XLSX file from this
                     
                     // starting row number for data
-                    uint rowNumber = 10;
+                    uint rowNumber = 7;
 
                     // create the XLSX in memory and send it out
                     var memory = new MemoryStream();
@@ -543,12 +543,12 @@ namespace openrmf_read_api.Controllers
                         DocumentFormat.OpenXml.Spreadsheet.Columns lstColumns = worksheetPart.Worksheet.GetFirstChild<DocumentFormat.OpenXml.Spreadsheet.Columns>();
                         if (lstColumns == null) {
                             lstColumns = new DocumentFormat.OpenXml.Spreadsheet.Columns();
-                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 1, Max = 1, Width = 50, CustomWidth = true }); // col A
-                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 2, Max = 2, Width = 50, CustomWidth = true });
-                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 3, Max = 3, Width = 50, CustomWidth = true });
-                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 4, Max = 4, Width = 50, CustomWidth = true });
-                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 5, Max = 5, Width = 50, CustomWidth = true });
-                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 6, Max = 6, Width = 50, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 1, Max = 1, Width = 20, CustomWidth = true }); // col A
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 2, Max = 2, Width = 80, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 3, Max = 3, Width = 40, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 4, Max = 4, Width = 30, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 5, Max = 5, Width = 10, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 6, Max = 6, Width = 10, CustomWidth = true });
                             worksheetPart.Worksheet.InsertAt(lstColumns, 0);
                         }
 
@@ -600,7 +600,7 @@ namespace openrmf_read_api.Controllers
 
                         _logger.LogInformation("ExportNessusPatchSummary() making the XLSX Summary for the patch information");
                         // make this go in reverse order of severity, 4 to 0
-                        foreach (NessusPatchSummary summary in reportSummaryFinal.OrderByDescending(x => x.severity).OrderBy(y => y.pluginId).ToList()) {
+                        foreach (NessusPatchSummary summary in reportSummaryFinal.OrderBy(y => y.pluginIdSort).OrderByDescending(x => x.severity).ToList()) {
                             // if this is a regular checklist, make sure the filter for VULN ID is checked before we add this to the list
                             // if this is from a compliance listing, only add the VULN IDs from the control to the listing
                             // the VULN has a CCI_REF field where the attribute would be the value in the cciList if it is valid
