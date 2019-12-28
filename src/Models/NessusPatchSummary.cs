@@ -10,6 +10,7 @@ namespace openrmf_read_api.Models
     public class NessusPatchSummary
     {
         public NessusPatchSummary () {        }
+        public string hostname { get; set;}
         public string pluginId { get; set; }
         public string pluginName { get; set; }
         public string family { get; set; }

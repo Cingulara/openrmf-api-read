@@ -47,6 +47,14 @@ namespace openrmf_read_api.Classes
             List<NessusPatchSummary> summaryListing = new List<NessusPatchSummary>();
             NessusPatchSummary summary = new NessusPatchSummary();
             XmlAttributeCollection colAttributes;
+            string hostname = "";
+            colAttributes = nodes[0].Attributes;
+            foreach (XmlAttribute attr in colAttributes) {
+                if (attr.Name == "name") {
+                    hostname = attr.Value;
+                }
+                break;
+            }
             foreach (XmlNode node in nodes) {                
                 if (node.ChildNodes.Count > 0) {
                     foreach (XmlElement child in node.ChildNodes) {
@@ -55,6 +63,8 @@ namespace openrmf_read_api.Classes
                             // get all ReportItems and their attributes in the tag 
                             colAttributes = child.Attributes;
                             summary = new NessusPatchSummary();
+                            // set the hostname
+                            summary.hostname = hostname;
                             foreach (XmlAttribute attr in colAttributes) {
                                 if (attr.Name == "severity") {
                                     // store the integer

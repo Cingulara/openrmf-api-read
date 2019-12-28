@@ -423,18 +423,17 @@ namespace openrmf_read_api.Controllers
             }
         }
 
-
-        // readAPI + "/system/" + encodeURIComponent(systemId) + "/nessuspatchsummary/"
-                /// <summary>
-        /// GET The list of checklists for the given System ID
+        /// <summary>
+        /// GET The count of patch information from the attached Nessus scan file, if there.
         /// </summary>
         /// <param name="systemGroupId">The ID of the system to use</param>
         /// <returns>
-        /// HTTP Status showing it was found or that there is an error. And the list of checklists records.
+        /// HTTP Status showing it was found or that there is an error. And the count of 
+        /// critical, high, medium, low, and info items from the Nessus ACAS Patch scan.
         /// </returns>
-        /// <response code="200">Returns the Artifact List of records</response>
+        /// <response code="200">Returns the count of records</response>
         /// <response code="400">If the item did not query correctly</response>
-        /// <response code="404">If the ID passed in is not valid</response>
+        /// <response code="404">If the ID passed in does not have a valid Nessus file</response>
         [HttpGet("system/{systemGroupId}/nessuspatchsummary")]
         [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
         public async Task<IActionResult> GetNessusPatchSummary(string systemGroupId)
@@ -482,6 +481,183 @@ namespace openrmf_read_api.Controllers
             }
         }
         
+        /// <summary>
+        /// GET The count of patch information from the attached Nessus scan file, if there.
+        /// </summary>
+        /// <param name="systemGroupId">The ID of the system to use</param>
+        /// <returns>
+        /// HTTP Status showing it was found or that there is an error. And the XLSX summary of 
+        /// critical, high, medium, low, and info items from the Nessus ACAS Patch scan.
+        /// </returns>
+        /// <response code="200">Returns the count of records</response>
+        /// <response code="400">If the item did not query correctly</response>
+        /// <response code="404">If the ID passed in does not have a valid Nessus file</response>
+        [HttpGet("system/{systemGroupId}/exportnessus")]
+        [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
+        public async Task<IActionResult> ExportNessusPatchSummary(string systemGroupId)
+        {
+            if (!string.IsNullOrEmpty(systemGroupId)) {
+                try {
+                    _logger.LogInformation("Calling ExportNessusPatchSummary({0})", systemGroupId);
+                    SystemGroup sg = new SystemGroup();
+                    sg = await _systemGroupRepo.GetSystemGroup(systemGroupId);
+                    if (sg == null) {
+                        _logger.LogWarning("ExportNessusPatchSummary({0}) an invalid system record");
+                        return NotFound();
+                    }
+                    if (string.IsNullOrEmpty(sg.rawNessusFile)) {
+                        _logger.LogWarning("ExportNessusPatchSummary({0}) system record has no Nessus patch file to use");
+                        return NotFound();
+                    }
+                    // load the NessusPatch XML into a List
+                    // do a count of Critical, High, and Medium and Low items
+                    // return the class of numbers for this
+                    _logger.LogInformation("ExportNessusPatchSummary({0}) loading Nessus patch data file", systemGroupId);
+                    NessusPatchData patchData = NessusPatchLoader.LoadPatchData(sg.rawNessusFile);
+                    _logger.LogInformation("ExportNessusPatchSummary({0}) querying Nessus patch data file for counts", systemGroupId);
+                    
+                    // generate the XLSX file from this
+                    
+                    // starting row number for data
+                    uint rowNumber = 10;
+
+                    // create the XLSX in memory and send it out
+                    var memory = new MemoryStream();
+                    using (SpreadsheetDocument spreadSheet = SpreadsheetDocument.Create(memory, SpreadsheetDocumentType.Workbook))
+                    {
+                        // Add a WorkbookPart to the document.
+                        WorkbookPart workbookpart = spreadSheet.AddWorkbookPart();
+                        workbookpart.Workbook = new Workbook();
+                        
+                        // add styles to workbook
+                        WorkbookStylesPart wbsp = workbookpart.AddNewPart<WorkbookStylesPart>();
+
+                        // Add a WorksheetPart to the WorkbookPart.
+                        WorksheetPart worksheetPart = workbookpart.AddNewPart<WorksheetPart>();
+                        worksheetPart.Worksheet = new Worksheet(new SheetData());
+
+                        // add stylesheet to use cell formats 1 - 4
+                        wbsp.Stylesheet = ExcelStyleSheet.GenerateStylesheet();
+
+                        // generate the column listings we need with custom widths
+                        DocumentFormat.OpenXml.Spreadsheet.Columns lstColumns = worksheetPart.Worksheet.GetFirstChild<DocumentFormat.OpenXml.Spreadsheet.Columns>();
+                        if (lstColumns == null) {
+                            lstColumns = new DocumentFormat.OpenXml.Spreadsheet.Columns();
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 1, Max = 1, Width = 50, CustomWidth = true }); // col A
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 2, Max = 2, Width = 50, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 3, Max = 3, Width = 50, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 4, Max = 4, Width = 50, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 5, Max = 5, Width = 50, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 6, Max = 6, Width = 50, CustomWidth = true });
+                            worksheetPart.Worksheet.InsertAt(lstColumns, 0);
+                        }
+
+                        // Add Sheets to the Workbook.
+                        Sheets sheets = spreadSheet.WorkbookPart.Workbook.AppendChild<Sheets>(new Sheets());
+
+                        // Append a new worksheet and associate it with the workbook.
+                        Sheet sheet = new Sheet() { Id = spreadSheet.WorkbookPart.
+                            GetIdOfPart(worksheetPart), SheetId = 1, Name = "Nessus-Patch-Summary" };
+                        sheets.Append(sheet);
+                        // Get the sheetData cell table.
+                        SheetData sheetData = worksheetPart.Worksheet.GetFirstChild<SheetData>();
+                        DocumentFormat.OpenXml.Spreadsheet.Cell refCell = null;
+                        DocumentFormat.OpenXml.Spreadsheet.Cell newCell = null;
+
+                        DocumentFormat.OpenXml.Spreadsheet.Row row = MakeTitleRow("OpenRMF by Cingulara and Tutela");
+                        sheetData.Append(row);
+                        row = MakeChecklistInfoRow("Nessus Patch Summary Export", "",2);
+                        sheetData.Append(row);
+                        row = MakeChecklistInfoRow("System Name", sg.title,3);
+                        sheetData.Append(row);
+                        row = MakeChecklistInfoRow("Report Name", patchData.reportName,4);
+                        sheetData.Append(row);
+                        row = MakeNessusSummaryHeaderRows(rowNumber);
+                        sheetData.Append(row);
+
+                        uint styleIndex = 0; // use this for 4, 5, 6, or 7 for status
+
+                        // cycle through the vulnerabilities to export into columns                            
+                        _logger.LogInformation("ExportNessusPatchSummary() grouping the patch information");
+                        // group all the results by hostname, pluginId, pluginName, Family, and severity and count the totals per hostname
+                        List<NessusPatchSummary> reportSummaryIntermediate = patchData.summary.GroupBy(x => new {x.hostname, x.pluginId, x.pluginName, x.family, x.severity})
+                            .Select(g => new NessusPatchSummary {
+                                hostname = g.Key.hostname, 
+                                pluginId = g.Key.pluginId, 
+                                pluginName = g.Key.pluginName, 
+                                family = g.Key.family, 
+                                severity = g.Key.severity, 
+                                total = g.Count()}).ToList();
+                        // now sum the total, but get all the other data minus hostname. Count the hostnames used though per plugin grouping
+                        List<NessusPatchSummary> reportSummaryFinal = patchData.summary.GroupBy(x => new {x.pluginId, x.pluginName, x.family, x.severity})
+                            .Select(g => new NessusPatchSummary {
+                                pluginId = g.Key.pluginId, 
+                                pluginName = g.Key.pluginName, 
+                                family = g.Key.family, 
+                                severity = g.Key.severity, 
+                                hostTotal = g.Count(),
+                                total = g.Sum(z => z.total)}).ToList();
+
+                        _logger.LogInformation("ExportNessusPatchSummary() making the XLSX Summary for the patch information");
+                        // make this go in reverse order of severity, 4 to 0
+                        foreach (NessusPatchSummary summary in reportSummaryFinal.OrderByDescending(x => x.severity).OrderBy(y => y.pluginId).ToList()) {
+                            // if this is a regular checklist, make sure the filter for VULN ID is checked before we add this to the list
+                            // if this is from a compliance listing, only add the VULN IDs from the control to the listing
+                            // the VULN has a CCI_REF field where the attribute would be the value in the cciList if it is valid
+                            rowNumber++;
+                            // make a new row for this set of items
+                            row = MakeDataRow(rowNumber, "A", summary.pluginId, styleIndex);
+                            // now cycle through the rest of the items
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "B" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue(summary.pluginName);
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = styleIndex;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "C" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue(summary.family);
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = styleIndex;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "D" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue(summary.severityName);
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = styleIndex;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue(summary.hostTotal.ToString());
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                            newCell.StyleIndex = styleIndex;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "F" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue(summary.total.ToString());
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                            newCell.StyleIndex = styleIndex;
+                            sheetData.Append(row);
+                        }
+
+                        // Save the new worksheet.
+                        workbookpart.Workbook.Save();
+                        // Close the document.
+                        spreadSheet.Close();
+                        // set the filename
+                        string filename = sg.title + "-NessusNessusScanSummary";
+                        memory.Seek(0, SeekOrigin.Begin);
+                        _logger.LogInformation("Called ExportNessusPatchSummary({0}) successfully", systemGroupId);
+                        return File(memory, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", CreateXLSXFilename(filename));
+                    }
+                }
+                catch (Exception ex) {
+                    _logger.LogError(ex, "ExportNessusPatchSummary() Error getting the Nessus scan XLSX export for system {0}", systemGroupId);
+                    return BadRequest();
+                }
+            }
+            else {
+                _logger.LogWarning("Called ExportNessusPatchSummary() with no system ID");
+                return BadRequest(); // no systemGroupId entered
+            }
+        }        
+
         #endregion
 
         #region Artifacts and Checklists
@@ -1125,6 +1301,48 @@ namespace openrmf_read_api.Controllers
             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "AB" + rowindex.ToString() };
             row.InsertBefore(newCell, refCell);
             newCell.CellValue = new CellValue("CCI");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            return row;
+        }
+        private DocumentFormat.OpenXml.Spreadsheet.Row MakeNessusSummaryHeaderRows(uint rowindex) {
+            DocumentFormat.OpenXml.Spreadsheet.Cell refCell = null;
+            DocumentFormat.OpenXml.Spreadsheet.Row row = new DocumentFormat.OpenXml.Spreadsheet.Row() { RowIndex = rowindex };
+            DocumentFormat.OpenXml.Spreadsheet.Cell newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "A" + rowindex.ToString() };
+            uint styleIndex = 3;
+
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Plugin ID");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "B" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Plugin Name");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "C" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Family");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "D" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Severity");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Host Total");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "F" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Total");
             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
             newCell.StyleIndex = styleIndex;
             return row;
