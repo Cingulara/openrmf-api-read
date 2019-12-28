@@ -48,14 +48,14 @@ namespace openrmf_read_api.Classes
             NessusPatchSummary summary = new NessusPatchSummary();
             XmlAttributeCollection colAttributes;
             string hostname = "";
-            colAttributes = nodes[0].Attributes;
-            foreach (XmlAttribute attr in colAttributes) {
-                if (attr.Name == "name") {
-                    hostname = attr.Value;
-                }
-                break;
-            }
-            foreach (XmlNode node in nodes) {                
+            foreach (XmlNode node in nodes) {  
+                colAttributes = node.Attributes;
+                foreach (XmlAttribute attr in colAttributes) {
+                    if (attr.Name == "name") {
+                        hostname = attr.Value;
+                    }
+                    break;
+                }              
                 if (node.ChildNodes.Count > 0) {
                     foreach (XmlElement child in node.ChildNodes) {
                         if (child.Name == "ReportItem") {

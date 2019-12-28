@@ -566,7 +566,7 @@ namespace openrmf_read_api.Controllers
 
                         DocumentFormat.OpenXml.Spreadsheet.Row row = MakeTitleRow("OpenRMF by Cingulara and Tutela");
                         sheetData.Append(row);
-                        row = MakeChecklistInfoRow("Nessus Patch Summary Export", "",2);
+                        row = MakeChecklistInfoRow("Nessus Patch Summary Export", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss tt"),2);
                         sheetData.Append(row);
                         row = MakeChecklistInfoRow("System Name", sg.title,3);
                         sheetData.Append(row);
