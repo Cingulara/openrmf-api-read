@@ -589,7 +589,7 @@ namespace openrmf_read_api.Controllers
                                 severity = g.Key.severity, 
                                 total = g.Count()}).ToList();
                         // now sum the total, but get all the other data minus hostname. Count the hostnames used though per plugin grouping
-                        List<NessusPatchSummary> reportSummaryFinal = patchData.summary.GroupBy(x => new {x.pluginId, x.pluginName, x.family, x.severity})
+                        List<NessusPatchSummary> reportSummaryFinal = reportSummaryIntermediate.GroupBy(x => new {x.pluginId, x.pluginName, x.family, x.severity})
                             .Select(g => new NessusPatchSummary {
                                 pluginId = g.Key.pluginId, 
                                 pluginName = g.Key.pluginName, 
