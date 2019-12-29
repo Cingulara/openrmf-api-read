@@ -297,6 +297,10 @@ namespace openrmf_read_api.Controllers
                     return NotFound();
                 }
                 _logger.LogInformation("Called ListArtifactSystems() successfully");
+                foreach(SystemGroup sys in systems) {
+                    // remove the Nessus file as we don't need it
+                    sys.rawNessusFile = "";
+                }
                 return Ok(systems);
             }
             catch (Exception ex) {
