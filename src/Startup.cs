@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Swashbuckle.AspNetCore.Swagger;
+using Prometheus;
 
 using openrmf_read_api.Models;
 using openrmf_read_api.Data;
@@ -116,6 +117,9 @@ namespace openrmf_read_api
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
+            // Use the Prometheus middleware
+            app.UseMetricServer();
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
