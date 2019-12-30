@@ -100,7 +100,7 @@ namespace openrmf_read_api.Models
             // blue or Not Reviewed
             Fill fill5 = new Fill();
             PatternFill patternFill5 = new PatternFill() { PatternType = PatternValues.Solid};
-            ForegroundColor foregroundColor5 = new ForegroundColor() { Rgb = "FF039BE5" };
+            ForegroundColor foregroundColor5 = new ForegroundColor() { Rgb = "FFFFFFFF" };
             BackgroundColor backgroundColor5 = new BackgroundColor() { Indexed = (UInt32Value)64U };
             patternFill5.Append(foregroundColor5);
             patternFill5.Append(backgroundColor5);
