@@ -489,6 +489,7 @@ namespace openrmf_read_api.Controllers
         /// GET The count of patch information from the attached Nessus scan file, if there.
         /// </summary>
         /// <param name="systemGroupId">The ID of the system to use</param>
+        /// <param name="summaryOnly">Show only a summary view? or include the hosts as well?</param>
         /// <returns>
         /// HTTP Status showing it was found or that there is an error. And the XLSX summary of 
         /// critical, high, medium, low, and info items from the Nessus ACAS Patch scan.
@@ -498,7 +499,7 @@ namespace openrmf_read_api.Controllers
         /// <response code="404">If the ID passed in does not have a valid Nessus file</response>
         [HttpGet("system/{systemGroupId}/exportnessus")]
         [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
-        public async Task<IActionResult> ExportNessusPatchSummary(string systemGroupId)
+        public async Task<IActionResult> ExportNessusPatchSummary(string systemGroupId, bool summaryOnly)
         {
             if (!string.IsNullOrEmpty(systemGroupId)) {
                 try {
@@ -553,6 +554,7 @@ namespace openrmf_read_api.Controllers
                             lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 4, Max = 4, Width = 30, CustomWidth = true });
                             lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 5, Max = 5, Width = 20, CustomWidth = true });
                             lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 6, Max = 6, Width = 20, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 7, Max = 7, Width = 60, CustomWidth = true });
                             worksheetPart.Worksheet.InsertAt(lstColumns, 0);
                         }
 
@@ -576,15 +578,15 @@ namespace openrmf_read_api.Controllers
                         sheetData.Append(row);
                         row = MakeChecklistInfoRow("Report Name", patchData.reportName,4);
                         sheetData.Append(row);
-                        row = MakeNessusSummaryHeaderRows(rowNumber);
+                        row = MakeNessusSummaryHeaderRows(rowNumber, summaryOnly);
                         sheetData.Append(row);
 
                         uint styleIndex = 0; // use this for 4, 5, 6, or 7 for status
 
-                        // cycle through the vulnerabilities to export into columns                            
-                        _logger.LogInformation("ExportNessusPatchSummary() grouping the patch information");
+                        // cycle through the vulnerabilities to export into columns
+                        _logger.LogInformation("ExportNessusPatchSummary() grouping the patch information by host");
                         // group all the results by hostname, pluginId, pluginName, Family, and severity and count the totals per hostname
-                        List<NessusPatchSummary> reportSummaryIntermediate = patchData.summary.GroupBy(x => new {x.hostname, x.pluginId, x.pluginName, x.family, x.severity})
+                        List<NessusPatchSummary> reportSummaryFinal = patchData.summary.GroupBy(x => new {x.hostname, x.pluginId, x.pluginName, x.family, x.severity})
                             .Select(g => new NessusPatchSummary {
                                 hostname = g.Key.hostname, 
                                 pluginId = g.Key.pluginId, 
@@ -592,15 +594,18 @@ namespace openrmf_read_api.Controllers
                                 family = g.Key.family, 
                                 severity = g.Key.severity, 
                                 total = g.Count()}).ToList();
-                        // now sum the total, but get all the other data minus hostname. Count the hostnames used though per plugin grouping
-                        List<NessusPatchSummary> reportSummaryFinal = reportSummaryIntermediate.GroupBy(x => new {x.pluginId, x.pluginName, x.family, x.severity})
-                            .Select(g => new NessusPatchSummary {
-                                pluginId = g.Key.pluginId, 
-                                pluginName = g.Key.pluginName, 
-                                family = g.Key.family, 
-                                severity = g.Key.severity, 
-                                hostTotal = g.Count(),
-                                total = g.Sum(z => z.total)}).ToList();
+                        if (summaryOnly) {
+                            _logger.LogInformation("ExportNessusPatchSummary() grouping the patch information for summary only (no hosts)");
+                            // now sum the total, but get all the other data minus hostname. Count the hostnames used though per plugin grouping
+                            reportSummaryFinal = reportSummaryFinal.GroupBy(x => new {x.pluginId, x.pluginName, x.family, x.severity})
+                                .Select(g => new NessusPatchSummary {
+                                    pluginId = g.Key.pluginId, 
+                                    pluginName = g.Key.pluginName, 
+                                    family = g.Key.family, 
+                                    severity = g.Key.severity, 
+                                    hostTotal = g.Count(),
+                                    total = g.Sum(z => z.total)}).ToList();
+                        }
 
                         _logger.LogInformation("ExportNessusPatchSummary() making the XLSX Summary for the patch information");
                         // make this go in reverse order of severity, 4 to 0
@@ -629,7 +634,10 @@ namespace openrmf_read_api.Controllers
                             newCell.StyleIndex = styleIndex;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
-                            newCell.CellValue = new CellValue(summary.hostTotal.ToString());
+                            if (summaryOnly) 
+                                newCell.CellValue = new CellValue(summary.hostTotal.ToString());
+                            else 
+                                newCell.CellValue = new CellValue("1"); // we are doing this by host, so host total is 1
                             newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
                             newCell.StyleIndex = styleIndex;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "F" + rowNumber.ToString() };
@@ -637,6 +645,14 @@ namespace openrmf_read_api.Controllers
                             newCell.CellValue = new CellValue(summary.total.ToString());
                             newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
                             newCell.StyleIndex = styleIndex;
+                            // only print the hostname if not just a summary
+                            if (!summaryOnly) {
+                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "G" + rowNumber.ToString() };
+                                row.InsertBefore(newCell, refCell);
+                                newCell.CellValue = new CellValue(summary.hostname);
+                                newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                                newCell.StyleIndex = styleIndex;
+                            }
                             sheetData.Append(row);
                         }
 
@@ -1309,7 +1325,7 @@ namespace openrmf_read_api.Controllers
             newCell.StyleIndex = styleIndex;
             return row;
         }
-        private DocumentFormat.OpenXml.Spreadsheet.Row MakeNessusSummaryHeaderRows(uint rowindex) {
+        private DocumentFormat.OpenXml.Spreadsheet.Row MakeNessusSummaryHeaderRows(uint rowindex, bool summaryOnly) {
             DocumentFormat.OpenXml.Spreadsheet.Cell refCell = null;
             DocumentFormat.OpenXml.Spreadsheet.Row row = new DocumentFormat.OpenXml.Spreadsheet.Row() { RowIndex = rowindex };
             DocumentFormat.OpenXml.Spreadsheet.Cell newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "A" + rowindex.ToString() };
@@ -1349,6 +1365,14 @@ namespace openrmf_read_api.Controllers
             newCell.CellValue = new CellValue("Total");
             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
             newCell.StyleIndex = styleIndex;
+            if (!summaryOnly) {
+                // next column
+                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "G" + rowindex.ToString() };
+                row.InsertBefore(newCell, refCell);
+                newCell.CellValue = new CellValue("Host");
+                newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                newCell.StyleIndex = styleIndex;
+            }
             return row;
         }
         private DocumentFormat.OpenXml.Spreadsheet.Row MakeDataRow(uint rowNumber, string cellReference, string value, uint styleIndex) {
