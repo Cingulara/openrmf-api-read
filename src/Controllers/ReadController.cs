@@ -486,7 +486,7 @@ namespace openrmf_read_api.Controllers
         }
         
         /// <summary>
-        /// GET The count of patch information from the attached Nessus scan file, if there.
+        /// GET The XLSX export of patch information from the attached Nessus scan file, if there.
         /// </summary>
         /// <param name="systemGroupId">The ID of the system to use</param>
         /// <param name="summaryOnly">Show only a summary view? or include the hosts as well?</param>
@@ -613,7 +613,8 @@ namespace openrmf_read_api.Controllers
                             // if this is a regular checklist, make sure the filter for VULN ID is checked before we add this to the list
                             // if this is from a compliance listing, only add the VULN IDs from the control to the listing
                             // the VULN has a CCI_REF field where the attribute would be the value in the cciList if it is valid
-                            rowNumber++;
+                            rowNumber++;                            
+                            styleIndex = GetPatchScanStatus(summary.severity);
                             // make a new row for this set of items
                             row = MakeDataRow(rowNumber, "A", summary.pluginId, styleIndex);
                             // now cycle through the rest of the items
@@ -881,7 +882,7 @@ namespace openrmf_read_api.Controllers
                                         (!string.IsNullOrEmpty(ctrl) && 
                                         v.STIG_DATA.Where(x => x.VULN_ATTRIBUTE == "CCI_REF" && cciList.Contains(x.ATTRIBUTE_DATA)).FirstOrDefault() != null))  {
                                     rowNumber++;
-                                    styleIndex = GetVulnerabilitiStatus(v.STATUS);
+                                    styleIndex = GetVulnerabilityStatus(v.STATUS);
                                     // make a new row for this set of items
                                     row = MakeDataRow(rowNumber, "A", v.STIG_DATA[0].ATTRIBUTE_DATA, styleIndex);
                                     // now cycle through the rest of the items
@@ -1427,7 +1428,7 @@ namespace openrmf_read_api.Controllers
             newCell.StyleIndex = 11;
             return row;
         }
-        private uint GetVulnerabilitiStatus(string status) {
+        private uint GetVulnerabilityStatus(string status) {
             // open = 4, N/A = 5, NotAFinding = 6, Not Reviewed = 7
             if (status.ToLower() == "not_reviewed")
                 return 7U;
@@ -1437,6 +1438,13 @@ namespace openrmf_read_api.Controllers
                 return 5U;
             // catch all
             return 6U;
+        }
+        private uint GetPatchScanStatus(int severity) {
+            // critical or high = 3 or 4, medium = 2, low = 1, informational = 0
+            if (severity > 2)
+                return 4U;
+            // catch all informational
+            return 7U;
         }
         #endregion
 
