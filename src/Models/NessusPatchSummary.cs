@@ -38,5 +38,12 @@ namespace openrmf_read_api.Models
         public int hostTotal { get; set; }
         // how many times has this pluginId come up in total
         public int total { get; set; }
+
+        // specific data points for the report are below
+        public string description { get; set; }
+        public string publicationDate { get; set; }
+        public string pluginType { get; set; }
+        public string riskFactor { get; set; }
+        public string synopsis { get; set; }
     }
 }

@@ -475,7 +475,7 @@ namespace openrmf_read_api.Controllers
                     return Ok(patchCount);
                 }
                 catch (Exception ex) {
-                    _logger.LogError(ex, "GetNessusPatchSummary() Error listing all checklists for system {0}", systemGroupId);
+                    _logger.LogError(ex, "GetNessusPatchSummary() Error getting the Nessus patch summary data for system {0}", systemGroupId);
                     return BadRequest();
                 }
             }
@@ -1534,6 +1534,62 @@ namespace openrmf_read_api.Controllers
                 return BadRequest();
             }
         }
+        #endregion
+
+        /******************************************
+        * Reports Specific API calls
+        ******************************************/
+        #region Report APIs
+
+        /// <summary>
+        /// GET The raw data of a Nessus file for the reports.
+        /// </summary>
+        /// <param name="systemGroupId">The ID of the system to use</param>
+        /// <returns>
+        /// HTTP Status showing it was found or that there is an error. And the raw data of 
+        /// the Nessus ACAS Patch scan.
+        /// </returns>
+        /// <response code="200">Returns the count of records</response>
+        /// <response code="400">If the item did not query correctly</response>
+        /// <response code="404">If the ID passed in does not have a valid Nessus file</response>
+        [HttpGet("report/nessus/{systemGroupId}")]
+        [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
+        public async Task<IActionResult> GetNessusPatchDataForReport(string systemGroupId)
+        {
+            if (!string.IsNullOrEmpty(systemGroupId)) {
+                try {
+                    _logger.LogInformation("Calling GetNessusPatchDataForReport({0})", systemGroupId);
+                    SystemGroup sg = new SystemGroup();
+                    sg = await _systemGroupRepo.GetSystemGroup(systemGroupId);
+                    if (sg == null) {
+                        _logger.LogWarning("GetNessusPatchDataForReport({0}) an invalid system record");
+                        return NotFound();
+                    }
+                    if (string.IsNullOrEmpty(sg.rawNessusFile)) {
+                        _logger.LogWarning("GetNessusPatchDataForReport({0}) system record has no Nessus patch file to use");
+                        return NotFound();
+                    }
+                    // load the NessusPatch XML into a List
+                    // do a count of Critical, High, and Medium and Low items
+                    // return the class of numbers for this
+                    _logger.LogInformation("GetNessusPatchDataForReport({0}) loading Nessus patch data file", systemGroupId);
+                    NessusPatchData patchData = NessusPatchLoader.LoadPatchData(sg.rawNessusFile);
+                    _logger.LogInformation("GetNessusPatchDataForReport({0}) querying Nessus patch data file for report", systemGroupId);
+
+                    _logger.LogInformation("Called GetNessusPatchDataForReport({0}) successfully", systemGroupId);
+                    return Ok(patchData);
+                }
+                catch (Exception ex) {
+                    _logger.LogError(ex, "GetNessusPatchDataForReport() Error getting data for the Nessus Data report for system {0}", systemGroupId);
+                    return BadRequest();
+                }
+            }
+            else {
+                _logger.LogWarning("Called GetNessusPatchDataForReport() with no system ID");
+                return BadRequest(); // no systemGroupId entered
+            }
+        }
+        
         #endregion
     }
 }

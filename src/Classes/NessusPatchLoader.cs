@@ -65,6 +65,7 @@ namespace openrmf_read_api.Classes
                             summary = new NessusPatchSummary();
                             // set the hostname
                             summary.hostname = hostname;
+                            // get all the attributes
                             foreach (XmlAttribute attr in colAttributes) {
                                 if (attr.Name == "severity") {
                                     // store the integer
@@ -77,6 +78,20 @@ namespace openrmf_read_api.Classes
                                     summary.family = attr.Value;
                                 }
                             }
+                            // get all the child record data we need
+                            foreach (XmlElement reportData in child.ChildNodes) {
+                                if (reportData.Name == "description")
+                                    summary.description = reportData.InnerText;
+                                else if (reportData.Name == "plugin_publication_date")
+                                    summary.publicationDate = reportData.InnerText;
+                                else if (reportData.Name == "plugin_type")
+                                    summary.pluginType = reportData.InnerText;
+                                else if (reportData.Name == "risk_factor")
+                                    summary.riskFactor = reportData.InnerText;
+                                else if (reportData.Name == "synopsis")
+                                    summary.synopsis = reportData.InnerText;
+                            }
+                            // add the record
                             summaryListing.Add(summary);
                         }
                     }
