@@ -48,17 +48,33 @@ namespace openrmf_read_api.Classes
             NessusPatchSummary summary = new NessusPatchSummary();
             XmlAttributeCollection colAttributes;
             string hostname = "";
+            string netbiosname = "";
             foreach (XmlNode node in nodes) {  
                 colAttributes = node.Attributes;
                 foreach (XmlAttribute attr in colAttributes) {
                     if (attr.Name == "name") {
-                        hostname = attr.Value;
+                        hostname = SanitizeHostname(attr.Value);
+                        break;
                     }
-                    break;
                 }              
                 if (node.ChildNodes.Count > 0) {
                     foreach (XmlElement child in node.ChildNodes) {
-                        if (child.Name == "ReportItem") {
+                        if (child.Name == "HostProperties") {
+                            // for each child node in here
+                            foreach (XmlElement hostChild in child.ChildNodes) {
+                                // get the child
+                                foreach (XmlAttribute childAttr in hostChild.Attributes) {
+                                    // cycle through attributes where attribute.innertext == netbios-name
+                                    if (childAttr.InnerText == "netbios-name") {
+                                        netbiosname = hostChild.InnerText; // get the outside child text;
+                                    } else if (childAttr.InnerText == "hostname") {
+                                        hostname = hostChild.InnerText; // get the outside child text;
+                                        break; // we are good to jump to report items if we can find this
+                                    }
+                                }// for each childAttr in hostChild
+                            } // for each hostChild
+                        }
+                        else if (child.Name == "ReportItem") {
                             // get the report host name
                             // get all ReportItems and their attributes in the tag 
                             colAttributes = child.Attributes;
@@ -98,6 +114,29 @@ namespace openrmf_read_api.Classes
                 }
             }
             return summaryListing;
+        }
+
+        /// <summary>
+        /// Called to remove the first two octets from an IP Address if this is an IP
+        /// </summary>
+        /// <param name="hostname">The hostname or IP of the system</param>
+        /// <returns>
+        /// The hostname if just a string, the IP address if an IP with xxx.xxx. to start 
+        /// the IP range. So the first two octets are hidden from view for security reasons.
+        /// </returns>
+        private static string SanitizeHostname(string hostname){
+            // if this is not an IP, just return the host
+            if (hostname.IndexOf(".") <= 0)
+                return hostname;
+            else {
+                System.Net.IPAddress hostAddress;
+                if (System.Net.IPAddress.TryParse(hostname.Trim(), out hostAddress)){
+                    // this is an IP address so return the last two octets
+                    return "xxx.xxx." + hostAddress.GetAddressBytes()[2] + "." + hostAddress.GetAddressBytes()[3];
+                }
+                else 
+                    return hostname;
+            }
         }
     }
 }
