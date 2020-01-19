@@ -1018,7 +1018,11 @@ namespace openrmf_read_api.Controllers
                                     newCell.StyleIndex = styleIndex;
                                     newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "AB" + rowNumber.ToString() };
                                     row.InsertBefore(newCell, refCell);
-                                    newCell.CellValue = new CellValue(v.STIG_DATA[24].ATTRIBUTE_DATA);
+                                    if (v.STIG_DATA[24].VULN_ATTRIBUTE == "CCI_REF"){
+                                        newCell.CellValue = new CellValue(v.STIG_DATA[24].ATTRIBUTE_DATA);
+                                    } else if (v.STIG_DATA.Count > 24 && v.STIG_DATA[25].VULN_ATTRIBUTE == "CCI_REF"){
+                                        newCell.CellValue = new CellValue(v.STIG_DATA[25].ATTRIBUTE_DATA);
+                                    }
                                     newCell.DataType = new EnumValue<CellValues>(CellValues.String);
                                     newCell.StyleIndex = styleIndex;
                                     sheetData.Append(row);
