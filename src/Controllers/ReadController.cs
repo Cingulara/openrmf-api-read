@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Cingulara LLC 2019 and Tutela LLC 2019. All rights reserved.
+// Licensed under the GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007 license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -33,21 +36,31 @@ namespace openrmf_read_api.Controllers
 
         #region System Functions and API calls
 
-        // GET /export
+        /// <summary>
+        /// GET The list of checklists for the given System ID
+        /// </summary>
+        /// <param name="system">The ID of the system to use</param>
+        /// <returns>
+        /// HTTP Status showing it was found or that there is an error. And the list of system records 
+        /// exported to an XLSX file to download.
+        /// </returns>
+        /// <response code="200">Returns the Artifact List of records for the passed in system in XLSX format</response>
+        /// <response code="400">If the item did not query correctly</response>
         [HttpGet("export")]
         [Authorize(Roles = "Administrator,Reader,Assessor")]
         public async Task<IActionResult> ExportChecklistListing(string system = null)
         {
             try {
+                _logger.LogInformation("Calling ExportChecklistListing({0})", system);
                 IEnumerable<Artifact> artifacts;
                 // if they pass in a system, get all for that system
                 if (string.IsNullOrEmpty(system))
                 {
-                    _logger.LogInformation("Getting a listing of all checklists to export to XLSX");
+                    _logger.LogInformation("ExportChecklistListing() Getting a listing of all checklists to export to XLSX");
                     artifacts = await _artifactRepo.GetAllArtifacts();
                 }
                 else {
-                    _logger.LogInformation(string.Format("Getting a listing of all {0} checklists to export to XLSX", system));
+                    _logger.LogInformation(string.Format("ExportChecklistListing() Getting a listing of all {0} checklists to export to XLSX", system));
                     artifacts = await _artifactRepo.GetSystemArtifacts(system);
                 }
                 if (artifacts != null && artifacts.Count() > 0) {
@@ -113,6 +126,7 @@ namespace openrmf_read_api.Controllers
                         Score checklistScore;
 
                         // cycle through the checklists and grab the score for each individually
+                        _logger.LogInformation("ExportChecklistListing({0}) cycling through checklists to list", system);
                         foreach (Artifact art in artifacts.OrderBy(x => x.title).OrderBy(y => y.systemTitle).ToList()) {
                             art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist);
                             try {
@@ -246,175 +260,526 @@ namespace openrmf_read_api.Controllers
                         // Close the document.
                         spreadSheet.Close();
                         memory.Seek(0, SeekOrigin.Begin);
+                        _logger.LogInformation("Called ExportChecklistListing({0}) successfully", system);
                         return File(memory, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "ChecklistListing.xlsx");
                     }
                 }
                 else {
+                    _logger.LogInformation("Calling ExportChecklistListing({0}) but had no checklists to show", system);
                     return NotFound();
                 }
             }
             catch (Exception ex) {
-                _logger.LogError(ex, "Error Retrieving Artifacts for Exporting");
+                _logger.LogError(ex, "ExportChecklistListing({0}) Error Retrieving Artifacts for Exporting", system);
                 return NotFound();
             }
         } 
-
-        // GET the distinct list of systems
+        
+        /// <summary>
+        /// GET The list of systems in the database
+        /// </summary>
+        /// <returns>
+        /// HTTP Status showing it was found or that there is an error. And the list of system records.
+        /// </returns>
+        /// <response code="200">Returns the System List of records</response>
+        /// <response code="400">If the item did not query correctly</response>
+        /// <response code="404">If there are no systems yet</response>
         [HttpGet("systems")]
         [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
         public async Task<IActionResult> ListArtifactSystems()
         {
             try {
+                _logger.LogInformation("Calling ListArtifactSystems()");
                 IEnumerable<SystemGroup> systems;
                 systems = await _systemGroupRepo.GetAllSystemGroups();
+                if (systems == null) {
+                    _logger.LogWarning("Calling ListArtifactSystems() returned 0 systems");
+                    return NotFound();
+                }
+                _logger.LogInformation("Called ListArtifactSystems() successfully");
+                foreach(SystemGroup sys in systems) {
+                    // remove the Nessus file as we don't need it
+                    sys.rawNessusFile = "";
+                }
                 return Ok(systems);
             }
             catch (Exception ex) {
-                _logger.LogError(ex, "Error listing all checklist systems");
+                _logger.LogError(ex, "ListArtifactSystems() Error listing all checklist systems");
                 return BadRequest();
             }
         }
         
-        // GET the list of checklist records for a systems
+        /// <summary>
+        /// GET The list of checklists for the given System ID
+        /// </summary>
+        /// <param name="systemGroupId">The ID of the system to use</param>
+        /// <returns>
+        /// HTTP Status showing it was found or that there is an error. And the list of checklists records.
+        /// </returns>
+        /// <response code="200">Returns the Artifact List of records</response>
+        /// <response code="400">If the item did not query correctly</response>
+        /// <response code="404">If the ID passed in is not valid</response>
         [HttpGet("systems/{systemGroupId}")]
         [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
         public async Task<IActionResult> ListArtifactsBySystem(string systemGroupId)
         {
             if (!string.IsNullOrEmpty(systemGroupId)) {
                 try {
+                    _logger.LogInformation("Calling ListArtifactsBySystem({0})", systemGroupId);
                     IEnumerable<Artifact> systemChecklists;
                     systemChecklists = await _artifactRepo.GetSystemArtifacts(systemGroupId);
-                    // we do not need all the data for the raw checklist in the listing
+                    if (systemChecklists == null) {
+                        _logger.LogWarning("Calling ListArtifactsBySystem({0}) returned no checklists", systemGroupId);
+                        return NotFound();
+                    }
+                    // we do not need all the data for the raw checklist in the listing, too bloated
                     foreach(Artifact a in systemChecklists) {
                         a.rawChecklist = "";
                     }
-
+                    _logger.LogInformation("Called ListArtifactsBySystem({0}) successfully", systemGroupId);
                     return Ok(systemChecklists);
                 }
                 catch (Exception ex) {
-                    _logger.LogError(ex, "Error listing all checklists for system {0}", systemGroupId);
+                    _logger.LogError(ex, "ListArtifactsBySystem() Error listing all checklists for system {0}", systemGroupId);
                     return BadRequest();
                 }
             }
-            else
+            else {
+                _logger.LogWarning("Called ListArtifactsBySystem() with no system ID");
                 return BadRequest(); // no systemGroupId entered
+            }
         }
         
-        // GET the list of checklist records for a systems
+        /// <summary>
+        /// GET The system record based on the ID.
+        /// </summary>
+        /// <param name="systemGroupId">The ID of the system to use</param>
+        /// <returns>
+        /// HTTP Status showing it was found or that there is an error. And the system record data.
+        /// </returns>
+        /// <response code="200">Returns the SystemGroup record</response>
+        /// <response code="400">If the item did not query correctly</response>
+        /// <response code="404">If the ID passed in is not valid</response>
         [HttpGet("system/{systemGroupId}")]
         [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
         public async Task<IActionResult> GetSystem(string systemGroupId)
         {
+            _logger.LogInformation("Calling GetSystem({0})", systemGroupId);
             if (!string.IsNullOrEmpty(systemGroupId)) {
                 try {
                     SystemGroup systemRecord;
                     systemRecord = await _systemGroupRepo.GetSystemGroup(systemGroupId);
+                    if (systemRecord == null) {                        
+                        _logger.LogWarning("Calling GetSystem({0}) with an invalid system ID", systemGroupId);
+                        return NotFound();
+                    }
+                    _logger.LogInformation("Called GetSystem({0}) successfully", systemGroupId);
                     return Ok(systemRecord);
                 }
                 catch (Exception ex) {
-                    _logger.LogError(ex, "Error getting the system record for {0}", systemGroupId);
+                    _logger.LogError(ex, "GetSystem() Error getting the system record for {0}", systemGroupId);
                     return BadRequest();
                 }
             }
-            else
+            else {
+                _logger.LogWarning("Calling GetSystem() with no System ID");
                 return BadRequest(); // no systemGroupId entered
+            }
         }
 
-        // download the Nessus scan file in XML to *.nessus
-        [HttpGet("/system/downloadnessus/{systemGroupId}")]
+        /// <summary>
+        /// GET Download the Nessus file for the system, if any
+        /// </summary>
+        /// <param name="systemGroupId">The ID of the system to use</param>
+        /// <returns>
+        /// HTTP Status showing it was found or that there is an error. And the nessus file downloaded as a 
+        /// .nessus text file, basically XML.
+        /// </returns>
+        /// <response code="200">Returns the Nessus file in XML format</response>
+        /// <response code="400">If the item did not query correctly</response>
+        /// <response code="404">If the ID passed in is not valid or the Nessus file is not there</response>
+        [HttpGet("/system/{systemGroupId}/downloadnessus")]
         [Authorize(Roles = "Administrator,Editor,Download")]
         public async Task<IActionResult> DownloadSystemNessus(string systemGroupId)
         {
             try {
+                _logger.LogInformation("Calling DownloadSystemNessus({0})", systemGroupId);
                 SystemGroup sg = new SystemGroup();
                 sg = await _systemGroupRepo.GetSystemGroup(systemGroupId);
                 if (sg != null) {
-                    if (!string.IsNullOrEmpty(sg.rawNessusFile))
+                    if (!string.IsNullOrEmpty(sg.rawNessusFile)) {
+                        _logger.LogInformation("Called DownloadSystemNessus({0}) successfully", systemGroupId);
                         return Ok(sg.rawNessusFile);
-                    else
+                    }
+                    else {
+                        _logger.LogWarning("Calling DownloadSystemNessus({0}) returned an empty Nessus file", systemGroupId);
                         return NotFound();
+                    }
                 }
-                else 
+                else {
+                    _logger.LogWarning("Calling DownloadSystemNessus({0}) with an invalid System ID", systemGroupId);
                     return NotFound();
+                }
             }
             catch (Exception ex) {
-                _logger.LogError(ex, "Error Retrieving System Nessus file for Download");
+                _logger.LogError(ex, "DownloadSystemNessus() Error Retrieving System Nessus file for Download");
                 return NotFound();
             }
         }
+
+        /// <summary>
+        /// GET The count of patch information from the attached Nessus scan file, if there.
+        /// </summary>
+        /// <param name="systemGroupId">The ID of the system to use</param>
+        /// <returns>
+        /// HTTP Status showing it was found or that there is an error. And the count of 
+        /// critical, high, medium, low, and info items from the Nessus ACAS Patch scan.
+        /// </returns>
+        /// <response code="200">Returns the count of records</response>
+        /// <response code="400">If the item did not query correctly</response>
+        /// <response code="404">If the ID passed in does not have a valid Nessus file</response>
+        [HttpGet("system/{systemGroupId}/nessuspatchsummary")]
+        [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
+        public async Task<IActionResult> GetNessusPatchSummary(string systemGroupId)
+        {
+            if (!string.IsNullOrEmpty(systemGroupId)) {
+                try {
+                    _logger.LogInformation("Calling GetNessusPatchSummary({0})", systemGroupId);
+                    SystemGroup sg = new SystemGroup();
+                    sg = await _systemGroupRepo.GetSystemGroup(systemGroupId);
+                    if (sg == null) {
+                        _logger.LogWarning("GetNessusPatchSummary({0}) an invalid system record");
+                        return NotFound();
+                    }
+                    if (string.IsNullOrEmpty(sg.rawNessusFile)) {
+                        _logger.LogWarning("GetNessusPatchSummary({0}) system record has no Nessus patch file to use");
+                        return NotFound();
+                    }
+                    // load the NessusPatch XML into a List
+                    // do a count of Critical, High, and Medium and Low items
+                    // return the class of numbers for this
+                    _logger.LogInformation("GetNessusPatchSummary({0}) loading Nessus patch data file", systemGroupId);
+                    NessusPatchData patchData = NessusPatchLoader.LoadPatchData(sg.rawNessusFile);
+                    _logger.LogInformation("GetNessusPatchSummary({0}) querying Nessus patch data file for counts", systemGroupId);
+
+                    NessusPatchCount patchCount = new NessusPatchCount();
+                    if (patchData.summary.Count > 0) {
+                        patchCount.totalCriticalOpen = patchData.summary.Where(x => x.severity == 4).Count();
+                        patchCount.totalHighOpen = patchData.summary.Where(x => x.severity == 3).Count();
+                        patchCount.totalMediumOpen = patchData.summary.Where(x => x.severity == 2).Count();
+                        patchCount.totalLowOpen = patchData.summary.Where(x => x.severity == 1).Count();;
+                        patchCount.totalInfoOpen = patchData.summary.Where(x => x.severity == 0).Count();
+                    }
+
+                    _logger.LogInformation("Called GetNessusPatchSummary({0}) successfully", systemGroupId);
+                    return Ok(patchCount);
+                }
+                catch (Exception ex) {
+                    _logger.LogError(ex, "GetNessusPatchSummary() Error getting the Nessus patch summary data for system {0}", systemGroupId);
+                    return BadRequest();
+                }
+            }
+            else {
+                _logger.LogWarning("Called GetNessusPatchSummary() with no system ID");
+                return BadRequest(); // no systemGroupId entered
+            }
+        }
+        
+        /// <summary>
+        /// GET The XLSX export of patch information from the attached Nessus scan file, if there.
+        /// </summary>
+        /// <param name="systemGroupId">The ID of the system to use</param>
+        /// <param name="summaryOnly">Show only a summary view? or include the hosts as well?</param>
+        /// <returns>
+        /// HTTP Status showing it was found or that there is an error. And the XLSX summary of 
+        /// critical, high, medium, low, and info items from the Nessus ACAS Patch scan.
+        /// </returns>
+        /// <response code="200">Returns the count of records</response>
+        /// <response code="400">If the item did not query correctly</response>
+        /// <response code="404">If the ID passed in does not have a valid Nessus file</response>
+        [HttpGet("system/{systemGroupId}/exportnessus")]
+        [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
+        public async Task<IActionResult> ExportNessusPatchSummary(string systemGroupId, bool summaryOnly)
+        {
+            if (!string.IsNullOrEmpty(systemGroupId)) {
+                try {
+                    _logger.LogInformation("Calling ExportNessusPatchSummary({0})", systemGroupId);
+                    SystemGroup sg = new SystemGroup();
+                    sg = await _systemGroupRepo.GetSystemGroup(systemGroupId);
+                    if (sg == null) {
+                        _logger.LogWarning("ExportNessusPatchSummary({0}) an invalid system record");
+                        return NotFound();
+                    }
+                    if (string.IsNullOrEmpty(sg.rawNessusFile)) {
+                        _logger.LogWarning("ExportNessusPatchSummary({0}) system record has no Nessus patch file to use");
+                        return NotFound();
+                    }
+                    // load the NessusPatch XML into a List
+                    // do a count of Critical, High, and Medium and Low items
+                    // return the class of numbers for this
+                    _logger.LogInformation("ExportNessusPatchSummary({0}) loading Nessus patch data file", systemGroupId);
+                    NessusPatchData patchData = NessusPatchLoader.LoadPatchData(sg.rawNessusFile);
+                    _logger.LogInformation("ExportNessusPatchSummary({0}) querying Nessus patch data file for counts", systemGroupId);
+                    
+                    // generate the XLSX file from this
+                    
+                    // starting row number for data
+                    uint rowNumber = 7;
+
+                    // create the XLSX in memory and send it out
+                    var memory = new MemoryStream();
+                    using (SpreadsheetDocument spreadSheet = SpreadsheetDocument.Create(memory, SpreadsheetDocumentType.Workbook))
+                    {
+                        // Add a WorkbookPart to the document.
+                        WorkbookPart workbookpart = spreadSheet.AddWorkbookPart();
+                        workbookpart.Workbook = new Workbook();
+                        
+                        // add styles to workbook
+                        WorkbookStylesPart wbsp = workbookpart.AddNewPart<WorkbookStylesPart>();
+
+                        // Add a WorksheetPart to the WorkbookPart.
+                        WorksheetPart worksheetPart = workbookpart.AddNewPart<WorksheetPart>();
+                        worksheetPart.Worksheet = new Worksheet(new SheetData());
+
+                        // add stylesheet to use cell formats 1 - 4
+                        wbsp.Stylesheet = ExcelStyleSheet.GenerateStylesheet();
+
+                        // generate the column listings we need with custom widths
+                        DocumentFormat.OpenXml.Spreadsheet.Columns lstColumns = worksheetPart.Worksheet.GetFirstChild<DocumentFormat.OpenXml.Spreadsheet.Columns>();
+                        if (lstColumns == null) {
+                            lstColumns = new DocumentFormat.OpenXml.Spreadsheet.Columns();
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 1, Max = 1, Width = 20, CustomWidth = true }); // col A
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 2, Max = 2, Width = 80, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 3, Max = 3, Width = 40, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 4, Max = 4, Width = 30, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 5, Max = 5, Width = 20, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 6, Max = 6, Width = 20, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 7, Max = 7, Width = 60, CustomWidth = true });
+                            worksheetPart.Worksheet.InsertAt(lstColumns, 0);
+                        }
+
+                        // Add Sheets to the Workbook.
+                        Sheets sheets = spreadSheet.WorkbookPart.Workbook.AppendChild<Sheets>(new Sheets());
+
+                        // Append a new worksheet and associate it with the workbook.
+                        Sheet sheet = new Sheet() { Id = spreadSheet.WorkbookPart.
+                            GetIdOfPart(worksheetPart), SheetId = 1, Name = "Nessus-Patch-Summary" };
+                        sheets.Append(sheet);
+                        // Get the sheetData cell table.
+                        SheetData sheetData = worksheetPart.Worksheet.GetFirstChild<SheetData>();
+                        DocumentFormat.OpenXml.Spreadsheet.Cell refCell = null;
+                        DocumentFormat.OpenXml.Spreadsheet.Cell newCell = null;
+
+                        DocumentFormat.OpenXml.Spreadsheet.Row row = MakeTitleRow("OpenRMF by Cingulara and Tutela");
+                        sheetData.Append(row);
+                        row = MakeChecklistInfoRow("Nessus Patch Summary Export", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss tt"),2);
+                        sheetData.Append(row);
+                        row = MakeChecklistInfoRow("System Name", sg.title,3);
+                        sheetData.Append(row);
+                        row = MakeChecklistInfoRow("Report Name", patchData.reportName,4);
+                        sheetData.Append(row);
+                        row = MakeNessusSummaryHeaderRows(rowNumber, summaryOnly);
+                        sheetData.Append(row);
+
+                        uint styleIndex = 0; // use this for 4, 5, 6, or 7 for status
+
+                        // cycle through the vulnerabilities to export into columns
+                        _logger.LogInformation("ExportNessusPatchSummary() grouping the patch information by host");
+                        // group all the results by hostname, pluginId, pluginName, Family, and severity and count the totals per hostname
+                        List<NessusPatchSummary> reportSummaryFinal = patchData.summary.GroupBy(x => new {x.hostname, x.pluginId, x.pluginName, x.family, x.severity})
+                            .Select(g => new NessusPatchSummary {
+                                hostname = g.Key.hostname, 
+                                pluginId = g.Key.pluginId, 
+                                pluginName = g.Key.pluginName, 
+                                family = g.Key.family, 
+                                severity = g.Key.severity, 
+                                total = g.Count()}).ToList();
+                        if (summaryOnly) {
+                            _logger.LogInformation("ExportNessusPatchSummary() grouping the patch information for summary only (no hosts)");
+                            // now sum the total, but get all the other data minus hostname. Count the hostnames used though per plugin grouping
+                            reportSummaryFinal = reportSummaryFinal.GroupBy(x => new {x.pluginId, x.pluginName, x.family, x.severity})
+                                .Select(g => new NessusPatchSummary {
+                                    pluginId = g.Key.pluginId, 
+                                    pluginName = g.Key.pluginName, 
+                                    family = g.Key.family, 
+                                    severity = g.Key.severity, 
+                                    hostTotal = g.Count(),
+                                    total = g.Sum(z => z.total)}).ToList();
+                        }
+
+                        _logger.LogInformation("ExportNessusPatchSummary() making the XLSX Summary for the patch information");
+                        // make this go in reverse order of severity, 4 to 0
+                        foreach (NessusPatchSummary summary in reportSummaryFinal.OrderBy(y => y.pluginIdSort).OrderByDescending(x => x.severity).ToList()) {
+                            // if this is a regular checklist, make sure the filter for VULN ID is checked before we add this to the list
+                            // if this is from a compliance listing, only add the VULN IDs from the control to the listing
+                            // the VULN has a CCI_REF field where the attribute would be the value in the cciList if it is valid
+                            rowNumber++;                            
+                            styleIndex = GetPatchScanStatus(summary.severity);
+                            // make a new row for this set of items
+                            row = MakeDataRow(rowNumber, "A", summary.pluginId, styleIndex);
+                            // now cycle through the rest of the items
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "B" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue(summary.pluginName);
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = styleIndex;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "C" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue(summary.family);
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = styleIndex;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "D" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue(summary.severityName);
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = styleIndex;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            if (summaryOnly) 
+                                newCell.CellValue = new CellValue(summary.hostTotal.ToString());
+                            else 
+                                newCell.CellValue = new CellValue("1"); // we are doing this by host, so host total is 1
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                            newCell.StyleIndex = styleIndex;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "F" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue(summary.total.ToString());
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                            newCell.StyleIndex = styleIndex;
+                            // only print the hostname if not just a summary
+                            if (!summaryOnly) {
+                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "G" + rowNumber.ToString() };
+                                row.InsertBefore(newCell, refCell);
+                                newCell.CellValue = new CellValue(summary.hostname);
+                                newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                                newCell.StyleIndex = styleIndex;
+                            }
+                            sheetData.Append(row);
+                        }
+
+                        // Save the new worksheet.
+                        workbookpart.Workbook.Save();
+                        // Close the document.
+                        spreadSheet.Close();
+                        // set the filename
+                        string filename = sg.title + "-NessusNessusScanSummary";
+                        memory.Seek(0, SeekOrigin.Begin);
+                        _logger.LogInformation("Called ExportNessusPatchSummary({0}) successfully", systemGroupId);
+                        return File(memory, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", CreateXLSXFilename(filename));
+                    }
+                }
+                catch (Exception ex) {
+                    _logger.LogError(ex, "ExportNessusPatchSummary() Error getting the Nessus scan XLSX export for system {0}", systemGroupId);
+                    return BadRequest();
+                }
+            }
+            else {
+                _logger.LogWarning("Called ExportNessusPatchSummary() with no system ID");
+                return BadRequest(); // no systemGroupId entered
+            }
+        }        
 
         #endregion
 
         #region Artifacts and Checklists
 
-        // GET the listing with Ids of the Checklist artifacts, but without all the extra XML
-        [HttpGet]
-        [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
-        public async Task<IActionResult> ListArtifacts()
-        {
-            try {
-                IEnumerable<Artifact> artifacts;
-                artifacts = await _artifactRepo.GetAllArtifacts();
-                foreach (Artifact a in artifacts) {
-                    a.rawChecklist = string.Empty;
-                }
-                return Ok(artifacts.OrderBy(x => x.title).OrderBy(y => y.systemTitle).ToList());
-            }
-            catch (Exception ex) {
-                _logger.LogError(ex, "Error listing all artifacts and deserializing the checklist XML");
-                return BadRequest();
-            }
-        }
-
-        // GET /value
+        /// <summary>
+        /// GET Called from the OpenRMF UI (or external access) to return a checklist record . 
+        /// </summary>
+        /// <param name="id">The ID of the checklist to use</param>
+        /// <returns>
+        /// HTTP Status showing it was generated or that there is an error. And the checklist full record
+        /// with all metadata.
+        /// </returns>
+        /// <response code="200">Returns the checklist data in CKL/XML format</response>
+        /// <response code="400">If the item did not query correctly</response>
+        /// <response code="404">If the ID passed in is not valid</response>
         [HttpGet("artifact/{id}")]
         [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
         public async Task<IActionResult> GetArtifact(string id)
         {
             try {
+                _logger.LogInformation("Calling GetArtifact({0})", id);
                 Artifact art = new Artifact();
                 art = await _artifactRepo.GetArtifact(id);
+                if (art == null) {
+                    _logger.LogWarning("Called GetArtifact({0}) with an invalid Artifact ID", id);
+                    return NotFound();
+                }
                 art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist.Replace("\t","").Replace(">\n<","><"));
                 art.rawChecklist = string.Empty;
+                _logger.LogInformation("Called GetArtifact({0}) successfully", id);
                 return Ok(art);
             }
             catch (Exception ex) {
-                _logger.LogError(ex, "Error Retrieving Artifact");
-                return NotFound();
+                _logger.LogError(ex, "GetArtifact({0}) Error Retrieving Artifact", id);
+                return BadRequest();
             }
         }
-        
-        // GET /download/value
-        // export the checklist .CKL file to use in the JAVA viewer
+
+        /// <summary>
+        /// GET Called from the OpenRMF UI (or external access) to export a checklist to its native CKL format. 
+        /// </summary>
+        /// <param name="id">The ID of the checklist to use</param>
+        /// <returns>
+        /// HTTP Status showing it was generated or that there is an error. And the checklist in a valid 
+        /// CKL file downloaded to the user. This file can be used elsewhere as in the DISA Java STIG viewer.
+        /// </returns>
+        /// <response code="200">Returns the checklist data in CKL/XML format</response>
+        /// <response code="400">If the item did not query correctly</response>
+        /// <response code="404">If the ID passed in is not valid</response>
         [HttpGet("download/{id}")]
         [Authorize(Roles = "Administrator,Editor,Assessor,Reader")]
         public async Task<IActionResult> DownloadChecklist(string id)
         {
             try {
+                _logger.LogInformation("Calling DownloadChecklist({0})", id);
                 Artifact art = new Artifact();
                 art = await _artifactRepo.GetArtifact(id);
+                if (art == null) {
+                    _logger.LogWarning("Called DownloadChecklist({0}) with an invalid Artifact ID", id);
+                    return NotFound();
+                }
+                _logger.LogInformation("Called DownloadChecklist({0}) successfully", id);
                 return Ok(art.rawChecklist);
             }
             catch (Exception ex) {
-                _logger.LogError(ex, "Error Retrieving Artifact for Download");
-                return NotFound();
+                _logger.LogError(ex, "DownloadChecklist({0}) Error Retrieving Artifact for Download", id);
+                return BadRequest();
             }
         }
-        
-        // GET /export/value
-        // export the checklist data to an EXCEL XLSX file
+
+        /// <summary>
+        /// GET Called from the OpenRMF UI (or external access) to export a checklist and the valid vulnerabilities to 
+        /// MS Excel format. 
+        /// </summary>
+        /// <param name="id">The ID of the checklist to use</param>
+        /// <param name="nf">Include Not a Finding Vulnerabilities</param>
+        /// <param name="open">Include Open Vulnerabilities</param>
+        /// <param name="na">Include Not Applicable Vulnerabilities</param>
+        /// <param name="nr">Include Not Reviewed Vulnerabilities</param>
+        /// <param name="ctrl">Include Vulnerabilities only linked to a specific control</param>
+        /// <returns>
+        /// HTTP Status showing it was generated or that there is an error. And the checklist with all relevant
+        /// vulnerabilities in a valid XLSX file downloaded to the user.
+        /// </returns>
+        /// <response code="200">Returns the checklist data in XLSX format</response>
+        /// <response code="400">If the item did not query correctly</response>
+        /// <response code="404">If the ID passed in is not valid</response>
         [HttpPost("export/{id}")]
         [Authorize(Roles = "Administrator,Editor,Assessor,Reader")]
         public async Task<IActionResult> ExportChecklist(string id, bool nf, bool open, bool na, bool nr, string ctrl)
         {
             try {
+                _logger.LogInformation("Calling ExportChecklist({0}, {1}, {2}, {3}, {4}, {5})", id, nf.ToString(), open.ToString(), na.ToString(), nr.ToString(), ctrl);
                 if (!string.IsNullOrEmpty(id)) {
                     Artifact art = new Artifact();
                     art = await _artifactRepo.GetArtifact(id);
                     if (art != null && art.CHECKLIST != null) {
                         List<string> cciList = new List<string>();
+                        _logger.LogInformation("ExportChecklist({0}....) formatting the checklist to XML from the raw string format");
                         art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist);
-
+                        _logger.LogInformation("ExportChecklist({0}....) checklist formatted");
                         // starting row number for data
                         uint rowNumber = 10;
 
@@ -502,10 +867,13 @@ namespace openrmf_read_api.Controllers
                             uint styleIndex = 0; // use this for 4, 5, 6, or 7 for status
                             // if this is from a compliance generated listing link to a checklist, go grab all the CCIs for that control
                             // as we are only exporting through VULN IDs that are related to that CCI
-                            if (!string.IsNullOrEmpty(ctrl))
+                            if (!string.IsNullOrEmpty(ctrl)) {
+                                _logger.LogInformation("ExportChecklist() generating the CCI Listing for {0}", ctrl);
                                 cciList = NATSClient.GetCCIListing(ctrl);
+                            }
 
-                            // cycle through the vulnerabilities to export into columns
+                            // cycle through the vulnerabilities to export into columns                            
+                            _logger.LogInformation("ExportChecklist() cycling through all the vulnerabilities");
                             foreach (VULN v in art.CHECKLIST.STIGS.iSTIG.VULN) {
                                 // if this is a regular checklist, make sure the filter for VULN ID is checked before we add this to the list
                                 // if this is from a compliance listing, only add the VULN IDs from the control to the listing
@@ -514,7 +882,7 @@ namespace openrmf_read_api.Controllers
                                         (!string.IsNullOrEmpty(ctrl) && 
                                         v.STIG_DATA.Where(x => x.VULN_ATTRIBUTE == "CCI_REF" && cciList.Contains(x.ATTRIBUTE_DATA)).FirstOrDefault() != null))  {
                                     rowNumber++;
-                                    styleIndex = GetVulnerabilitiStatus(v.STATUS);
+                                    styleIndex = GetVulnerabilityStatus(v.STATUS);
                                     // make a new row for this set of items
                                     row = MakeDataRow(rowNumber, "A", v.STIG_DATA[0].ATTRIBUTE_DATA, styleIndex);
                                     // now cycle through the rest of the items
@@ -650,7 +1018,11 @@ namespace openrmf_read_api.Controllers
                                     newCell.StyleIndex = styleIndex;
                                     newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "AB" + rowNumber.ToString() };
                                     row.InsertBefore(newCell, refCell);
-                                    newCell.CellValue = new CellValue(v.STIG_DATA[24].ATTRIBUTE_DATA);
+                                    if (v.STIG_DATA[24].VULN_ATTRIBUTE == "CCI_REF"){
+                                        newCell.CellValue = new CellValue(v.STIG_DATA[24].ATTRIBUTE_DATA);
+                                    } else if (v.STIG_DATA.Count > 24 && v.STIG_DATA[25].VULN_ATTRIBUTE == "CCI_REF"){
+                                        newCell.CellValue = new CellValue(v.STIG_DATA[25].ATTRIBUTE_DATA);
+                                    }
                                     newCell.DataType = new EnumValue<CellValues>(CellValues.String);
                                     newCell.StyleIndex = styleIndex;
                                     sheetData.Append(row);
@@ -667,21 +1039,23 @@ namespace openrmf_read_api.Controllers
                                 filename = art.systemTitle.Trim() + "-" + filename; // add the system onto the front
                             // return the file
                             memory.Seek(0, SeekOrigin.Begin);
+                            _logger.LogInformation("Called ExportChecklist({0}, {1}, {2}, {3}, {4}, {5}) successfully", id, nf.ToString(), open.ToString(), na.ToString(), nr.ToString(), ctrl);
                             return File(memory, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", CreateXLSXFilename(filename));
                         }
                     }
-                    else {
+                    else {                        
+                        _logger.LogWarning("Calling ExportChecklist({0}, {1}, {2}, {3}, {4}, {5}) with an invalid Artifact ID", id, nf.ToString(), open.ToString(), na.ToString(), nr.ToString(), ctrl);
                         return NotFound();
                     }
                 }
                 else { // did not pass in an id
-                    _logger.LogInformation("Did not pass in an id in the Export of a single checklist.");
+                    _logger.LogWarning("ExportChecklist() Did not pass in an Artifact ID in the Export of a single checklist.");
                     return BadRequest();
                 }
             }
             catch (Exception ex) {
-                _logger.LogError(ex, "Error Retrieving Artifact for Exporting");
-                return NotFound();
+                _logger.LogError(ex, "ExportChecklist({0} Error Retrieving Artifact for Exporting", id);
+                return BadRequest();
             }
         } 
 
@@ -704,14 +1078,28 @@ namespace openrmf_read_api.Controllers
             return false;
         }
 
-        // GET /value
+        /// <summary>
+        /// GET Called from the OpenRMF UI (or external access) to return the list of vulnerability IDs in 
+        /// a checklist filtered by the control they are linked to.
+        /// </summary>
+        /// <param name="id">The ID of the checklist to use</param>
+        /// <param name="control">The control to filter the vulnerabilities on</param>
+        /// <returns>
+        /// HTTP Status showing it was generated or that there is an error. And the list of VULN IDs for
+        /// this control on this checklist. Usually called from clicking an individual checklist on the 
+        /// Compliance page in the UI.
+        /// </returns>
+        /// <response code="200">Returns the list of vulnerability IDs for the control</response>
+        /// <response code="400">If the item did not query correctly</response>
+        /// <response code="404">If the ID passed in is not valid</response>
         [HttpGet("{id}/control/{control}")]
         [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
         public async Task<IActionResult> GetArtifactVulnIdsByControl(string id, string control)
         {
             try {
+                _logger.LogInformation("Calling GetArtifactVulnIdsByControl({0}, {1})", id, control);
                 if (!string.IsNullOrEmpty(id) && !string.IsNullOrEmpty(control)) {
-                    _logger.LogInformation("Invalid Artifact Id {0} or Control {1}", id, control);
+                    _logger.LogInformation("GetArtifactVulnIdsByControl() Invalid Artifact Id {0} or Control {1}", id, control);
                     Artifact art = new Artifact();
                     art = await _artifactRepo.GetArtifact(id);
                     art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist);
@@ -728,21 +1116,24 @@ namespace openrmf_read_api.Controllers
                                 vulnIds.Add(v.STIG_DATA.Where(y => y.VULN_ATTRIBUTE == "Vuln_Num").FirstOrDefault().ATTRIBUTE_DATA); // add the V-xxxx number
                             }
                         }
+                        _logger.LogInformation("Called GetArtifactVulnIdsByControl({0}, {1}) successfully", id, control);
                         return Ok(vulnIds.Distinct().OrderBy(z => z).ToList());
                     }
-                    else
-                        return BadRequest();
+                    else {
+                        _logger.LogWarning("Called GetArtifactVulnIdsByControl({0}, {1}) but returned an empty CCI Listing", id, control);
+                        return NotFound();
+                    }
                 }
                 else {
                     // log the values passed in
-                    _logger.LogWarning("Invalid Artifact Id {0} or Control {1}", 
+                    _logger.LogWarning("GetArtifactVulnIdsByControl() Invalid Artifact Id {0} or Control {1}", 
                         !string.IsNullOrEmpty(id)? id : "null", !string.IsNullOrEmpty(control)? control : "null");
-                    return BadRequest();    
+                    return NotFound();    
                 }
             }
             catch (Exception ex) {
-                _logger.LogError(ex, "Error Retrieving Artifact");
-                return NotFound();
+                _logger.LogError(ex, "Called GetArtifactVulnIdsByControl({0}, {1}) Error Retrieving Artifact", id, control);
+                return BadRequest();
             }
         }
 
@@ -939,6 +1330,56 @@ namespace openrmf_read_api.Controllers
             newCell.StyleIndex = styleIndex;
             return row;
         }
+        private DocumentFormat.OpenXml.Spreadsheet.Row MakeNessusSummaryHeaderRows(uint rowindex, bool summaryOnly) {
+            DocumentFormat.OpenXml.Spreadsheet.Cell refCell = null;
+            DocumentFormat.OpenXml.Spreadsheet.Row row = new DocumentFormat.OpenXml.Spreadsheet.Row() { RowIndex = rowindex };
+            DocumentFormat.OpenXml.Spreadsheet.Cell newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "A" + rowindex.ToString() };
+            uint styleIndex = 3;
+
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Plugin ID");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "B" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Plugin Name");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "C" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Family");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "D" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Severity");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Host Total");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "F" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Total");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            if (!summaryOnly) {
+                // next column
+                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "G" + rowindex.ToString() };
+                row.InsertBefore(newCell, refCell);
+                newCell.CellValue = new CellValue("Host");
+                newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                newCell.StyleIndex = styleIndex;
+            }
+            return row;
+        }
         private DocumentFormat.OpenXml.Spreadsheet.Row MakeDataRow(uint rowNumber, string cellReference, string value, uint styleIndex) {
             DocumentFormat.OpenXml.Spreadsheet.Row row = new DocumentFormat.OpenXml.Spreadsheet.Row() { RowIndex = rowNumber };
             DocumentFormat.OpenXml.Spreadsheet.Cell refCell = null;
@@ -991,7 +1432,7 @@ namespace openrmf_read_api.Controllers
             newCell.StyleIndex = 11;
             return row;
         }
-        private uint GetVulnerabilitiStatus(string status) {
+        private uint GetVulnerabilityStatus(string status) {
             // open = 4, N/A = 5, NotAFinding = 6, Not Reviewed = 7
             if (status.ToLower() == "not_reviewed")
                 return 7U;
@@ -1002,61 +1443,157 @@ namespace openrmf_read_api.Controllers
             // catch all
             return 6U;
         }
+        private uint GetPatchScanStatus(int severity) {
+            // critical or high = 3 or 4, medium = 2, low = 1, informational = 0
+            if (severity > 2)
+                return 4U;
+            // catch all informational
+            return 7U;
+        }
         #endregion
 
         /******************************************
         * Dashboard Specific API calls
-        */
+        ******************************************/
         #region Dashboard APIs
-        // GET /count
-        [HttpGet("count")]
+
+        /// <summary>
+        /// GET Called from the OpenRMF UI (or external access) dashboard to return the number of 
+        /// total artifacts/checklists within the database.
+        /// </summary>
+        /// <returns>
+        /// HTTP Status showing it was searched correctly and the count of the artifacts. Or that there is an error.
+        /// </returns>
+        /// <response code="200">Returns the list of checklists and their count</response>
+        /// <response code="400">If the item did not search correctly</response>
+        [HttpGet("count/artifacts")]
         [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
-        public async Task<IActionResult> CountArtifacts(string id)
+        public async Task<IActionResult> CountArtifacts()
         {
             try {
+                _logger.LogInformation("Calling CountArtifacts()");
                 long result = await _artifactRepo.CountChecklists();
+                _logger.LogInformation("Called CountArtifacts() successfully for {0} items", result.ToString());
                 return Ok(result);
             }
             catch (Exception ex) {
-                _logger.LogError(ex, "Error Retrieving Artifact Count in MongoDB");
-                return NotFound();
-            }
-        }
-        // GET /latest
-        [HttpGet("latest/{number}")]
-        [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
-        public async Task<IActionResult> GetLatestArtifacts(int number)
-        {
-            try {
-                IEnumerable<Artifact> artifacts;
-                artifacts = await _artifactRepo.GetLatestArtifacts(number);
-                foreach (Artifact a in artifacts) {
-                    a.rawChecklist = string.Empty;
-                }
-                return Ok(artifacts);
-            }
-            catch (Exception ex) {
-                _logger.LogError(ex, "Error listing latest {0} artifacts and deserializing the checklist XML", number.ToString());
+                _logger.LogError(ex, "CountArtifacts() Error Retrieving Artifact Count in MongoDB");
                 return BadRequest();
             }
         }
 
-        
-        // GET /latest
+        /// <summary>
+        /// GET Called from the OpenRMF UI (or external access) dashboard to return the number of 
+        /// systems within the database.
+        /// </summary>
+        /// <returns>
+        /// HTTP Status showing it was searched correctly and the count of the systems. Or that there is an error.
+        /// </returns>
+        /// <response code="200">Returns the list of checklist types and their count</response>
+        /// <response code="400">If the item did not search correctly</response>
+        [HttpGet("count/systems")]
+        [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
+        public async Task<IActionResult> CountSystems()
+        {
+            try {
+                _logger.LogInformation("Calling CountSystems()");
+                long result = await _systemGroupRepo.CountSystems();
+                _logger.LogInformation("Called CountSystems() successfully for {0} items", result.ToString());
+                return Ok(result);
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "CountSystems() Error Retrieving System Count in MongoDB");
+                return BadRequest();
+            }
+        }
+
+        /// <summary>
+        /// GET Called from the OpenRMF UI (or external access) to return a count of each type of checklist. 
+        /// If you pass in the system Id it does this per system.
+        /// </summary>
+        /// <param name="system">The ID of the system for generating the count</param>
+        /// <returns>
+        /// HTTP Status showing it was searched correctly and the count per STIG type or that there is an error.
+        /// </returns>
+        /// <response code="200">Returns the list of checklist types and their count</response>
+        /// <response code="400">If the item did not search correctly</response>
+        /// <response code="404">If the ID passed in is not valid</response>
         [HttpGet("counttype")]
         [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
         public async Task<IActionResult> GetCountByType(string system)
         {
             try {
+                _logger.LogInformation("Calling GetCountByType('{0}')", system);
                 IEnumerable<Object> artifacts;
                 artifacts = await _artifactRepo.GetCountByType(system);
+                _logger.LogInformation("Called GetCountByType('{0}')", system);
+                if (artifacts == null) {                    
+                    _logger.LogWarning("Calling GetCountByType('{0}') returned null", system);
+                    NotFound();
+                }
                 return Ok(artifacts);
             }
             catch (Exception ex) {
-                _logger.LogError(ex, "Error getting the counts by type for the Reports page");
+                _logger.LogError(ex, "GetCountByType() Error getting the counts by type for the Reports page");
                 return BadRequest();
             }
         }
+        #endregion
+
+        /******************************************
+        * Reports Specific API calls
+        ******************************************/
+        #region Report APIs
+
+        /// <summary>
+        /// GET The raw data of a Nessus file for the reports.
+        /// </summary>
+        /// <param name="systemGroupId">The ID of the system to use</param>
+        /// <returns>
+        /// HTTP Status showing it was found or that there is an error. And the raw data of 
+        /// the Nessus ACAS Patch scan.
+        /// </returns>
+        /// <response code="200">Returns the count of records</response>
+        /// <response code="400">If the item did not query correctly</response>
+        /// <response code="404">If the ID passed in does not have a valid Nessus file</response>
+        [HttpGet("report/nessus/{systemGroupId}")]
+        [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
+        public async Task<IActionResult> GetNessusPatchDataForReport(string systemGroupId)
+        {
+            if (!string.IsNullOrEmpty(systemGroupId)) {
+                try {
+                    _logger.LogInformation("Calling GetNessusPatchDataForReport({0})", systemGroupId);
+                    SystemGroup sg = new SystemGroup();
+                    sg = await _systemGroupRepo.GetSystemGroup(systemGroupId);
+                    if (sg == null) {
+                        _logger.LogWarning("GetNessusPatchDataForReport({0}) an invalid system record");
+                        return NotFound();
+                    }
+                    if (string.IsNullOrEmpty(sg.rawNessusFile)) {
+                        _logger.LogWarning("GetNessusPatchDataForReport({0}) system record has no Nessus patch file to use");
+                        return NotFound();
+                    }
+                    // load the NessusPatch XML into a List
+                    // do a count of Critical, High, and Medium and Low items
+                    // return the class of numbers for this
+                    _logger.LogInformation("GetNessusPatchDataForReport({0}) loading Nessus patch data file", systemGroupId);
+                    NessusPatchData patchData = NessusPatchLoader.LoadPatchData(sg.rawNessusFile);
+                    _logger.LogInformation("GetNessusPatchDataForReport({0}) querying Nessus patch data file for report", systemGroupId);
+
+                    _logger.LogInformation("Called GetNessusPatchDataForReport({0}) successfully", systemGroupId);
+                    return Ok(patchData);
+                }
+                catch (Exception ex) {
+                    _logger.LogError(ex, "GetNessusPatchDataForReport() Error getting data for the Nessus Data report for system {0}", systemGroupId);
+                    return BadRequest();
+                }
+            }
+            else {
+                _logger.LogWarning("Called GetNessusPatchDataForReport() with no system ID");
+                return BadRequest(); // no systemGroupId entered
+            }
+        }
+        
         #endregion
     }
 }

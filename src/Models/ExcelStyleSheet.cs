@@ -1,6 +1,7 @@
-using System;
+// Copyright (c) Cingulara LLC 2019 and Tutela LLC 2019. All rights reserved.
+// Licensed under the GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007 license. See LICENSE file in the project root for full license information.
+
 using DocumentFormat.OpenXml;
-using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 
 namespace openrmf_read_api.Models
@@ -99,7 +100,7 @@ namespace openrmf_read_api.Models
             // blue or Not Reviewed
             Fill fill5 = new Fill();
             PatternFill patternFill5 = new PatternFill() { PatternType = PatternValues.Solid};
-            ForegroundColor foregroundColor5 = new ForegroundColor() { Rgb = "FF039BE5" };
+            ForegroundColor foregroundColor5 = new ForegroundColor() { Rgb = "FFFFFFFF" };
             BackgroundColor backgroundColor5 = new BackgroundColor() { Indexed = (UInt32Value)64U };
             patternFill5.Append(foregroundColor5);
             patternFill5.Append(backgroundColor5);

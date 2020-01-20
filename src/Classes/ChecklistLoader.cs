@@ -1,10 +1,8 @@
-using System;
+// Copyright (c) Cingulara LLC 2019 and Tutela LLC 2019. All rights reserved.
+// Licensed under the GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007 license. See LICENSE file in the project root for full license information.
+
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using openrmf_read_api.Models;
-using System.IO;
-using System.Text;
 using System.Xml.Serialization;
 using System.Xml;
 
@@ -14,7 +12,6 @@ namespace openrmf_read_api.Classes
     {        
         public static CHECKLIST LoadChecklist(string rawChecklist) {
             CHECKLIST myChecklist = new CHECKLIST();
-            XmlSerializer serializer = new XmlSerializer(typeof(CHECKLIST));
             rawChecklist = rawChecklist.Replace("\t","");
             XmlDocument xmlDoc = new XmlDocument();
             xmlDoc.LoadXml(rawChecklist);

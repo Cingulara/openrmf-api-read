@@ -34,3 +34,7 @@ More will follow as this expands for auditing, logging, etc.
 * docker run --rm --name nats-main -p 4222:4222 -p 6222:6222 -p 8222:8222 nats
 * this is the default and lets you run a NATS server version 1.2.0 (as of 8/2018)
 * just runs in memory and no streaming (that is separate)
+
+## Using Jaeger
+
+The Jaeger Client is https://github.com/jaegertracing/jaeger-client-csharp. We use defaults but you can specify ENV for configuration.
