@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Cingulara LLC 2019 and Tutela LLC 2019. All rights reserved.
+// Licensed under the GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007 license. See LICENSE file in the project root for full license information.
+
+using System;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.IdentityModel.Tokens;
@@ -7,7 +10,13 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Swashbuckle.AspNetCore.Swagger;
+using Prometheus;
+using OpenTracing;
+using OpenTracing.Util;
+using Jaeger;
+using Jaeger.Samplers;
 
 using openrmf_read_api.Models;
 using openrmf_read_api.Data;
@@ -33,6 +42,27 @@ namespace openrmf_read_api
                 options.Database = Environment.GetEnvironmentVariable("MONGODB");
             });
             
+            // Use "OpenTracing.Contrib.NetCore" to automatically generate spans for ASP.NET Core
+            services.AddSingleton<ITracer>(serviceProvider =>  
+            {  
+                string serviceName = System.Reflection.Assembly.GetEntryAssembly().GetName().Name;  
+            
+                ILoggerFactory loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();  
+            
+                ISampler sampler = new ConstSampler(sample: true);  
+            
+                ITracer tracer = new Tracer.Builder(serviceName)  
+                    .WithLoggerFactory(loggerFactory)  
+                    .WithSampler(sampler)  
+                    .Build();  
+            
+                GlobalTracer.Register(tracer);  
+            
+                return tracer;  
+            });
+            services.AddOpenTracing();
+
+            // add repositories
             services.AddTransient<IArtifactRepository, ArtifactRepository>();
             services.AddTransient<ISystemGroupRepository, SystemGroupRepository>();
 
@@ -113,6 +143,20 @@ namespace openrmf_read_api
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
+            // Custom Metrics to count requests for each endpoint and the method
+            var counter = Metrics.CreateCounter("openrmf_read_api_path_counter", "Counts requests to OpenRMF endpoints", new CounterConfiguration
+            {
+                LabelNames = new[] { "method", "endpoint" }
+            });
+            app.Use((context, next) =>
+            {
+                counter.WithLabels(context.Request.Method, context.Request.Path).Inc();
+                return next();
+            });
+            // Use the Prometheus middleware
+            app.UseMetricServer();
+            app.UseHttpMetrics();
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();

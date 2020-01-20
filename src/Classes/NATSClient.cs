@@ -1,3 +1,6 @@
+// Copyright (c) Cingulara LLC 2019 and Tutela LLC 2019. All rights reserved.
+// Licensed under the GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007 license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -25,7 +28,8 @@ namespace openrmf_read_api.Classes
             // add the options for the server, reconnecting, and the handler events
             Options opts = ConnectionFactory.GetDefaultOptions();
             opts.MaxReconnect = -1;
-            opts.ReconnectWait = 1000;
+            opts.ReconnectWait = 2000;
+            opts.Name = "openrmf-api-read";
             opts.Url = Environment.GetEnvironmentVariable("NATSSERVERURL");
             opts.AsyncErrorEventHandler += (sender, events) =>
             {
@@ -55,7 +59,7 @@ namespace openrmf_read_api.Classes
             // Creates a live connection to the NATS Server with the above options
             IConnection c = cf.CreateConnection(opts);
 
-            Msg reply = c.Request("openrmf.score.read", Encoding.UTF8.GetBytes(id), 30000); // publish to get this Artifact checklist back via ID
+            Msg reply = c.Request("openrmf.score.read", Encoding.UTF8.GetBytes(id), 10000); // publish to get this Artifact checklist back via ID
             c.Flush();
             // save the reply and get back the checklist score
             if (reply != null) {
@@ -79,7 +83,8 @@ namespace openrmf_read_api.Classes
             // add the options for the server, reconnecting, and the handler events
             Options opts = ConnectionFactory.GetDefaultOptions();
             opts.MaxReconnect = -1;
-            opts.ReconnectWait = 1000;
+            opts.ReconnectWait = 2000;
+            opts.Name = "openrmf-api-read";
             opts.Url = Environment.GetEnvironmentVariable("NATSSERVERURL");
             opts.AsyncErrorEventHandler += (sender, events) =>
             {
@@ -110,7 +115,7 @@ namespace openrmf_read_api.Classes
             IConnection c = cf.CreateConnection(opts);
             
             // send the message with data of the control as the only payload (small)
-            Msg reply = c.Request("openrmf.compliance.cci.control", Encoding.UTF8.GetBytes(control), 30000);
+            Msg reply = c.Request("openrmf.compliance.cci.control", Encoding.UTF8.GetBytes(control), 10000);
             // save the reply and get back the checklist to score
             if (reply != null) {
                 listing = JsonConvert.DeserializeObject<List<string>>(Compression.DecompressString(Encoding.UTF8.GetString(reply.Data)));
