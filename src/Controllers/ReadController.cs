@@ -874,6 +874,8 @@ namespace openrmf_read_api.Controllers
 
                             // cycle through the vulnerabilities to export into columns                            
                             _logger.LogInformation("ExportChecklist() cycling through all the vulnerabilities");
+
+                            string cciReferences = "";
                             foreach (VULN v in art.CHECKLIST.STIGS.iSTIG.VULN) {
                                 // if this is a regular checklist, make sure the filter for VULN ID is checked before we add this to the list
                                 // if this is from a compliance listing, only add the VULN IDs from the control to the listing
@@ -1018,11 +1020,20 @@ namespace openrmf_read_api.Controllers
                                     newCell.StyleIndex = styleIndex;
                                     newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "AB" + rowNumber.ToString() };
                                     row.InsertBefore(newCell, refCell);
-                                    if (v.STIG_DATA[24].VULN_ATTRIBUTE == "CCI_REF"){
-                                        newCell.CellValue = new CellValue(v.STIG_DATA[24].ATTRIBUTE_DATA);
-                                    } else if (v.STIG_DATA.Count > 24 && v.STIG_DATA[25].VULN_ATTRIBUTE == "CCI_REF"){
-                                        newCell.CellValue = new CellValue(v.STIG_DATA[25].ATTRIBUTE_DATA);
+
+                                    // collect all CCI references
+                                    cciReferences = "";
+                                    for (int i = 24; i < v.STIG_DATA.Count; i++) { 
+                                        if (v.STIG_DATA[i].VULN_ATTRIBUTE == "CCI_REF") 
+                                            cciReferences += v.STIG_DATA[i].ATTRIBUTE_DATA + ", ";
                                     }
+                                    // take off the ", " at the end
+                                    if (!string.IsNullOrEmpty(cciReferences) && cciReferences.Length > 2)
+                                        cciReferences = cciReferences.Substring(0, cciReferences.Length-2);
+                                    else 
+                                        cciReferences = "";
+
+                                    newCell.CellValue = new CellValue(cciReferences);
                                     newCell.DataType = new EnumValue<CellValues>(CellValues.String);
                                     newCell.StyleIndex = styleIndex;
                                     sheetData.Append(row);
