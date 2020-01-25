@@ -2,7 +2,7 @@
 name: Feature request
 about: Suggest an idea for the OpenRMF Read API
 title: "[FEATURE] "
-labels: bug
+labels: enhancement
 assignees: Cingulara
 
 ---
