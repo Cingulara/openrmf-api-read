@@ -780,9 +780,6 @@ namespace openrmf_read_api.Controllers
                         uint styleIndex = 0; // use this for 4, 5, 6, or 7 for status
                         Score checklistScore;
 
-                        // cycle through the vulnerabilities to export into columns
-                        _logger.LogInformation("ExportSystemTestPlan() grouping the patch information by host");
-                        _logger.LogInformation("ExportSystemTestPlan() making the XLSX Summary for the patch information");
                         //     styleIndex = GetPatchScanStatus(summary.severity);
                         
                         // get the list of hosts to use
@@ -800,10 +797,20 @@ namespace openrmf_read_api.Controllers
 
                             // make a new row for this set of items
                             row = MakeDataRow(rowNumber, "A", host, styleIndex);
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "B" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue(patchData.summary.Where(x => x.hostname == host).Select(y => y.ipAddress).FirstOrDefault());
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = 0;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "D" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue(patchData.summary.Where(x => x.hostname == host).Select(y => y.operatingSystem).FirstOrDefault());
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = 0;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(!string.IsNullOrEmpty(sg.nessusFilename)? sg.nessusFilename : "Latest Scan file");
-                            newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
                             newCell.StyleIndex = 0;
                             // now cycle through the rest of the items
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "F" + rowNumber.ToString() };
@@ -838,6 +845,14 @@ namespace openrmf_read_api.Controllers
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(patchTotal.ToString());
                             newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                            newCell.StyleIndex = 0;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "K" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            if (patchData.summary.Where(x => x.hostname == host).Select(y => y.credentialed).FirstOrDefault())
+                                newCell.CellValue = new CellValue("Yes");
+                            else
+                                newCell.CellValue = new CellValue("No");
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
                             newCell.StyleIndex = 0;
                             sheetData.Append(row);
                         }

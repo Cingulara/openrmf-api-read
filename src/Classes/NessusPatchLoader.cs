@@ -49,7 +49,19 @@ namespace openrmf_read_api.Classes
             XmlAttributeCollection colAttributes;
             string hostname = "";
             string netbiosname = "";
-            foreach (XmlNode node in nodes) {  
+            string operatingSystem = "";
+            string systemType = "";
+            bool credentialed = false;
+            string ipAddress = "";
+
+            foreach (XmlNode node in nodes) {
+                // reset the variables for each reporthost listing
+                hostname = "";
+                netbiosname = "";
+                operatingSystem = "";
+                systemType = "";
+                credentialed = false;
+                ipAddress = "";
                 colAttributes = node.Attributes;
                 foreach (XmlAttribute attr in colAttributes) {
                     if (attr.Name == "name") {
@@ -61,6 +73,11 @@ namespace openrmf_read_api.Classes
                     foreach (XmlElement child in node.ChildNodes) {
                         if (child.Name == "HostProperties") {
                             // for each child node in here
+                            netbiosname = "";
+                            operatingSystem = "";
+                            systemType = "";
+                            credentialed = false;
+                            ipAddress = "";
                             foreach (XmlElement hostChild in child.ChildNodes) {
                                 // get the child
                                 foreach (XmlAttribute childAttr in hostChild.Attributes) {
@@ -69,7 +86,14 @@ namespace openrmf_read_api.Classes
                                         netbiosname = hostChild.InnerText; // get the outside child text;
                                     } else if (childAttr.InnerText == "hostname") {
                                         hostname = hostChild.InnerText; // get the outside child text;
-                                        break; // we are good to jump to report items if we can find this
+                                    } else if (childAttr.InnerText == "operating-system") {
+                                        operatingSystem = hostChild.InnerText; // get the outside child text;
+                                    } else if (childAttr.InnerText == "system-type") {
+                                        systemType = hostChild.InnerText; // get the outside child text;
+                                    } else if (childAttr.InnerText == "Credentialed_Scan") {
+                                        bool.TryParse(hostChild.InnerText, out credentialed); // get the outside child text;
+                                    } else if (childAttr.InnerText == "host-rdns") {
+                                        ipAddress = hostChild.InnerText; // get the outside child text;
                                     }
                                 }// for each childAttr in hostChild
                             } // for each hostChild
@@ -79,8 +103,12 @@ namespace openrmf_read_api.Classes
                             // get all ReportItems and their attributes in the tag 
                             colAttributes = child.Attributes;
                             summary = new NessusPatchSummary();
-                            // set the hostname
+                            // set the hostname and other host data for every single record
                             summary.hostname = hostname;
+                            summary.operatingSystem = operatingSystem;
+                            summary.ipAddress = SanitizeHostname(ipAddress); // if an IP clean up the information octets
+                            summary.systemType = systemType;
+                            summary.credentialed = credentialed;
                             // get all the attributes
                             foreach (XmlAttribute attr in colAttributes) {
                                 if (attr.Name == "severity") {
