@@ -770,7 +770,7 @@ namespace openrmf_read_api.Controllers
                         _logger.LogInformation("ExportSystemTestPlan({0}) setting title XLSX information", systemGroupId);
                         DocumentFormat.OpenXml.Spreadsheet.Row row = MakeTitleRow("OpenRMF by Cingulara and Tutela");
                         sheetData.Append(row);
-                        row = MakeChecklistInfoRow("System Test Plan", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss tt"),2);
+                        row = MakeChecklistInfoRow("System Test Plan Summary", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss tt"),2);
                         sheetData.Append(row);
                         row = MakeChecklistInfoRow("System Name", sg.title,3);
                         sheetData.Append(row);
@@ -865,6 +865,7 @@ namespace openrmf_read_api.Controllers
                         IEnumerable<Artifact> artifacts;
                         artifacts = await _artifactRepo.GetSystemArtifacts(systemGroupId);
                         foreach (Artifact art in artifacts.OrderBy(x => x.title).OrderBy(y => y.systemTitle).ToList()) {
+                            art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist);
                             try {
                                 _logger.LogInformation("ExportSystemTestPlan({0}) getting checklist data and scores for {1}", systemGroupId, art.title);
                                 checklistScore = NATSClient.GetChecklistScore(art.InternalId.ToString());
@@ -879,6 +880,11 @@ namespace openrmf_read_api.Controllers
                             // make a new row for this set of items
                             row = MakeDataRow(rowNumber, "A", art.hostName.Trim().ToLower() != ""? art.hostName : "", styleIndex);
                             // now cycle through the rest of the items
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "B" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue(!string.IsNullOrEmpty(art.CHECKLIST.ASSET.HOST_IP)? art.CHECKLIST.ASSET.HOST_IP : "");
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = 0;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(art.title+ ".ckl");
@@ -1777,7 +1783,7 @@ namespace openrmf_read_api.Controllers
             // open = 4, N/A = 5, NotAFinding = 6, Not Reviewed = 7
             if (status.ToLower() == "not_reviewed")
                 return 7U;
-            if (status.ToLower() == "open")
+            if (status.ToLower() == "open") // need to know the category as well
                 return 4U;
             if (status.ToLower() == "not_applicable")
                 return 5U;
@@ -1788,6 +1794,10 @@ namespace openrmf_read_api.Controllers
             // critical or high = 3 or 4, medium = 2, low = 1, informational = 0
             if (severity > 2)
                 return 4U;
+            if (severity == 2)
+                return 12U;
+            if (severity == 1)
+                return 13U;
             // catch all informational
             return 7U;
         }
