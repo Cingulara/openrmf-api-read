@@ -706,9 +706,12 @@ namespace openrmf_read_api.Controllers
                     // load the NessusPatch XML into a List
                     // do a count of Critical, High, and Medium and Low items
                     // return the class of numbers for this
-                    _logger.LogInformation("ExportSystemTestPlan({0}) loading Nessus patch data file", systemGroupId);
-                    NessusPatchData patchData = NessusPatchLoader.LoadPatchData(sg.rawNessusFile);
-                    _logger.LogInformation("ExportSystemTestPlan({0}) querying Nessus patch data file for counts", systemGroupId);
+                    NessusPatchData patchData = new NessusPatchData();
+                    if (!string.IsNullOrEmpty(sg.rawNessusFile)) {
+                        _logger.LogInformation("ExportSystemTestPlan({0}) loading Nessus patch data file", systemGroupId);
+                        patchData = NessusPatchLoader.LoadPatchData(sg.rawNessusFile);
+                        _logger.LogInformation("ExportSystemTestPlan({0}) Nessus patch data file loaded", systemGroupId);
+                    }
                     
                     // generate the XLSX file from this
                     
@@ -719,6 +722,7 @@ namespace openrmf_read_api.Controllers
                     var memory = new MemoryStream();
                     using (SpreadsheetDocument spreadSheet = SpreadsheetDocument.Create(memory, SpreadsheetDocumentType.Workbook))
                     {
+                        _logger.LogInformation("ExportSystemTestPlan({0}) setting up XLSX file", systemGroupId);
                         // Add a WorkbookPart to the document.
                         WorkbookPart workbookpart = spreadSheet.AddWorkbookPart();
                         workbookpart.Workbook = new Workbook();
@@ -763,6 +767,7 @@ namespace openrmf_read_api.Controllers
                         DocumentFormat.OpenXml.Spreadsheet.Cell refCell = null;
                         DocumentFormat.OpenXml.Spreadsheet.Cell newCell = null;
 
+                        _logger.LogInformation("ExportSystemTestPlan({0}) setting title XLSX information", systemGroupId);
                         DocumentFormat.OpenXml.Spreadsheet.Row row = MakeTitleRow("OpenRMF by Cingulara and Tutela");
                         sheetData.Append(row);
                         row = MakeChecklistInfoRow("System Test Plan", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss tt"),2);
@@ -777,87 +782,76 @@ namespace openrmf_read_api.Controllers
 
                         // cycle through the vulnerabilities to export into columns
                         _logger.LogInformation("ExportSystemTestPlan() grouping the patch information by host");
-                        // group all the results by hostname, pluginId, pluginName, Family, and severity and count the totals per hostname
-                        // List<NessusPatchSummary> reportSummaryFinal = patchData.summary.GroupBy(x => new {x.hostname, x.pluginId, x.pluginName, x.family, x.severity})
-                        //     .Select(g => new NessusPatchSummary {
-                        //         hostname = g.Key.hostname, 
-                        //         pluginId = g.Key.pluginId, 
-                        //         pluginName = g.Key.pluginName, 
-                        //         family = g.Key.family, 
-                        //         severity = g.Key.severity, 
-                        //         total = g.Count()}).ToList();
-                        // if (summaryOnly) {
-                        //     _logger.LogInformation("ExportSystemTestPlan() grouping the patch information for summary only (no hosts)");
-                        //     // now sum the total, but get all the other data minus hostname. Count the hostnames used though per plugin grouping
-                        //     reportSummaryFinal = reportSummaryFinal.GroupBy(x => new {x.pluginId, x.pluginName, x.family, x.severity})
-                        //         .Select(g => new NessusPatchSummary {
-                        //             pluginId = g.Key.pluginId, 
-                        //             pluginName = g.Key.pluginName, 
-                        //             family = g.Key.family, 
-                        //             severity = g.Key.severity, 
-                        //             hostTotal = g.Count(),
-                        //             total = g.Sum(z => z.total)}).ToList();
-                        // }
-
                         _logger.LogInformation("ExportSystemTestPlan() making the XLSX Summary for the patch information");
-                        // make this go in reverse order of severity, 4 to 0
-                        // foreach (NessusPatchSummary summary in reportSummaryFinal.OrderBy(y => y.pluginIdSort).OrderByDescending(x => x.severity).ToList()) {
-                        //     // if this is a regular checklist, make sure the filter for VULN ID is checked before we add this to the list
-                        //     // if this is from a compliance listing, only add the VULN IDs from the control to the listing
-                        //     // the VULN has a CCI_REF field where the attribute would be the value in the cciList if it is valid
-                        //     rowNumber++;                            
                         //     styleIndex = GetPatchScanStatus(summary.severity);
-                        //     // make a new row for this set of items
-                        //     row = MakeDataRow(rowNumber, "A", summary.pluginId, styleIndex);
-                        //     // now cycle through the rest of the items
-                        //     newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "B" + rowNumber.ToString() };
-                        //     row.InsertBefore(newCell, refCell);
-                        //     newCell.CellValue = new CellValue(summary.pluginName);
-                        //     newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                        //     newCell.StyleIndex = styleIndex;
-                        //     newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "C" + rowNumber.ToString() };
-                        //     row.InsertBefore(newCell, refCell);
-                        //     newCell.CellValue = new CellValue(summary.family);
-                        //     newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                        //     newCell.StyleIndex = styleIndex;
-                        //     newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "D" + rowNumber.ToString() };
-                        //     row.InsertBefore(newCell, refCell);
-                        //     newCell.CellValue = new CellValue(summary.severityName);
-                        //     newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                        //     newCell.StyleIndex = styleIndex;
-                        //     newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowNumber.ToString() };
-                        //     row.InsertBefore(newCell, refCell);
-                        //     if (summaryOnly) 
-                        //         newCell.CellValue = new CellValue(summary.hostTotal.ToString());
-                        //     else 
-                        //         newCell.CellValue = new CellValue("1"); // we are doing this by host, so host total is 1
-                        //     newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
-                        //     newCell.StyleIndex = styleIndex;
-                        //     newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "F" + rowNumber.ToString() };
-                        //     row.InsertBefore(newCell, refCell);
-                        //     newCell.CellValue = new CellValue(summary.total.ToString());
-                        //     newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
-                        //     newCell.StyleIndex = styleIndex;
-                        //     // only print the hostname if not just a summary
-                        //     if (!summaryOnly) {
-                        //         newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "G" + rowNumber.ToString() };
-                        //         row.InsertBefore(newCell, refCell);
-                        //         newCell.CellValue = new CellValue(summary.hostname);
-                        //         newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                        //         newCell.StyleIndex = styleIndex;
-                        //     }
-                        //     sheetData.Append(row);
-                        // }
+                        
+                        // get the list of hosts to use
+                        _logger.LogInformation("ExportSystemTestPlan({0}) getting Hosts from Nessus patch data file", systemGroupId);
+                        List<string> hostnames = patchData.summary.Select(x => x.hostname).Distinct().ToList();
+                        int patchCount = 0;
+                        int patchTotal = 0;
+                        // for each host, cycle through the # of items and print out
+                        foreach (string host in hostnames) {
+                            _logger.LogInformation("ExportSystemTestPlan({0}) adding Nessus patch data file for {1}", systemGroupId, host);
+                            rowNumber++;
+                            // reset numbers just in case
+                            patchTotal = 0;
+                            patchCount = 0;
+
+                            // make a new row for this set of items
+                            row = MakeDataRow(rowNumber, "A", host, styleIndex);
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue(!string.IsNullOrEmpty(sg.nessusFilename)? sg.nessusFilename : "Latest Scan file");
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                            newCell.StyleIndex = 0;
+                            // now cycle through the rest of the items
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "F" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            patchCount = patchData.summary.Where(x => x.hostname == host && x.severity == 4).Count();
+                            patchTotal += patchCount;
+                            newCell.CellValue = new CellValue(patchCount.ToString());
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                            newCell.StyleIndex = 0;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "G" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            patchCount = patchData.summary.Where(x => x.hostname == host && x.severity == 3).Count();
+                            patchTotal += patchCount;
+                            newCell.CellValue = new CellValue(patchCount.ToString());
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                            newCell.StyleIndex = 10;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "H" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            patchCount = patchData.summary.Where(x => x.hostname == host && x.severity == 2).Count();
+                            patchTotal += patchCount;
+                            newCell.CellValue = new CellValue(patchCount.ToString());
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                            newCell.StyleIndex = 9;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "I" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            patchCount = patchData.summary.Where(x => x.hostname == host && x.severity == 1).Count();
+                            patchTotal += patchCount;
+                            newCell.CellValue = new CellValue(patchCount.ToString());
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                            newCell.StyleIndex = 11;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "J" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue(patchTotal.ToString());
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                            newCell.StyleIndex = 0;
+                            sheetData.Append(row);
+                        }
 
                         // generate the checklist files
-                        rowNumber = rowNumber + 5;
+                        rowNumber = rowNumber + 5;                        
+                        _logger.LogInformation("ExportSystemTestPlan({0}) getting checklist data and scores", systemGroupId);
                         row = MakeTestPlanHeaderRows(rowNumber, false);
                         sheetData.Append(row);
                         IEnumerable<Artifact> artifacts;
                         artifacts = await _artifactRepo.GetSystemArtifacts(systemGroupId);
                         foreach (Artifact art in artifacts.OrderBy(x => x.title).OrderBy(y => y.systemTitle).ToList()) {
-                            //art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist);
                             try {
+                                _logger.LogInformation("ExportSystemTestPlan({0}) getting checklist data and scores for {1}", systemGroupId, art.title);
                                 checklistScore = NATSClient.GetChecklistScore(art.InternalId.ToString());
                             }
                             catch (Exception ex) {
@@ -866,12 +860,13 @@ namespace openrmf_read_api.Controllers
                             }
                             rowNumber++;
 
+                            _logger.LogInformation("ExportSystemTestPlan({0}) making checklist row for {1}", systemGroupId, art.title);
                             // make a new row for this set of items
                             row = MakeDataRow(rowNumber, "A", art.hostName.Trim().ToLower() != ""? art.hostName : "", styleIndex);
                             // now cycle through the rest of the items
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
-                            newCell.CellValue = new CellValue(art.title);
+                            newCell.CellValue = new CellValue(art.title+ ".ckl");
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
                             newCell.StyleIndex = 0;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "F" + rowNumber.ToString() };
@@ -888,7 +883,7 @@ namespace openrmf_read_api.Controllers
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(checklistScore.totalCat3Open.ToString());
                             newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
-                            newCell.StyleIndex = 8;
+                            newCell.StyleIndex = 11;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "I" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue("0");
@@ -905,6 +900,7 @@ namespace openrmf_read_api.Controllers
                         // Save the new worksheet.
                         workbookpart.Workbook.Save();
                         // Close the document.
+                        _logger.LogInformation("ExportSystemTestPlan({0}) closing the XLSX test plan", systemGroupId);
                         spreadSheet.Close();
                         // set the filename
                         string filename = sg.title + "-SystemTestPlan";
