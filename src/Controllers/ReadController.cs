@@ -789,6 +789,7 @@ namespace openrmf_read_api.Controllers
                         List<string> hostnames = patchData.summary.Select(x => x.hostname).Distinct().ToList();
                         int patchCount = 0;
                         int patchTotal = 0;
+                        string ipAddress = "";
                         // for each host, cycle through the # of items and print out
                         foreach (string host in hostnames) {
                             _logger.LogInformation("ExportSystemTestPlan({0}) adding Nessus patch data file for {1}", systemGroupId, host);
@@ -884,7 +885,12 @@ namespace openrmf_read_api.Controllers
                             // now cycle through the rest of the items
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "B" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
-                            newCell.CellValue = new CellValue(!string.IsNullOrEmpty(art.CHECKLIST.ASSET.HOST_IP)? art.CHECKLIST.ASSET.HOST_IP : "");
+                            ipAddress = art.CHECKLIST.ASSET.HOST_IP;
+                            if (!string.IsNullOrEmpty(ipAddress)) {
+                                ipAddress = NessusPatchLoader.SanitizeHostname(ipAddress);
+                            } else
+                                ipAddress = "";
+                            newCell.CellValue = new CellValue(ipAddress);
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
                             newCell.StyleIndex = 0;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowNumber.ToString() };

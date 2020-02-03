@@ -152,7 +152,7 @@ namespace openrmf_read_api.Classes
         /// The hostname if just a string, the IP address if an IP with xxx.xxx. to start 
         /// the IP range. So the first two octets are hidden from view for security reasons.
         /// </returns>
-        private static string SanitizeHostname(string hostname){
+        public static string SanitizeHostname(string hostname){
             // if this is not an IP, just return the host
             if (hostname.IndexOf(".") <= 0)
                 return hostname;
