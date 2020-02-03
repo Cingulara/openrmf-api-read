@@ -148,19 +148,19 @@ namespace openrmf_read_api.Controllers
                             newCell.StyleIndex = 0;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "C" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue(checklistScore.totalOpen.ToString());
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                            newCell.StyleIndex = 8;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "D" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(checklistScore.totalNotAFinding.ToString());
                             newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
                             newCell.StyleIndex = 10;
-                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "D" + rowNumber.ToString() };
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(checklistScore.totalNotApplicable.ToString());
                             newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
                             newCell.StyleIndex = 9;
-                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowNumber.ToString() };
-                            row.InsertBefore(newCell, refCell);
-                            newCell.CellValue = new CellValue(checklistScore.totalOpen.ToString());
-                            newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
-                            newCell.StyleIndex = 8;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "F" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(checklistScore.totalNotReviewed.ToString());
@@ -178,25 +178,26 @@ namespace openrmf_read_api.Controllers
                             newCell.StyleIndex = 0;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "C" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue(checklistScore.totalCat1Open.ToString());
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                            newCell.StyleIndex = 8;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "D" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(checklistScore.totalCat1NotAFinding.ToString());
                             newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
                             newCell.StyleIndex = 10;
-                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "D" + rowNumber.ToString() };
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(checklistScore.totalCat1NotApplicable.ToString());
                             newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
                             newCell.StyleIndex = 9;
-                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowNumber.ToString() };
-                            row.InsertBefore(newCell, refCell);
-                            newCell.CellValue = new CellValue(checklistScore.totalCat1Open.ToString());
-                            newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
-                            newCell.StyleIndex = 8;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "F" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(checklistScore.totalCat1NotReviewed.ToString());
                             newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
                             newCell.StyleIndex = 11;
                             sheetData.Append(row);
+
                             rowNumber++; // CAT 2
                             row = MakeDataRow(rowNumber, "A", "", styleIndex);
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "B" + rowNumber.ToString() };
@@ -206,25 +207,26 @@ namespace openrmf_read_api.Controllers
                             newCell.StyleIndex = 0;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "C" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue(checklistScore.totalCat2Open.ToString());
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                            newCell.StyleIndex = 14;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "D" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(checklistScore.totalCat2NotAFinding.ToString());
                             newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
                             newCell.StyleIndex = 10;
-                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "D" + rowNumber.ToString() };
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(checklistScore.totalCat2NotApplicable.ToString());
                             newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
                             newCell.StyleIndex = 9;
-                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowNumber.ToString() };
-                            row.InsertBefore(newCell, refCell);
-                            newCell.CellValue = new CellValue(checklistScore.totalCat2Open.ToString());
-                            newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
-                            newCell.StyleIndex = 8;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "F" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(checklistScore.totalCat2NotReviewed.ToString());
                             newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
                             newCell.StyleIndex = 11;
                             sheetData.Append(row);
+
                             rowNumber++; // CAT 3
                             row = MakeDataRow(rowNumber, "A", "", styleIndex);
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "B" + rowNumber.ToString() };
@@ -234,19 +236,19 @@ namespace openrmf_read_api.Controllers
                             newCell.StyleIndex = 0;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "C" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue(checklistScore.totalCat3Open.ToString());
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                            newCell.StyleIndex = 15;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "D" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(checklistScore.totalCat3NotAFinding.ToString());
                             newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
                             newCell.StyleIndex = 10;
-                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "D" + rowNumber.ToString() };
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(checklistScore.totalCat3NotApplicable.ToString());
                             newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
                             newCell.StyleIndex = 9;
-                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowNumber.ToString() };
-                            row.InsertBefore(newCell, refCell);
-                            newCell.CellValue = new CellValue(checklistScore.totalCat3Open.ToString());
-                            newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
-                            newCell.StyleIndex = 8;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "F" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(checklistScore.totalCat3NotReviewed.ToString());
@@ -551,10 +553,10 @@ namespace openrmf_read_api.Controllers
                             lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 1, Max = 1, Width = 20, CustomWidth = true }); // col A
                             lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 2, Max = 2, Width = 80, CustomWidth = true });
                             lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 3, Max = 3, Width = 40, CustomWidth = true });
-                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 4, Max = 4, Width = 30, CustomWidth = true });
-                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 5, Max = 5, Width = 20, CustomWidth = true });
-                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 6, Max = 6, Width = 20, CustomWidth = true });
-                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 7, Max = 7, Width = 60, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 4, Max = 4, Width = 20, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 5, Max = 5, Width = 15, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 6, Max = 6, Width = 15, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 7, Max = 7, Width = 60, CustomWidth = true }); // col G host if shown
                             worksheetPart.Worksheet.InsertAt(lstColumns, 0);
                         }
 
@@ -741,9 +743,9 @@ namespace openrmf_read_api.Controllers
                         DocumentFormat.OpenXml.Spreadsheet.Columns lstColumns = worksheetPart.Worksheet.GetFirstChild<DocumentFormat.OpenXml.Spreadsheet.Columns>();
                         if (lstColumns == null) {
                             lstColumns = new DocumentFormat.OpenXml.Spreadsheet.Columns();
-                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 1, Max = 1, Width = 40, CustomWidth = true }); // col A
-                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 2, Max = 2, Width = 30, CustomWidth = true });
-                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 3, Max = 3, Width = 40, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 1, Max = 1, Width = 30, CustomWidth = true }); // col A
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 2, Max = 2, Width = 20, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 3, Max = 3, Width = 30, CustomWidth = true });
                             lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 4, Max = 4, Width = 40, CustomWidth = true });
                             lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 5, Max = 5, Width = 80, CustomWidth = true });
                             lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 6, Max = 6, Width = 10, CustomWidth = true });
@@ -815,28 +817,28 @@ namespace openrmf_read_api.Controllers
                             // now cycle through the rest of the items
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "F" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
-                            patchCount = patchData.summary.Where(x => x.hostname == host && x.severity == 4).Count();
+                            patchCount = patchData.summary.Where(x => x.hostname == host && x.severity > 2).Count();
                             patchTotal += patchCount;
                             newCell.CellValue = new CellValue(patchCount.ToString());
                             newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
-                            newCell.StyleIndex = 0;
+                            newCell.StyleIndex = 8;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "G" + rowNumber.ToString() };
-                            row.InsertBefore(newCell, refCell);
-                            patchCount = patchData.summary.Where(x => x.hostname == host && x.severity == 3).Count();
-                            patchTotal += patchCount;
-                            newCell.CellValue = new CellValue(patchCount.ToString());
-                            newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
-                            newCell.StyleIndex = 10;
-                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "H" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             patchCount = patchData.summary.Where(x => x.hostname == host && x.severity == 2).Count();
                             patchTotal += patchCount;
                             newCell.CellValue = new CellValue(patchCount.ToString());
                             newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
-                            newCell.StyleIndex = 9;
-                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "I" + rowNumber.ToString() };
+                            newCell.StyleIndex = 14;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "H" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             patchCount = patchData.summary.Where(x => x.hostname == host && x.severity == 1).Count();
+                            patchTotal += patchCount;
+                            newCell.CellValue = new CellValue(patchCount.ToString());
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                            newCell.StyleIndex = 15;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "I" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            patchCount = patchData.summary.Where(x => x.hostname == host && x.severity == 0).Count();
                             patchTotal += patchCount;
                             newCell.CellValue = new CellValue(patchCount.ToString());
                             newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
@@ -845,7 +847,7 @@ namespace openrmf_read_api.Controllers
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(patchTotal.ToString());
                             newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
-                            newCell.StyleIndex = 0;
+                            newCell.StyleIndex = 11;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "K" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             if (patchData.summary.Where(x => x.hostname == host).Select(y => y.credentialed).FirstOrDefault())
@@ -894,17 +896,17 @@ namespace openrmf_read_api.Controllers
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(checklistScore.totalCat1Open.ToString());
                             newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
-                            newCell.StyleIndex = 10;
+                            newCell.StyleIndex = 8;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "G" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(checklistScore.totalCat2Open.ToString());
                             newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
-                            newCell.StyleIndex = 9;
+                            newCell.StyleIndex = 14;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "H" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(checklistScore.totalCat3Open.ToString());
                             newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
-                            newCell.StyleIndex = 11;
+                            newCell.StyleIndex = 15;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "I" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue("0");
@@ -1065,30 +1067,30 @@ namespace openrmf_read_api.Controllers
                             DocumentFormat.OpenXml.Spreadsheet.Columns lstColumns = worksheetPart.Worksheet.GetFirstChild<DocumentFormat.OpenXml.Spreadsheet.Columns>();
                             if (lstColumns == null) { // generate the column listings we need with custom widths
                                 lstColumns = new DocumentFormat.OpenXml.Spreadsheet.Columns();
-                                lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 1, Max = 1, Width = 20, CustomWidth = true }); // col A
-                                lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 2, Max = 2, Width = 20, CustomWidth = true });
-                                lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 3, Max = 3, Width = 40, CustomWidth = true });
-                                lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 4, Max = 4, Width = 30, CustomWidth = true });
-                                lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 5, Max = 5, Width = 30, CustomWidth = true });
+                                lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 1, Max = 1, Width = 15, CustomWidth = true }); // col A
+                                lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 2, Max = 2, Width = 15, CustomWidth = true });
+                                lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 3, Max = 3, Width = 20, CustomWidth = true });
+                                lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 4, Max = 4, Width = 20, CustomWidth = true });
+                                lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 5, Max = 5, Width = 20, CustomWidth = true });
                                 lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 6, Max = 6, Width = 100, CustomWidth = true });
-                                lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 7, Max = 7, Width = 100, CustomWidth = true });
+                                lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 7, Max = 7, Width = 100, CustomWidth = true }); // col G Discussion
                                 lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 8, Max = 8, Width = 20, CustomWidth = true });
                                 lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 9, Max = 9, Width = 100, CustomWidth = true });
                                 lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 10, Max = 10, Width = 100, CustomWidth = true });
                                 lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 11, Max = 11, Width = 30, CustomWidth = true });
                                 lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 12, Max = 12, Width = 30, CustomWidth = true });
                                 lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 13, Max = 13, Width = 20, CustomWidth = true }); // col M
-                                lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 14, Max = 14, Width = 75, CustomWidth = true });
-                                lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 15, Max = 15, Width = 75, CustomWidth = true });
-                                lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 16, Max = 16, Width = 75, CustomWidth = true });
-                                lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 17, Max = 17, Width = 75, CustomWidth = true }); // col Q
-                                lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 18, Max = 18, Width = 75, CustomWidth = true });
-                                lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 19, Max = 19, Width = 75, CustomWidth = true });
+                                lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 14, Max = 14, Width = 45, CustomWidth = true });
+                                lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 15, Max = 15, Width = 45, CustomWidth = true });
+                                lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 16, Max = 16, Width = 45, CustomWidth = true });
+                                lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 17, Max = 17, Width = 45, CustomWidth = true }); // col Q
+                                lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 18, Max = 18, Width = 45, CustomWidth = true });
+                                lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 19, Max = 19, Width = 45, CustomWidth = true }); // col S Severity Override Guidance
                                 lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 20, Max = 20, Width = 30, CustomWidth = true });
-                                lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 21, Max = 21, Width = 30, CustomWidth = true });
-                                lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 22, Max = 22, Width = 30, CustomWidth = true }); // col V
-                                lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 23, Max = 23, Width = 50, CustomWidth = true });
-                                lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 24, Max = 24, Width = 100, CustomWidth = true });
+                                lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 21, Max = 21, Width = 25, CustomWidth = true });
+                                lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 22, Max = 22, Width = 15, CustomWidth = true }); // col V
+                                lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 23, Max = 23, Width = 15, CustomWidth = true }); // col W Status
+                                lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 24, Max = 24, Width = 100, CustomWidth = true }); // col X Comments
                                 lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 25, Max = 25, Width = 100, CustomWidth = true });
                                 lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 26, Max = 26, Width = 20, CustomWidth = true });
                                 lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 27, Max = 27, Width = 75, CustomWidth = true });
@@ -1145,7 +1147,7 @@ namespace openrmf_read_api.Controllers
                                         (!string.IsNullOrEmpty(ctrl) && 
                                         v.STIG_DATA.Where(x => x.VULN_ATTRIBUTE == "CCI_REF" && cciList.Contains(x.ATTRIBUTE_DATA)).FirstOrDefault() != null))  {
                                     rowNumber++;
-                                    styleIndex = GetVulnerabilityStatus(v.STATUS);
+                                    styleIndex = GetVulnerabilityStatus(v.STATUS, v.STIG_DATA.Where(x => x.VULN_ATTRIBUTE == "Severity").Select(y => y.ATTRIBUTE_DATA).FirstOrDefault());
                                     // make a new row for this set of items
                                     row = MakeDataRow(rowNumber, "A", v.STIG_DATA[0].ATTRIBUTE_DATA, styleIndex);
                                     // now cycle through the rest of the items
@@ -1683,7 +1685,7 @@ namespace openrmf_read_api.Controllers
             // next column
             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowindex.ToString() };
             row.InsertBefore(newCell, refCell);
-            newCell.CellValue = new CellValue("Filename");
+            newCell.CellValue = new CellValue("File Name");
             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
             newCell.StyleIndex = styleIndex;
             // next column
@@ -1756,21 +1758,21 @@ namespace openrmf_read_api.Controllers
             // next column
             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "C" + rowindex.ToString() };
             row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Open");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = 8;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "D" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
             newCell.CellValue = new CellValue("Not a Finding");
             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
             newCell.StyleIndex = 10;
             // next column
-            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "D" + rowindex.ToString() };
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowindex.ToString() };
             row.InsertBefore(newCell, refCell);
             newCell.CellValue = new CellValue("Not Applicable");
             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
             newCell.StyleIndex = 9;
-            // next column
-            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowindex.ToString() };
-            row.InsertBefore(newCell, refCell);
-            newCell.CellValue = new CellValue("Open");
-            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-            newCell.StyleIndex = 8;
             // next column
             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "F" + rowindex.ToString() };
             row.InsertBefore(newCell, refCell);
@@ -1779,12 +1781,17 @@ namespace openrmf_read_api.Controllers
             newCell.StyleIndex = 11;
             return row;
         }
-        private uint GetVulnerabilityStatus(string status) {
+        private uint GetVulnerabilityStatus(string status, string severity) {
             // open = 4, N/A = 5, NotAFinding = 6, Not Reviewed = 7
             if (status.ToLower() == "not_reviewed")
                 return 7U;
-            if (status.ToLower() == "open") // need to know the category as well
-                return 4U;
+            if (status.ToLower() == "open") { // need to know the category as well
+                if (severity == "high")
+                    return 4U;
+                if (severity == "medium")
+                    return 12U;
+                return 13U; // catch all for Open CAT 3 Low
+            }
             if (status.ToLower() == "not_applicable")
                 return 5U;
             // catch all
