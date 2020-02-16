@@ -1977,11 +1977,11 @@ namespace openrmf_read_api.Controllers
         {
             if (!string.IsNullOrEmpty(systemGroupId) || !string.IsNullOrEmpty(vulnid)) {
                 try {
-                    _logger.LogInformation("Calling GetSystemByVulnerabilityForReport({system: 0, vulnid: {1})", systemGroupId, vulnid);
+                    _logger.LogInformation("Calling GetSystemByVulnerabilityForReport(system: {0}, vulnid: {1})", systemGroupId, vulnid);
                     IEnumerable<Artifact> systemChecklists;
                     systemChecklists = await _artifactRepo.GetSystemArtifacts(systemGroupId);
                     if (systemChecklists == null) {
-                        _logger.LogWarning("Calling GetSystemByVulnerabilityForReport({system: 0, vulnid: {1}) returned no checklists", systemGroupId, vulnid  );
+                        _logger.LogWarning("Calling GetSystemByVulnerabilityForReport(system: {0}, vulnid: {1}) returned no checklists", systemGroupId, vulnid  );
                         return NotFound();
                     }
                     // this is where all the results go
@@ -1990,18 +1990,16 @@ namespace openrmf_read_api.Controllers
                     VULN vulnerability;
                     // we do not need all the data for the raw checklist in the listing, too bloated
                     foreach(Artifact a in systemChecklists) {
-                        _logger.LogInformation("Looking in Artifact {2} for GetSystemByVulnerabilityForReport({system: 0, vulnid: {1}) successfully", systemGroupId, vulnid, a.InternalId.ToString());
+                        _logger.LogInformation("Looking in Artifact {2} for GetSystemByVulnerabilityForReport(system: {0}, vulnid: {1}) successfully", systemGroupId, vulnid, a.InternalId.ToString());
                         if (a.rawChecklist.IndexOf(vulnid) > 0) { // it is in here so go grab it
                             // load the checklist
                             a.CHECKLIST = ChecklistLoader.LoadChecklist(a.rawChecklist);
                             // go get the vulnerability from the checklist and parse through it
                             vulnerability = a.CHECKLIST.STIGS.iSTIG.VULN.Where(y => vulnid == y.STIG_DATA.Where(z => z.VULN_ATTRIBUTE == "Vuln_Num").FirstOrDefault().ATTRIBUTE_DATA).FirstOrDefault();
                             if (vulnerability != null) {
-                                _logger.LogInformation("Getting Artifact {2} data for GetSystemByVulnerabilityForReport({system: 0, vulnid: {1}) successfully", systemGroupId, vulnid, a.InternalId.ToString());
+                                _logger.LogInformation("Getting Artifact {2} data for GetSystemByVulnerabilityForReport(system: {0}, vulnid: {1}) successfully", systemGroupId, vulnid, a.InternalId.ToString());
                                 // grab pertinent information
                                 vulnRecord = new VulnerabilityReport();
-                                // get a place to pull the actual vulnerability info from the checklist
-                                vulnerability = new VULN();
                                 // get the hostname from the ASSET record
                                 if (!string.IsNullOrEmpty(a.CHECKLIST.ASSET.HOST_NAME)) 
                                     vulnRecord.hostname = a.CHECKLIST.ASSET.HOST_NAME;
@@ -2026,13 +2024,13 @@ namespace openrmf_read_api.Controllers
                                     // add each one of these, from 0 to N of them
                                     vulnRecord.cciList.Add(stig.ATTRIBUTE_DATA);
                                 }
-                                _logger.LogInformation("Adding Artifact {2} to the list for GetSystemByVulnerabilityForReport({system: 0, vulnid: {1}) successfully", systemGroupId, vulnid, a.InternalId.ToString());
+                                _logger.LogInformation("Adding Artifact {2} to the list for GetSystemByVulnerabilityForReport(system: {0}, vulnid: {1}) successfully", systemGroupId, vulnid, a.InternalId.ToString());
                                 vulnReport.Add(vulnRecord); // add it to the listing
                             }
                         }
                     }
                     systemChecklists = null;
-                    _logger.LogInformation("Called GetSystemByVulnerabilityForReport({system: 0, vulnid: {1}) successfully", systemGroupId, vulnid);
+                    _logger.LogInformation("Called GetSystemByVulnerabilityForReport(system: {0}, vulnid: {1}) successfully", systemGroupId, vulnid);
                     return Ok(vulnReport);
                 }
                 catch (Exception ex) {
