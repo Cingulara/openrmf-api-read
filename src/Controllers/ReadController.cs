@@ -39,30 +39,86 @@ namespace openrmf_read_api.Controllers
         /// <summary>
         /// GET The list of checklists for the given System ID
         /// </summary>
-        /// <param name="system">The ID of the system to use</param>
+        /// <param name="systemGroupId">The ID of the system to use</param>
+        /// <param name="naf">True/False include Not a Finding vulnerabilities</param>
+        /// <param name="open">True/False include Open vulnerabilities</param>
+        /// <param name="na">True/False include Not Applicable vulnerabilities</param>
+        /// <param name="nr">True/False include Not Reviewed vulnerabilities</param>
+        /// <param name="cat1">True/False include CAT 1 / High vulnerabilities</param>
+        /// <param name="cat2">True/False include CAT 2 / Medium vulnerabilities</param>
+        /// <param name="cat3">True/False include CAT 3 / Low vulnerabilities</param>
         /// <returns>
         /// HTTP Status showing it was found or that there is an error. And the list of system records 
         /// exported to an XLSX file to download.
         /// </returns>
         /// <response code="200">Returns the Artifact List of records for the passed in system in XLSX format</response>
         /// <response code="400">If the item did not query correctly</response>
-        [HttpGet("export")]
+        [HttpGet("system/export/{systemGroupId}")]
         [Authorize(Roles = "Administrator,Reader,Assessor")]
-        public async Task<IActionResult> ExportChecklistListing(string system = null)
+        public async Task<IActionResult> ExportChecklistListing(string systemGroupId, bool naf = true, bool open = true, bool na = true, 
+            bool nr = true, bool cat1 = true, bool cat2 = true, bool cat3 = true)
         {
             try {
-                _logger.LogInformation("Calling ExportChecklistListing({0})", system);
+                _logger.LogInformation("Calling ExportChecklistListing({0})", systemGroupId);
                 IEnumerable<Artifact> artifacts;
                 // if they pass in a system, get all for that system
-                if (string.IsNullOrEmpty(system))
+                if (string.IsNullOrEmpty(systemGroupId))
                 {
-                    _logger.LogInformation("ExportChecklistListing() Getting a listing of all checklists to export to XLSX");
-                    artifacts = await _artifactRepo.GetAllArtifacts();
+                    _logger.LogWarning("ExportChecklistListing() Getting a listing of all checklists to export to XLSX");
+                    return BadRequest("You must specify a system to export");
                 }
-                else {
-                    _logger.LogInformation(string.Format("ExportChecklistListing() Getting a listing of all {0} checklists to export to XLSX", system));
-                    artifacts = await _artifactRepo.GetSystemArtifacts(system);
-                }
+                _logger.LogInformation(string.Format("ExportChecklistListing() Getting a listing of all {0} checklists to export to XLSX", systemGroupId));
+                artifacts = await _artifactRepo.GetSystemArtifacts(systemGroupId);
+                if (!naf || !open || !na || !nr || !cat1 || !cat2 || !cat3) {
+                    // used to store the allowed checklists
+                    List<string> allowedChecklists = new List<string>();
+                    bool allowChecklist = false;
+                    List<Score> scoreListing = NATSClient.GetSystemScores(systemGroupId);
+                    // get the list of scores for all of them
+                    if (scoreListing != null && scoreListing.Count > 0) {
+                        // see for each if they should be included
+                        foreach (Score s in scoreListing) {
+                            allowChecklist = false;
+                            // now we can check status and boolean
+                            if (s.totalCat1Open > 0 && cat1 && open)
+                                allowChecklist = true;
+                            else if (s.totalCat2Open > 0 && cat2 && open)
+                                allowChecklist = true;
+                            else if (s.totalCat3Open > 0 && cat3 && open)
+                                allowChecklist = true;
+                            else if (s.totalCat1NotReviewed > 0 && cat1 && nr)
+                                allowChecklist = true;
+                            else if (s.totalCat2NotReviewed > 0 && cat2 && nr)
+                                allowChecklist = true;
+                            else if (s.totalCat3NotReviewed > 0 && cat3 && nr)
+                                allowChecklist = true;
+                            else if (s.totalCat1NotApplicable > 0 && cat1 && na)
+                                allowChecklist = true;
+                            else if (s.totalCat2NotApplicable > 0 && cat2 && na)
+                                allowChecklist = true;
+                            else if (s.totalCat3NotApplicable > 0 && cat3 && na)
+                                allowChecklist = true;
+                            else if (s.totalCat1NotAFinding > 0 && cat1 && naf)
+                                allowChecklist = true;
+                            else if (s.totalCat2NotAFinding > 0 && cat2 && naf)
+                                allowChecklist = true;
+                            else if (s.totalCat3NotAFinding > 0 && cat3 && naf)
+                                allowChecklist = true;
+                            else
+                                allowChecklist = false; // only if no severity is checked, which is not smart
+
+                            if (allowChecklist) // then add it, we will do a distinct later
+                                allowedChecklists.Add(s.artifactId);
+                        }
+                        if (allowedChecklists.Count == 0)
+                            artifacts = new List<Artifact>(); // there are not allowed, so empty it
+                        else {
+                            // otherwise remove from the systemChecklists before going on
+                            artifacts = artifacts.Where(o => allowedChecklists.Contains(o.InternalId.ToString()));
+                        }
+                    }
+                } 
+                // now use the listing
                 if (artifacts != null && artifacts.Count() > 0) {
                     // starting row number for data
                     uint rowNumber = 6;
@@ -114,7 +170,7 @@ namespace openrmf_read_api.Controllers
                         if (artifacts != null && artifacts.Count() > 0) {
                             row = MakeChecklistInfoRow("Checklist Listing", artifacts.FirstOrDefault().systemTitle, 2);
                         } else {
-                            row = MakeChecklistInfoRow("Checklist Listing", system, 2);
+                            row = MakeChecklistInfoRow("Checklist Listing", systemGroupId, 2);
                         }
                         sheetData.Append(row);
                         row = MakeChecklistInfoRow("Printed Date", DateTime.Now.ToString("MM/dd/yy hh:mm"),3);
@@ -126,7 +182,7 @@ namespace openrmf_read_api.Controllers
                         Score checklistScore;
 
                         // cycle through the checklists and grab the score for each individually
-                        _logger.LogInformation("ExportChecklistListing({0}) cycling through checklists to list", system);
+                        _logger.LogInformation("ExportChecklistListing({0}) cycling through checklists to list", systemGroupId);
                         foreach (Artifact art in artifacts.OrderBy(x => x.title).OrderBy(y => y.systemTitle).ToList()) {
                             //art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist);
                             try {
@@ -262,17 +318,17 @@ namespace openrmf_read_api.Controllers
                         // Close the document.
                         spreadSheet.Close();
                         memory.Seek(0, SeekOrigin.Begin);
-                        _logger.LogInformation("Called ExportChecklistListing({0}) successfully", system);
+                        _logger.LogInformation("Called ExportChecklistListing({0}) successfully", systemGroupId);
                         return File(memory, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "ChecklistListing.xlsx");
                     }
                 }
                 else {
-                    _logger.LogInformation("Calling ExportChecklistListing({0}) but had no checklists to show", system);
+                    _logger.LogInformation("Calling ExportChecklistListing({0}) but had no checklists to show", systemGroupId);
                     return NotFound();
                 }
             }
             catch (Exception ex) {
-                _logger.LogError(ex, "ExportChecklistListing({0}) Error Retrieving Artifacts for Exporting", system);
+                _logger.LogError(ex, "ExportChecklistListing({0}) Error Retrieving Artifacts for Exporting", systemGroupId);
                 return NotFound();
             }
         } 
