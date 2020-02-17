@@ -315,6 +315,13 @@ namespace openrmf_read_api.Controllers
         /// GET The list of checklists for the given System ID
         /// </summary>
         /// <param name="systemGroupId">The ID of the system to use</param>
+        /// <param name="naf">True/False include Not a Finding vulnerabilities</param>
+        /// <param name="open">True/False include Open vulnerabilities</param>
+        /// <param name="na">True/False include Not Applicable vulnerabilities</param>
+        /// <param name="nr">True/False include Not Reviewed vulnerabilities</param>
+        /// <param name="cat1">True/False include CAT 1 / High vulnerabilities</param>
+        /// <param name="cat2">True/False include CAT 2 / Medium vulnerabilities</param>
+        /// <param name="cat3">True/False include CAT 3 / Low vulnerabilities</param>
         /// <returns>
         /// HTTP Status showing it was found or that there is an error. And the list of checklists records.
         /// </returns>
@@ -323,13 +330,68 @@ namespace openrmf_read_api.Controllers
         /// <response code="404">If the ID passed in is not valid</response>
         [HttpGet("systems/{systemGroupId}")]
         [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
-        public async Task<IActionResult> ListArtifactsBySystem(string systemGroupId)
+        public async Task<IActionResult> ListArtifactsBySystem(string systemGroupId, bool naf = true, bool open = true, bool na = true, 
+            bool nr = true, bool cat1 = true, bool cat2 = true, bool cat3 = true)
         {
             if (!string.IsNullOrEmpty(systemGroupId)) {
                 try {
                     _logger.LogInformation("Calling ListArtifactsBySystem({0})", systemGroupId);
+                    // store the list of all system checklists
                     IEnumerable<Artifact> systemChecklists;
+                    // used to store the allowed checklists
+                    List<string> allowedChecklists = new List<string>();
+                    bool allowChecklist = false;
+                    // get the checklists
                     systemChecklists = await _artifactRepo.GetSystemArtifacts(systemGroupId);
+                    // If we are filtering at all then use the filter
+                    // Otherwise send the whole list
+                    if (!naf || !open || !na || !nr || !cat1 || !cat2 || !cat3) {
+                        List<Score> scoreListing = NATSClient.GetSystemScores(systemGroupId);
+                        // get the list of scores for all of them
+                        if (scoreListing != null && scoreListing.Count > 0) {
+                            // see for each if they should be included
+                            foreach (Score s in scoreListing) {
+                                allowChecklist = false;
+                                // now we can check status and boolean
+                                if (s.totalCat1Open > 0 && cat1 && open)
+                                    allowChecklist = true;
+                                else if (s.totalCat2Open > 0 && cat2 && open)
+                                    allowChecklist = true;
+                                else if (s.totalCat3Open > 0 && cat3 && open)
+                                    allowChecklist = true;
+                                else if (s.totalCat1NotReviewed > 0 && cat1 && nr)
+                                    allowChecklist = true;
+                                else if (s.totalCat2NotReviewed > 0 && cat2 && nr)
+                                    allowChecklist = true;
+                                else if (s.totalCat3NotReviewed > 0 && cat3 && nr)
+                                    allowChecklist = true;
+                                else if (s.totalCat1NotApplicable > 0 && cat1 && na)
+                                    allowChecklist = true;
+                                else if (s.totalCat2NotApplicable > 0 && cat2 && na)
+                                    allowChecklist = true;
+                                else if (s.totalCat3NotApplicable > 0 && cat3 && na)
+                                    allowChecklist = true;
+                                else if (s.totalCat1NotAFinding > 0 && cat1 && naf)
+                                    allowChecklist = true;
+                                else if (s.totalCat2NotAFinding > 0 && cat2 && naf)
+                                    allowChecklist = true;
+                                else if (s.totalCat3NotAFinding > 0 && cat3 && naf)
+                                    allowChecklist = true;
+                                else
+                                    allowChecklist = false; // only if no severity is checked, which is not smart
+
+                                if (allowChecklist) // then add it, we will do a distinct later
+                                    allowedChecklists.Add(s.artifactId);
+                            }
+                            if (allowedChecklists.Count == 0)
+                                systemChecklists = new List<Artifact>(); // there are not allowed, so empty it
+                            else {
+                                // otherwise remove from the systemChecklists before going on
+                                systemChecklists = systemChecklists.Where(o => allowedChecklists.Contains(o.InternalId.ToString()));
+                            }
+                        }
+                    } 
+                    
                     if (systemChecklists == null) {
                         _logger.LogWarning("Calling ListArtifactsBySystem({0}) returned no checklists", systemGroupId);
                         return NotFound();
