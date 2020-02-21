@@ -1162,6 +1162,8 @@ namespace openrmf_read_api.Controllers
                 if (!string.IsNullOrEmpty(id)) {
                     Artifact art = new Artifact();
                     art = await _artifactRepo.GetArtifact(id);
+                    if (art != null && art.CHECKLIST == null && !string.IsNullOrEmpty(art.rawChecklist)) // load the checklist data
+                        art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist);
                     if (art != null && art.CHECKLIST != null) {
                         List<string> cciList = new List<string>();
                         _logger.LogInformation("ExportChecklist({0}....) formatting the checklist to XML from the raw string format");
