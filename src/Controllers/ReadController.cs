@@ -47,6 +47,7 @@ namespace openrmf_read_api.Controllers
         /// <param name="cat1">True/False include CAT 1 / High vulnerabilities</param>
         /// <param name="cat2">True/False include CAT 2 / Medium vulnerabilities</param>
         /// <param name="cat3">True/False include CAT 3 / Low vulnerabilities</param>
+        /// <param name="hostname">The hostname of the checklist to filter on</param>
         /// <returns>
         /// HTTP Status showing it was found or that there is an error. And the list of system records 
         /// exported to an XLSX file to download.
@@ -56,7 +57,7 @@ namespace openrmf_read_api.Controllers
         [HttpGet("system/export/{systemGroupId}")]
         [Authorize(Roles = "Administrator,Reader,Assessor")]
         public async Task<IActionResult> ExportChecklistListing(string systemGroupId, bool naf = true, bool open = true, bool na = true, 
-            bool nr = true, bool cat1 = true, bool cat2 = true, bool cat3 = true)
+            bool nr = true, bool cat1 = true, bool cat2 = true, bool cat3 = true, string hostname = "")
         {
             try {
                 _logger.LogInformation("Calling ExportChecklistListing({0})", systemGroupId);
@@ -118,6 +119,11 @@ namespace openrmf_read_api.Controllers
                         }
                     }
                 } 
+                // check for hostname being used
+                if (!string.IsNullOrEmpty(hostname)) {
+                    artifacts = artifacts.Where(z => z.hostName.Contains(hostname));
+                }
+
                 // now use the listing
                 if (artifacts != null && artifacts.Count() > 0) {
                     // starting row number for data
@@ -378,6 +384,7 @@ namespace openrmf_read_api.Controllers
         /// <param name="cat1">True/False include CAT 1 / High vulnerabilities</param>
         /// <param name="cat2">True/False include CAT 2 / Medium vulnerabilities</param>
         /// <param name="cat3">True/False include CAT 3 / Low vulnerabilities</param>
+        /// <param name="hostname">The hostname to filter the list of checklists on</param>
         /// <returns>
         /// HTTP Status showing it was found or that there is an error. And the list of checklists records.
         /// </returns>
@@ -387,7 +394,7 @@ namespace openrmf_read_api.Controllers
         [HttpGet("systems/{systemGroupId}")]
         [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
         public async Task<IActionResult> ListArtifactsBySystem(string systemGroupId, bool naf = true, bool open = true, bool na = true, 
-            bool nr = true, bool cat1 = true, bool cat2 = true, bool cat3 = true)
+            bool nr = true, bool cat1 = true, bool cat2 = true, bool cat3 = true, string hostname="")
         {
             if (!string.IsNullOrEmpty(systemGroupId)) {
                 try {
@@ -448,6 +455,11 @@ namespace openrmf_read_api.Controllers
                         }
                     } 
                     
+                    // check for hostname being used
+                    if (!string.IsNullOrEmpty(hostname)) {
+                        systemChecklists = systemChecklists.Where(z => z.hostName.Contains(hostname));
+                    }
+
                     if (systemChecklists == null) {
                         _logger.LogWarning("Calling ListArtifactsBySystem({0}) returned no checklists", systemGroupId);
                         return NotFound();
