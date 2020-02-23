@@ -811,7 +811,6 @@ namespace openrmf_read_api.Controllers
             }
         }        
 
-
         /// <summary>
         /// GET The XLSX export of the system test plan.
         /// </summary>
@@ -2090,7 +2089,6 @@ namespace openrmf_read_api.Controllers
             }
         }
         
-
         /// <summary>
         /// GET The list of hostnames and vulnerability data from a passed in system id and vuln id
         /// </summary>
