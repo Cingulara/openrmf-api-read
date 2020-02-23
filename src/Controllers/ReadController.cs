@@ -1077,6 +1077,278 @@ namespace openrmf_read_api.Controllers
                 return BadRequest(); // no systemGroupId entered
             }
         }        
+
+        /// <summary>
+        /// GET The XLSX export of the system test plan.
+        /// </summary>
+        /// <param name="systemGroupId">The ID of the system to use</param>
+        /// <returns>
+        /// HTTP Status showing it was found or that there is an error. And the XLSX test plan file.
+        /// </returns>
+        /// <response code="200">Returns the count of records</response>
+        /// <response code="400">If the item did not query correctly</response>
+        /// <response code="404">If the ID passed in does not have a valid system record</response>
+        [HttpGet("system/{systemGroupId}/poamexport")]
+        [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
+        public async Task<IActionResult> ExportSystemPOAM(string systemGroupId)
+        {
+            if (!string.IsNullOrEmpty(systemGroupId)) {
+                try {
+                    _logger.LogInformation("Calling ExportSystemPOAM({0})", systemGroupId);
+                    SystemGroup sg = new SystemGroup();
+                    sg = await _systemGroupRepo.GetSystemGroup(systemGroupId);
+                    if (sg == null) {
+                        _logger.LogWarning("ExportSystemPOAM({0}) an invalid system record");
+                        return NotFound();
+                    }
+                    // load the NessusPatch XML into a List
+                    // do a count of Critical, High, and Medium and Low items
+                    // return the class of numbers for this
+                    NessusPatchData patchData = new NessusPatchData();
+                    if (!string.IsNullOrEmpty(sg.rawNessusFile)) {
+                        _logger.LogInformation("ExportSystemPOAM({0}) loading Nessus patch data file", systemGroupId);
+                        patchData = NessusPatchLoader.LoadPatchData(sg.rawNessusFile);
+                        _logger.LogInformation("ExportSystemPOAM({0}) Nessus patch data file loaded", systemGroupId);
+                    }
+                    
+                    // generate the XLSX file from this
+                    
+                    // starting row number for data
+                    uint rowNumber = 7;
+
+                    // create the XLSX in memory and send it out
+                    var memory = new MemoryStream();
+                    using (SpreadsheetDocument spreadSheet = SpreadsheetDocument.Create(memory, SpreadsheetDocumentType.Workbook))
+                    {
+                        _logger.LogInformation("ExportSystemPOAM({0}) setting up XLSX file", systemGroupId);
+                        // Add a WorkbookPart to the document.
+                        WorkbookPart workbookpart = spreadSheet.AddWorkbookPart();
+                        workbookpart.Workbook = new Workbook();
+                        
+                        // add styles to workbook
+                        WorkbookStylesPart wbsp = workbookpart.AddNewPart<WorkbookStylesPart>();
+
+                        // Add a WorksheetPart to the WorkbookPart.
+                        WorksheetPart worksheetPart = workbookpart.AddNewPart<WorksheetPart>();
+                        worksheetPart.Worksheet = new Worksheet(new SheetData());
+
+                        // add stylesheet to use cell formats 1 - 4
+                        wbsp.Stylesheet = ExcelStyleSheet.GenerateStylesheet();
+
+                        // generate the column listings we need with custom widths
+                        DocumentFormat.OpenXml.Spreadsheet.Columns lstColumns = worksheetPart.Worksheet.GetFirstChild<DocumentFormat.OpenXml.Spreadsheet.Columns>();
+                        if (lstColumns == null) {
+                            lstColumns = new DocumentFormat.OpenXml.Spreadsheet.Columns();
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 1, Max = 1, Width = 10, CustomWidth = true }); // col A
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 2, Max = 2, Width = 40, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 3, Max = 3, Width = 40, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 4, Max = 4, Width = 30, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 5, Max = 5, Width = 10, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 6, Max = 6, Width = 10, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 7, Max = 7, Width = 20, CustomWidth = true }); // col G Mitigations
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 8, Max = 8, Width = 10, CustomWidth = true }); // col H
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 9, Max = 9, Width = 40, CustomWidth = true }); // col I
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 10, Max = 10, Width = 40, CustomWidth = true }); // col J
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 11, Max = 11, Width = 40, CustomWidth = true }); // col K
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 12, Max = 12, Width = 40, CustomWidth = true }); 
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 13, Max = 13, Width = 40, CustomWidth = true }); // col M source identifying
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 14, Max = 14, Width = 10, CustomWidth = true }); // col N Status
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 15, Max = 15, Width = 40, CustomWidth = true }); // col O comments
+                            worksheetPart.Worksheet.InsertAt(lstColumns, 0);
+                        }
+
+                        // Add Sheets to the Workbook.
+                        Sheets sheets = spreadSheet.WorkbookPart.Workbook.AppendChild<Sheets>(new Sheets());
+
+                        // Append a new worksheet and associate it with the workbook.
+                        Sheet sheet = new Sheet() { Id = spreadSheet.WorkbookPart.
+                            GetIdOfPart(worksheetPart), SheetId = 1, Name = "System-POAM" };
+                        sheets.Append(sheet);
+                        // Get the sheetData cell table.
+                        SheetData sheetData = worksheetPart.Worksheet.GetFirstChild<SheetData>();
+                        DocumentFormat.OpenXml.Spreadsheet.Cell refCell = null;
+                        DocumentFormat.OpenXml.Spreadsheet.Cell newCell = null;
+
+                        _logger.LogInformation("ExportSystemPOAM({0}) setting title XLSX information", systemGroupId);
+                        DocumentFormat.OpenXml.Spreadsheet.Row row = MakeTitleRow("OpenRMF by Cingulara and Tutela");
+                        sheetData.Append(row);
+                        row = MakeChecklistInfoRow("System POA&M", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss tt"),2);
+                        sheetData.Append(row);
+                        row = MakeChecklistInfoRow("System Name", sg.title,3);
+                        sheetData.Append(row);
+                        row = MakePOAMHeaderRows(rowNumber, true);
+                        sheetData.Append(row);
+
+                        uint styleIndex = 0; // use this for 4, 5, 6, or 7 for status
+                        Score checklistScore;
+
+                        //     styleIndex = GetPatchScanStatus(summary.severity);
+                        
+                        // get the list of hosts to use
+                        _logger.LogInformation("ExportSystemPOAM({0}) getting Hosts from Nessus patch data file", systemGroupId);
+                        List<string> hostnames = patchData.summary.Select(x => x.hostname).Distinct().ToList();
+                        int patchCount = 0;
+                        int patchTotal = 0;
+                        string ipAddress = "";
+                        // for each host, cycle through the # of items and print out
+                        // foreach (string host in hostnames) {
+                        //     _logger.LogInformation("ExportSystemPOAM({0}) adding Nessus patch data file for {1}", systemGroupId, host);
+                        //     rowNumber++;
+                        //     // reset numbers just in case
+                        //     patchTotal = 0;
+                        //     patchCount = 0;
+
+                        //     // make a new row for this set of items
+                        //     row = MakeDataRow(rowNumber, "A", host, styleIndex);
+                        //     newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "B" + rowNumber.ToString() };
+                        //     row.InsertBefore(newCell, refCell);
+                        //     newCell.CellValue = new CellValue(patchData.summary.Where(x => x.hostname == host).Select(y => y.ipAddress).FirstOrDefault());
+                        //     newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                        //     newCell.StyleIndex = 0;
+                        //     newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "D" + rowNumber.ToString() };
+                        //     row.InsertBefore(newCell, refCell);
+                        //     newCell.CellValue = new CellValue(patchData.summary.Where(x => x.hostname == host).Select(y => y.operatingSystem).FirstOrDefault());
+                        //     newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                        //     newCell.StyleIndex = 0;
+                        //     newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowNumber.ToString() };
+                        //     row.InsertBefore(newCell, refCell);
+                        //     newCell.CellValue = new CellValue(!string.IsNullOrEmpty(sg.nessusFilename)? sg.nessusFilename : "Latest Scan file");
+                        //     newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                        //     newCell.StyleIndex = 0;
+                        //     // now cycle through the rest of the items
+                        //     newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "F" + rowNumber.ToString() };
+                        //     row.InsertBefore(newCell, refCell);
+                        //     patchCount = patchData.summary.Where(x => x.hostname == host && x.severity > 2).Count();
+                        //     patchTotal += patchCount;
+                        //     newCell.CellValue = new CellValue(patchCount.ToString());
+                        //     newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                        //     newCell.StyleIndex = 8;
+                        //     newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "G" + rowNumber.ToString() };
+                        //     row.InsertBefore(newCell, refCell);
+                        //     patchCount = patchData.summary.Where(x => x.hostname == host && x.severity == 2).Count();
+                        //     patchTotal += patchCount;
+                        //     newCell.CellValue = new CellValue(patchCount.ToString());
+                        //     newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                        //     newCell.StyleIndex = 14;
+                        //     newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "H" + rowNumber.ToString() };
+                        //     row.InsertBefore(newCell, refCell);
+                        //     patchCount = patchData.summary.Where(x => x.hostname == host && x.severity == 1).Count();
+                        //     patchTotal += patchCount;
+                        //     newCell.CellValue = new CellValue(patchCount.ToString());
+                        //     newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                        //     newCell.StyleIndex = 15;
+                        //     newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "I" + rowNumber.ToString() };
+                        //     row.InsertBefore(newCell, refCell);
+                        //     patchCount = patchData.summary.Where(x => x.hostname == host && x.severity == 0).Count();
+                        //     patchTotal += patchCount;
+                        //     newCell.CellValue = new CellValue(patchCount.ToString());
+                        //     newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                        //     newCell.StyleIndex = 11;
+                        //     newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "J" + rowNumber.ToString() };
+                        //     row.InsertBefore(newCell, refCell);
+                        //     newCell.CellValue = new CellValue(patchTotal.ToString());
+                        //     newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                        //     newCell.StyleIndex = 11;
+                        //     newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "K" + rowNumber.ToString() };
+                        //     row.InsertBefore(newCell, refCell);
+                        //     if (patchData.summary.Where(x => x.hostname == host).Select(y => y.credentialed).FirstOrDefault())
+                        //         newCell.CellValue = new CellValue("Yes");
+                        //     else
+                        //         newCell.CellValue = new CellValue("No");
+                        //     newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                        //     newCell.StyleIndex = 0;
+                        //     sheetData.Append(row);
+                        // }
+
+                        // generate the checklist files
+                        // rowNumber = rowNumber + 5;                        
+                        // _logger.LogInformation("ExportSystemPOAM({0}) getting checklist data and scores", systemGroupId);
+                        // row = MakeTestPlanHeaderRows(rowNumber, false);
+                        // sheetData.Append(row);
+                        // IEnumerable<Artifact> artifacts;
+                        // artifacts = await _artifactRepo.GetSystemArtifacts(systemGroupId);
+                        // foreach (Artifact art in artifacts.OrderBy(x => x.title).OrderBy(y => y.systemTitle).ToList()) {
+                        //     art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist);
+                        //     try {
+                        //         _logger.LogInformation("ExportSystemPOAM({0}) getting checklist data and scores for {1}", systemGroupId, art.title);
+                        //         checklistScore = NATSClient.GetChecklistScore(art.InternalId.ToString());
+                        //     }
+                        //     catch (Exception ex) {
+                        //         _logger.LogWarning(ex, "No score found for artifact {0}", art.InternalId.ToString());
+                        //         checklistScore = new Score();
+                        //     }
+                        //     rowNumber++;
+
+                        //     _logger.LogInformation("ExportSystemPOAM({0}) making checklist row for {1}", systemGroupId, art.title);
+                        //     // make a new row for this set of items
+                        //     row = MakeDataRow(rowNumber, "A", art.hostName.Trim().ToLower() != ""? art.hostName : "", styleIndex);
+                        //     // now cycle through the rest of the items
+                        //     newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "B" + rowNumber.ToString() };
+                        //     row.InsertBefore(newCell, refCell);
+                        //     ipAddress = art.CHECKLIST.ASSET.HOST_IP;
+                        //     if (!string.IsNullOrEmpty(ipAddress)) {
+                        //         ipAddress = NessusPatchLoader.SanitizeHostname(ipAddress);
+                        //     } else
+                        //         ipAddress = "";
+                        //     newCell.CellValue = new CellValue(ipAddress);
+                        //     newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                        //     newCell.StyleIndex = 0;
+                        //     newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowNumber.ToString() };
+                        //     row.InsertBefore(newCell, refCell);
+                        //     newCell.CellValue = new CellValue(art.title+ ".ckl");
+                        //     newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                        //     newCell.StyleIndex = 0;
+                        //     newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "F" + rowNumber.ToString() };
+                        //     row.InsertBefore(newCell, refCell);
+                        //     newCell.CellValue = new CellValue(checklistScore.totalCat1Open.ToString());
+                        //     newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                        //     newCell.StyleIndex = 8;
+                        //     newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "G" + rowNumber.ToString() };
+                        //     row.InsertBefore(newCell, refCell);
+                        //     newCell.CellValue = new CellValue(checklistScore.totalCat2Open.ToString());
+                        //     newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                        //     newCell.StyleIndex = 14;
+                        //     newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "H" + rowNumber.ToString() };
+                        //     row.InsertBefore(newCell, refCell);
+                        //     newCell.CellValue = new CellValue(checklistScore.totalCat3Open.ToString());
+                        //     newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                        //     newCell.StyleIndex = 15;
+                        //     newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "I" + rowNumber.ToString() };
+                        //     row.InsertBefore(newCell, refCell);
+                        //     newCell.CellValue = new CellValue("0");
+                        //     newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                        //     newCell.StyleIndex = 0;
+                        //     newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "J" + rowNumber.ToString() };
+                        //     row.InsertBefore(newCell, refCell);
+                        //     newCell.CellValue = new CellValue(checklistScore.totalOpen.ToString());
+                        //     newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                        //     newCell.StyleIndex = 0;
+                        //     sheetData.Append(row);
+                        // }
+
+                        // Save the new worksheet.
+                        workbookpart.Workbook.Save();
+                        // Close the document.
+                        _logger.LogInformation("ExportSystemPOAM({0}) closing the XLSX test plan", systemGroupId);
+                        spreadSheet.Close();
+                        // set the filename
+                        string filename = sg.title + "-SystemPOAM";
+                        memory.Seek(0, SeekOrigin.Begin);
+                        _logger.LogInformation("Called ExportSystemPOAM({0}) successfully", systemGroupId);
+                        return File(memory, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", CreateXLSXFilename(filename));
+                    }
+                }
+                catch (Exception ex) {
+                    _logger.LogError(ex, "ExportSystemPOAM() Error getting the test plan XLSX export for system {0}", systemGroupId);
+                    return BadRequest();
+                }
+            }
+            else {
+                _logger.LogWarning("Called ExportSystemPOAM() with no system ID");
+                return BadRequest(); // no systemGroupId entered
+            }
+        }        
+
         #endregion
 
         #region Artifacts and Checklists
@@ -1863,6 +2135,103 @@ namespace openrmf_read_api.Controllers
                 newCell.DataType = new EnumValue<CellValues>(CellValues.String);
                 newCell.StyleIndex = styleIndex;
             }
+            return row;
+        }
+        private DocumentFormat.OpenXml.Spreadsheet.Row MakePOAMHeaderRows(uint rowindex, bool credentialed) {
+            DocumentFormat.OpenXml.Spreadsheet.Cell refCell = null;
+            DocumentFormat.OpenXml.Spreadsheet.Row row = new DocumentFormat.OpenXml.Spreadsheet.Row() { RowIndex = rowindex };
+            DocumentFormat.OpenXml.Spreadsheet.Cell newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "A" + rowindex.ToString() };
+            uint styleIndex = 3;
+
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "B" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Control Vulnerability Description");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "C" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Security Control Number");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "D" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Office/Org");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Security Checks");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "F" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Raw Severity Value");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "G" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Mitigations");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "H" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Severity Value");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "I" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Resources Required");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "J" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Scheduled Completion Date");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "K" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Milestone with Completion Dates");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "L" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Milestone with Completion Dates");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "M" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Source ID Control Vulnerability");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "N" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Status");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "O" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Comments");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+
             return row;
         }
 
