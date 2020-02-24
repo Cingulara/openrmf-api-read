@@ -1168,13 +1168,29 @@ namespace openrmf_read_api.Controllers
                         SheetData sheetData = worksheetPart.Worksheet.GetFirstChild<SheetData>();
                         DocumentFormat.OpenXml.Spreadsheet.Cell refCell = null;
                         DocumentFormat.OpenXml.Spreadsheet.Cell newCell = null;
-
+                        var claim = this.User.Claims.Where(x => x.Type == System.Security.Claims.ClaimTypes.NameIdentifier).FirstOrDefault();
+                        string strClaimName = "Unknown";
+                        if (claim != null) {
+                            strClaimName = claim.Value; // userid
+                            if (claim.Subject.Claims.Where(x => x.Type == "name").FirstOrDefault() != null) 
+                                strClaimName = claim.Subject.Claims.Where(x => x.Type == "name").FirstOrDefault().Value;
+                            else if (claim.Subject.Claims.Where(x => x.Type == "preferred_username").FirstOrDefault() != null)
+                                strClaimName = claim.Subject.Claims.Where(x => x.Type == "preferred_username").FirstOrDefault().Value;
+                            else if (claim.Subject.Claims.Where(x => x.Type.Contains("emailaddress")).FirstOrDefault() != null)
+                                strClaimName = claim.Subject.Claims.Where(x => x.Type.Contains("emailaddress")).FirstOrDefault().Value;
+                        }
                         _logger.LogInformation("ExportSystemPOAM({0}) setting title XLSX information", systemGroupId);
                         DocumentFormat.OpenXml.Spreadsheet.Row row = MakeTitleRow("OpenRMF by Cingulara and Tutela");
                         sheetData.Append(row);
-                        row = MakeChecklistInfoRow("System POA&M", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss tt"),2);
+                        row = MakePOAMInfoRow("Date Created:",DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss tt"),"System Type:","","OMB Project ID:","",2);
                         sheetData.Append(row);
-                        row = MakeChecklistInfoRow("System Name", sg.title,3);
+                        row = MakePOAMInfoRow("Created By:",strClaimName,"","","","",3);
+                        sheetData.Append(row);
+                        row = MakePOAMInfoRow("DoD Component:","","POC Name:","","","",4);
+                        sheetData.Append(row);
+                        row = MakePOAMInfoRow("System Project Name:", sg.title, "POC Phone:", "", "Security Costs:","",5);
+                        sheetData.Append(row);
+                        row = MakePOAMInfoRow("DoD IT Registration Number:","","POC Email:","","","",6);
                         sheetData.Append(row);
                         row = MakePOAMHeaderRows(rowNumber, true);
                         sheetData.Append(row);
@@ -1182,7 +1198,7 @@ namespace openrmf_read_api.Controllers
                         uint styleIndex = 0; // use this for 4, 5, 6, or 7 for status
                         Score checklistScore;
 
-                        //     styleIndex = GetPatchScanStatus(summary.severity);
+                        // styleIndex = GetPatchScanStatus(summary.severity);
                         
                         // get the list of hosts to use
                         _logger.LogInformation("ExportSystemPOAM({0}) getting Hosts from Nessus patch data file", systemGroupId);
@@ -2135,6 +2151,51 @@ namespace openrmf_read_api.Controllers
                 newCell.DataType = new EnumValue<CellValues>(CellValues.String);
                 newCell.StyleIndex = styleIndex;
             }
+            return row;
+        }
+        private DocumentFormat.OpenXml.Spreadsheet.Row MakePOAMInfoRow(string colAlabel, string colBvalue, string colIlabel, string colJvalue, string colLlabel, string colMvalue, uint rowindex) {
+            DocumentFormat.OpenXml.Spreadsheet.Row row = new DocumentFormat.OpenXml.Spreadsheet.Row() { RowIndex = rowindex };
+            DocumentFormat.OpenXml.Spreadsheet.Cell refCell = null;
+            DocumentFormat.OpenXml.Spreadsheet.Cell newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "B" + rowindex.ToString()};
+            uint styleIndex = 3;
+
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue(colAlabel);
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "C" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue(colBvalue);
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = 0;
+
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "I" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue(colIlabel);
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "J" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue(colJvalue);
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = 0;
+
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "L" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue(colLlabel);
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "M" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue(colMvalue);
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = 0;
+
             return row;
         }
         private DocumentFormat.OpenXml.Spreadsheet.Row MakePOAMHeaderRows(uint rowindex, bool credentialed) {
