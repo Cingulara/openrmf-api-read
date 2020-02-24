@@ -133,6 +133,15 @@ namespace openrmf_read_api.Models
             patternFill8.Append(backgroundColor8);
             fill8.Append(patternFill8);
 
+            // 8 gray background for any general use
+            Fill fill9 = new Fill();
+            PatternFill patternFill9 = new PatternFill() { PatternType = PatternValues.Solid};
+            ForegroundColor foregroundColor9 = new ForegroundColor() { Rgb = "FFBBBBBB" };
+            BackgroundColor backgroundColor9 = new BackgroundColor() { Indexed = (UInt32Value)64U };
+            patternFill9.Append(foregroundColor9);
+            patternFill9.Append(backgroundColor9);
+            fill9.Append(patternFill9);
+
             fills1.Append(fill1); // these are 0 based when you include in the CellFormat statements below, so 1 off
             fills1.Append(fill2);
             fills1.Append(fill3);
@@ -141,6 +150,7 @@ namespace openrmf_read_api.Models
             fills1.Append(fill6);
             fills1.Append(fill7);
             fills1.Append(fill8);
+            fills1.Append(fill9);
 
             Borders borders1 = new Borders() { Count = (UInt32Value)1U };
 
@@ -200,6 +210,8 @@ namespace openrmf_read_api.Models
             CellFormat cellFormat16 = new CellFormat(new Alignment() { WrapText = true, Horizontal = HorizontalAlignmentValues.Center }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)6U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U };
             // style index 15: yellow Open CAT 3 centered
             CellFormat cellFormat17 = new CellFormat(new Alignment() { WrapText = true, Horizontal = HorizontalAlignmentValues.Center }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)7U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U };
+            // style index 16: yellow Open CAT 3 centered
+            CellFormat cellFormat18 = new CellFormat(new Alignment() { WrapText = true }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)1U, FillId = (UInt32Value)8U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U, ApplyFont = true };
 
             // add all these formats
             cellFormats1.Append(cellFormat2);
@@ -218,6 +230,7 @@ namespace openrmf_read_api.Models
             cellFormats1.Append(cellFormat15);
             cellFormats1.Append(cellFormat16);
             cellFormats1.Append(cellFormat17);
+            cellFormats1.Append(cellFormat18);
 
             CellStyles cellStyles1 = new CellStyles() { Count = (UInt32Value)1U };
             CellStyle cellStyle1 = new CellStyle() { Name = "Normal", FormatId = 0, BuiltinId = 0 };

@@ -1114,7 +1114,7 @@ namespace openrmf_read_api.Controllers
                     // generate the XLSX file from this
                     
                     // starting row number for data
-                    uint rowNumber = 7;
+                    uint rowNumber = 8;
 
                     // create the XLSX in memory and send it out
                     var memory = new MemoryStream();
@@ -2157,7 +2157,7 @@ namespace openrmf_read_api.Controllers
             DocumentFormat.OpenXml.Spreadsheet.Row row = new DocumentFormat.OpenXml.Spreadsheet.Row() { RowIndex = rowindex };
             DocumentFormat.OpenXml.Spreadsheet.Cell refCell = null;
             DocumentFormat.OpenXml.Spreadsheet.Cell newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "B" + rowindex.ToString()};
-            uint styleIndex = 3;
+            uint styleIndex = 16; // background color grey
 
             row.InsertBefore(newCell, refCell);
             newCell.CellValue = new CellValue(colAlabel);
