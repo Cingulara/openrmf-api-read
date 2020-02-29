@@ -149,6 +149,9 @@ namespace openrmf_read_api.Classes
                                     }
                                 }
                             }
+                            // record the ACAS version for the POA&M export
+                            if (!string.IsNullOrEmpty(scanVersion)) summary.scanVersion = scanVersion;
+
                             // add the record
                             summaryListing.Add(summary);
                         }

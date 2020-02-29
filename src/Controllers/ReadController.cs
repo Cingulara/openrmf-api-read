@@ -1221,7 +1221,10 @@ namespace openrmf_read_api.Controllers
                             newCell.StyleIndex = 0;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "M" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
-                            newCell.CellValue = new CellValue("Assured Compliance Assessment Solution (ACAS) Nessus Scanner :: (version)");
+                            if (!string.IsNullOrEmpty(p.scanVersion))
+                                newCell.CellValue = new CellValue("Assured Compliance Assessment Solution (ACAS) Nessus Scanner :: " + p.scanVersion);
+                            else 
+                                newCell.CellValue = new CellValue("Assured Compliance Assessment Solution (ACAS) Nessus Scanner :: (version)");
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
                             newCell.StyleIndex = 0;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "N" + rowNumber.ToString() };
