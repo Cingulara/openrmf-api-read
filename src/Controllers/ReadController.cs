@@ -1143,10 +1143,10 @@ namespace openrmf_read_api.Controllers
                             lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 2, Max = 2, Width = 40, CustomWidth = true });
                             lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 3, Max = 3, Width = 40, CustomWidth = true });
                             lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 4, Max = 4, Width = 30, CustomWidth = true });
-                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 5, Max = 5, Width = 10, CustomWidth = true });
-                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 6, Max = 6, Width = 10, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 5, Max = 5, Width = 20, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 6, Max = 6, Width = 20, CustomWidth = true });
                             lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 7, Max = 7, Width = 20, CustomWidth = true }); // col G Mitigations
-                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 8, Max = 8, Width = 10, CustomWidth = true }); // col H
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 8, Max = 8, Width = 20, CustomWidth = true }); // col H
                             lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 9, Max = 9, Width = 40, CustomWidth = true }); // col I
                             lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 10, Max = 10, Width = 40, CustomWidth = true }); // col J
                             lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 11, Max = 11, Width = 40, CustomWidth = true }); // col K
@@ -1196,85 +1196,48 @@ namespace openrmf_read_api.Controllers
                         sheetData.Append(row);
 
                         uint styleIndex = 0; // use this for 4, 5, 6, or 7 for status
-                        Score checklistScore;
-
-                        // styleIndex = GetPatchScanStatus(summary.severity);
                         
                         // get the list of hosts to use
                         _logger.LogInformation("ExportSystemPOAM({0}) getting Hosts from Nessus patch data file", systemGroupId);
-                        List<string> hostnames = patchData.summary.Select(x => x.hostname).Distinct().ToList();
-                        int patchCount = 0;
-                        int patchTotal = 0;
-                        string ipAddress = "";
-                        // for each host, cycle through the # of items and print out
-                        // foreach (string host in hostnames) {
-                        //     _logger.LogInformation("ExportSystemPOAM({0}) adding Nessus patch data file for {1}", systemGroupId, host);
-                        //     rowNumber++;
-                        //     // reset numbers just in case
-                        //     patchTotal = 0;
-                        //     patchCount = 0;
+                        string reportName = patchData.reportName;
+                        // for each patch issue, cycle through and put a row -- order by severity and then hostname if in the correct order!!
+                        // only severity 1 - 4 items
+                        patchData.summary = patchData.summary.Where(z => z.severity > 0).OrderByDescending(x => x.severity).OrderBy(y => y.hostname).ToList();
+                        foreach (NessusPatchSummary p in patchData.summary) {
+                            _logger.LogInformation("ExportSystemPOAM({0}) adding Nessus patch summary row for {1}", systemGroupId, p.pluginId);
+                            rowNumber++;
 
-                        //     // make a new row for this set of items
-                        //     row = MakeDataRow(rowNumber, "A", host, styleIndex);
-                        //     newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "B" + rowNumber.ToString() };
-                        //     row.InsertBefore(newCell, refCell);
-                        //     newCell.CellValue = new CellValue(patchData.summary.Where(x => x.hostname == host).Select(y => y.ipAddress).FirstOrDefault());
-                        //     newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                        //     newCell.StyleIndex = 0;
-                        //     newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "D" + rowNumber.ToString() };
-                        //     row.InsertBefore(newCell, refCell);
-                        //     newCell.CellValue = new CellValue(patchData.summary.Where(x => x.hostname == host).Select(y => y.operatingSystem).FirstOrDefault());
-                        //     newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                        //     newCell.StyleIndex = 0;
-                        //     newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowNumber.ToString() };
-                        //     row.InsertBefore(newCell, refCell);
-                        //     newCell.CellValue = new CellValue(!string.IsNullOrEmpty(sg.nessusFilename)? sg.nessusFilename : "Latest Scan file");
-                        //     newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                        //     newCell.StyleIndex = 0;
-                        //     // now cycle through the rest of the items
-                        //     newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "F" + rowNumber.ToString() };
-                        //     row.InsertBefore(newCell, refCell);
-                        //     patchCount = patchData.summary.Where(x => x.hostname == host && x.severity > 2).Count();
-                        //     patchTotal += patchCount;
-                        //     newCell.CellValue = new CellValue(patchCount.ToString());
-                        //     newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
-                        //     newCell.StyleIndex = 8;
-                        //     newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "G" + rowNumber.ToString() };
-                        //     row.InsertBefore(newCell, refCell);
-                        //     patchCount = patchData.summary.Where(x => x.hostname == host && x.severity == 2).Count();
-                        //     patchTotal += patchCount;
-                        //     newCell.CellValue = new CellValue(patchCount.ToString());
-                        //     newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
-                        //     newCell.StyleIndex = 14;
-                        //     newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "H" + rowNumber.ToString() };
-                        //     row.InsertBefore(newCell, refCell);
-                        //     patchCount = patchData.summary.Where(x => x.hostname == host && x.severity == 1).Count();
-                        //     patchTotal += patchCount;
-                        //     newCell.CellValue = new CellValue(patchCount.ToString());
-                        //     newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
-                        //     newCell.StyleIndex = 15;
-                        //     newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "I" + rowNumber.ToString() };
-                        //     row.InsertBefore(newCell, refCell);
-                        //     patchCount = patchData.summary.Where(x => x.hostname == host && x.severity == 0).Count();
-                        //     patchTotal += patchCount;
-                        //     newCell.CellValue = new CellValue(patchCount.ToString());
-                        //     newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
-                        //     newCell.StyleIndex = 11;
-                        //     newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "J" + rowNumber.ToString() };
-                        //     row.InsertBefore(newCell, refCell);
-                        //     newCell.CellValue = new CellValue(patchTotal.ToString());
-                        //     newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
-                        //     newCell.StyleIndex = 11;
-                        //     newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "K" + rowNumber.ToString() };
-                        //     row.InsertBefore(newCell, refCell);
-                        //     if (patchData.summary.Where(x => x.hostname == host).Select(y => y.credentialed).FirstOrDefault())
-                        //         newCell.CellValue = new CellValue("Yes");
-                        //     else
-                        //         newCell.CellValue = new CellValue("No");
-                        //     newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                        //     newCell.StyleIndex = 0;
-                        //     sheetData.Append(row);
-                        // }
+                            // make a new row for this set of items
+                            row = MakeDataRow(rowNumber, "B", "Title:\n" + p.pluginName + "\n\nDescription:\n" + p.description, styleIndex);
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue(p.pluginId);
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = 0;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "F" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue(p.severity.ToString());
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                            newCell.StyleIndex = 0;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "M" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue("Assured Compliance Assessment Solution (ACAS) Nessus Scanner :: (version)");
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = 0;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "N" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue("Ongoing");
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = 0;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "O" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue("Devices affected: " + p.hostname);
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = 0;
+
+                            // add the row to the sheet now
+                            sheetData.Append(row);
+                        }
 
                         // generate the checklist files
                         // rowNumber = rowNumber + 5;                        
