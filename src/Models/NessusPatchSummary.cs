@@ -50,5 +50,8 @@ namespace openrmf_read_api.Models
         public string pluginType { get; set; }
         public string riskFactor { get; set; }
         public string synopsis { get; set; }
+
+        // Nessus ACAS Scanner Version
+        public string scanVersion { get; set; }
     }
 }

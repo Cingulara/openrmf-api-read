@@ -53,6 +53,7 @@ namespace openrmf_read_api.Classes
             string systemType = "";
             bool credentialed = false;
             string ipAddress = "";
+            string scanVersion = "";
 
             foreach (XmlNode node in nodes) {
                 // reset the variables for each reporthost listing
@@ -134,6 +135,19 @@ namespace openrmf_read_api.Classes
                                     summary.riskFactor = reportData.InnerText;
                                 else if (reportData.Name == "synopsis")
                                     summary.synopsis = reportData.InnerText;
+
+                                if (summary.family == "Settings" && summary.pluginName == "Nessus Scan Information") { // get the version of ACAS
+                                    if (reportData.Name == "plugin_output") { // parse the data in here
+                                        int strPlacement = 0;
+                                        strPlacement = reportData.InnerText.IndexOf("Nessus version : ");
+                                        if (strPlacement > 0) { // record the version
+                                            scanVersion = reportData.InnerText.Substring(strPlacement+17, reportData.InnerText.IndexOf("\n",strPlacement+19)-(strPlacement+17)).Trim();
+                                            strPlacement = reportData.InnerText.IndexOf("Plugin feed version : ");
+                                            if (strPlacement > 0) // add the plugin feed version to the end of the ACAS version
+                                                scanVersion += "." + reportData.InnerText.Substring(strPlacement+22, reportData.InnerText.IndexOf("\n",strPlacement+24)-(strPlacement+22)).Trim();
+                                        }
+                                    }
+                                }
                             }
                             // add the record
                             summaryListing.Add(summary);

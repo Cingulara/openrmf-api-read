@@ -1140,8 +1140,8 @@ namespace openrmf_read_api.Controllers
                         if (lstColumns == null) {
                             lstColumns = new DocumentFormat.OpenXml.Spreadsheet.Columns();
                             lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 1, Max = 1, Width = 10, CustomWidth = true }); // col A
-                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 2, Max = 2, Width = 40, CustomWidth = true });
-                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 3, Max = 3, Width = 40, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 2, Max = 2, Width = 60, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 3, Max = 3, Width = 30, CustomWidth = true });
                             lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 4, Max = 4, Width = 30, CustomWidth = true });
                             lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 5, Max = 5, Width = 20, CustomWidth = true });
                             lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 6, Max = 6, Width = 20, CustomWidth = true });
@@ -1202,7 +1202,7 @@ namespace openrmf_read_api.Controllers
                         string reportName = patchData.reportName;
                         // for each patch issue, cycle through and put a row -- order by severity and then hostname if in the correct order!!
                         // only severity 1 - 4 items
-                        patchData.summary = patchData.summary.Where(z => z.severity > 0).OrderByDescending(x => x.severity).OrderBy(y => y.hostname).ToList();
+                        patchData.summary = patchData.summary.Where(z => z.severity > 0).OrderBy(y => y.hostname).OrderByDescending(x => x.severity).ToList();
                         foreach (NessusPatchSummary p in patchData.summary) {
                             _logger.LogInformation("ExportSystemPOAM({0}) adding Nessus patch summary row for {1}", systemGroupId, p.pluginId);
                             rowNumber++;
