@@ -1245,8 +1245,6 @@ namespace openrmf_read_api.Controllers
                         IEnumerable<Artifact> checklists = await _artifactRepo.GetSystemArtifacts(systemGroupId);
                         if (checklists != null) {
                             _logger.LogInformation("ExportSystemPOAM({0}) cycling through the checklists to get all Open or N/R vulnerabilities.", systemGroupId);
-                            rowNumber = rowNumber + 5; 
-
                             // put all VULNs in here to order later
                             List<VulnerabilityReport> vulnerabilities = new List<VulnerabilityReport>();
                             VulnerabilityReport vulnReport;
@@ -1304,16 +1302,16 @@ namespace openrmf_read_api.Controllers
                                 newCell.CellValue = new CellValue(vuln.severityCategory.ToString());
                                 newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
                                 newCell.StyleIndex = 0;
-                                // newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "G" + rowNumber.ToString() };
-                                // row.InsertBefore(newCell, refCell);
-                                // newCell.CellValue = new CellValue(!string.IsNullOrEmpty(vuln.severityJustification)? vuln.severityJustification : "");
-                                // newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
-                                // newCell.StyleIndex = 0;
-                                // newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "H" + rowNumber.ToString() };
-                                // row.InsertBefore(newCell, refCell);
-                                // newCell.CellValue = new CellValue(!string.IsNullOrEmpty(vuln.severityOverride)? vuln.severityOverride : "");
-                                // newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
-                                // newCell.StyleIndex = 0;
+                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "G" + rowNumber.ToString() };
+                                row.InsertBefore(newCell, refCell);
+                                newCell.CellValue = new CellValue(!string.IsNullOrEmpty(vuln.severityJustification)? vuln.severityJustification : "");
+                                newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                                newCell.StyleIndex = 0;
+                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "H" + rowNumber.ToString() };
+                                row.InsertBefore(newCell, refCell);
+                                newCell.CellValue = new CellValue(!string.IsNullOrEmpty(vuln.severityOverride)? vuln.severityOverride : "");
+                                newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                                newCell.StyleIndex = 0;
                                 newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "M" + rowNumber.ToString() };
                                 row.InsertBefore(newCell, refCell);
                                 newCell.CellValue = new CellValue(vuln.checklistType + " V" + vuln.checklistVersion + " " + vuln.checklistRelease);
