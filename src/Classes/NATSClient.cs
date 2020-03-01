@@ -126,7 +126,6 @@ namespace openrmf_read_api.Classes
             return listing;
         }
 
-
         /// <summary>
         /// Get a listing of all checklists and their scores back from the Score MSG client
         /// </summary>
@@ -183,6 +182,5 @@ namespace openrmf_read_api.Classes
             return score;
         }
 
-        //
     }
 }

@@ -1111,8 +1111,6 @@ namespace openrmf_read_api.Controllers
                         _logger.LogInformation("ExportSystemPOAM({0}) Nessus patch data file loaded", systemGroupId);
                     }
                     
-                    // generate the XLSX file from this
-                    
                     // starting row number for data
                     uint rowNumber = 8;
 
@@ -1242,71 +1240,101 @@ namespace openrmf_read_api.Controllers
                             sheetData.Append(row);
                         }
 
-                        // generate the checklist files
-                        // rowNumber = rowNumber + 5;                        
-                        // _logger.LogInformation("ExportSystemPOAM({0}) getting checklist data and scores", systemGroupId);
-                        // row = MakeTestPlanHeaderRows(rowNumber, false);
-                        // sheetData.Append(row);
-                        // IEnumerable<Artifact> artifacts;
-                        // artifacts = await _artifactRepo.GetSystemArtifacts(systemGroupId);
-                        // foreach (Artifact art in artifacts.OrderBy(x => x.title).OrderBy(y => y.systemTitle).ToList()) {
-                        //     art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist);
-                        //     try {
-                        //         _logger.LogInformation("ExportSystemPOAM({0}) getting checklist data and scores for {1}", systemGroupId, art.title);
-                        //         checklistScore = NATSClient.GetChecklistScore(art.InternalId.ToString());
-                        //     }
-                        //     catch (Exception ex) {
-                        //         _logger.LogWarning(ex, "No score found for artifact {0}", art.InternalId.ToString());
-                        //         checklistScore = new Score();
-                        //     }
-                        //     rowNumber++;
+                        // get the list of checklists
+                        _logger.LogInformation("ExportSystemPOAM({0}) getting all system checklists.", systemGroupId);
+                        IEnumerable<Artifact> checklists = await _artifactRepo.GetSystemArtifacts(systemGroupId);
+                        if (checklists != null) {
+                            _logger.LogInformation("ExportSystemPOAM({0}) cycling through the checklists to get all Open or N/R vulnerabilities.", systemGroupId);
+                            rowNumber = rowNumber + 5; 
 
-                        //     _logger.LogInformation("ExportSystemPOAM({0}) making checklist row for {1}", systemGroupId, art.title);
-                        //     // make a new row for this set of items
-                        //     row = MakeDataRow(rowNumber, "A", art.hostName.Trim().ToLower() != ""? art.hostName : "", styleIndex);
-                        //     // now cycle through the rest of the items
-                        //     newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "B" + rowNumber.ToString() };
-                        //     row.InsertBefore(newCell, refCell);
-                        //     ipAddress = art.CHECKLIST.ASSET.HOST_IP;
-                        //     if (!string.IsNullOrEmpty(ipAddress)) {
-                        //         ipAddress = NessusPatchLoader.SanitizeHostname(ipAddress);
-                        //     } else
-                        //         ipAddress = "";
-                        //     newCell.CellValue = new CellValue(ipAddress);
-                        //     newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                        //     newCell.StyleIndex = 0;
-                        //     newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowNumber.ToString() };
-                        //     row.InsertBefore(newCell, refCell);
-                        //     newCell.CellValue = new CellValue(art.title+ ".ckl");
-                        //     newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                        //     newCell.StyleIndex = 0;
-                        //     newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "F" + rowNumber.ToString() };
-                        //     row.InsertBefore(newCell, refCell);
-                        //     newCell.CellValue = new CellValue(checklistScore.totalCat1Open.ToString());
-                        //     newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
-                        //     newCell.StyleIndex = 8;
-                        //     newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "G" + rowNumber.ToString() };
-                        //     row.InsertBefore(newCell, refCell);
-                        //     newCell.CellValue = new CellValue(checklistScore.totalCat2Open.ToString());
-                        //     newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
-                        //     newCell.StyleIndex = 14;
-                        //     newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "H" + rowNumber.ToString() };
-                        //     row.InsertBefore(newCell, refCell);
-                        //     newCell.CellValue = new CellValue(checklistScore.totalCat3Open.ToString());
-                        //     newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
-                        //     newCell.StyleIndex = 15;
-                        //     newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "I" + rowNumber.ToString() };
-                        //     row.InsertBefore(newCell, refCell);
-                        //     newCell.CellValue = new CellValue("0");
-                        //     newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
-                        //     newCell.StyleIndex = 0;
-                        //     newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "J" + rowNumber.ToString() };
-                        //     row.InsertBefore(newCell, refCell);
-                        //     newCell.CellValue = new CellValue(checklistScore.totalOpen.ToString());
-                        //     newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
-                        //     newCell.StyleIndex = 0;
-                        //     sheetData.Append(row);
-                        // }
+                            // put all VULNs in here to order later
+                            List<VulnerabilityReport> vulnerabilities = new List<VulnerabilityReport>();
+                            VulnerabilityReport vulnReport;
+                            string hostname;
+                            string checklistType;
+                            string checklistVersion;
+                            string checklistRelease;
+                            foreach (Artifact a in checklists) {
+                                // for each checklist, cycle through the vulnerabilities that are Open or N/R and add them to a listing of VULN
+                                a.CHECKLIST = ChecklistLoader.LoadChecklist(a.rawChecklist);
+                                // get the main info every single VULN will need
+                                hostname = a.CHECKLIST.ASSET.HOST_NAME;
+                                checklistType = a.CHECKLIST.STIGS.iSTIG.STIG_INFO.SI_DATA.Where(x => x.SID_NAME == "title").FirstOrDefault().SID_DATA;
+                                checklistVersion = a.CHECKLIST.STIGS.iSTIG.STIG_INFO.SI_DATA.Where(x => x.SID_NAME == "version").FirstOrDefault().SID_DATA;
+                                checklistRelease = a.CHECKLIST.STIGS.iSTIG.STIG_INFO.SI_DATA.Where(x => x.SID_NAME == "releaseinfo").FirstOrDefault().SID_DATA;
+                                foreach (VULN v in a.CHECKLIST.STIGS.iSTIG.VULN){
+                                    if (v.STATUS.ToLower() == "open" || v.STATUS.ToLower() == "not_reviewed"){
+                                        vulnReport = new VulnerabilityReport();
+                                        vulnReport.hostname = hostname;
+                                        vulnReport.checklistType = checklistType;
+                                        vulnReport.checklistVersion = checklistVersion;
+                                        vulnReport.checklistRelease = checklistRelease;
+                                        // get the VULN information in here now
+                                        vulnReport.vulnid = v.STIG_DATA.Where(x => x.VULN_ATTRIBUTE == "Vuln_Num").FirstOrDefault().ATTRIBUTE_DATA;
+                                        vulnReport.ruleTitle = v.STIG_DATA.Where(x => x.VULN_ATTRIBUTE == "Rule_Title").FirstOrDefault().ATTRIBUTE_DATA;
+                                        vulnReport.comments = v.COMMENTS;
+                                        vulnReport.checkContent = v.STIG_DATA.Where(x => x.VULN_ATTRIBUTE == "Check_Content").FirstOrDefault().ATTRIBUTE_DATA;
+                                        vulnReport.fixText = v.STIG_DATA.Where(x => x.VULN_ATTRIBUTE == "Fix_Text").FirstOrDefault().ATTRIBUTE_DATA;
+                                        vulnReport.severity = v.STIG_DATA.Where(x => x.VULN_ATTRIBUTE == "Severity").FirstOrDefault().ATTRIBUTE_DATA;
+                                        vulnReport.severityJustification = v.SEVERITY_JUSTIFICATION;
+                                        vulnReport.severityOverride = v.SEVERITY_OVERRIDE;
+                                        vulnerabilities.Add(vulnReport);
+                                    }
+                                }
+                            }
+
+                            // Order by severity, and then VULN ID
+                            vulnerabilities = vulnerabilities.OrderByDescending(c => c.severityCategory).ThenBy(d => d.vulnid).ToList();
+
+                            // cycle through the listing and add each VULN ID for a row
+
+                            foreach (VulnerabilityReport vuln in vulnerabilities) {
+                                _logger.LogInformation("ExportSystemPOAM({0}) adding Vulnerabilities for {1}", systemGroupId, vuln.vulnid);
+                                rowNumber++;
+
+                                // make a new row for this set of items
+                                row = MakeDataRow(rowNumber, "B", vuln.ruleTitle, styleIndex);
+                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowNumber.ToString() };
+                                row.InsertBefore(newCell, refCell);
+                                newCell.CellValue = new CellValue(vuln.vulnid);
+                                newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                                newCell.StyleIndex = 0;
+                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "F" + rowNumber.ToString() };
+                                row.InsertBefore(newCell, refCell);
+                                newCell.CellValue = new CellValue(vuln.severityCategory.ToString());
+                                newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                                newCell.StyleIndex = 0;
+                                // newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "G" + rowNumber.ToString() };
+                                // row.InsertBefore(newCell, refCell);
+                                // newCell.CellValue = new CellValue(!string.IsNullOrEmpty(vuln.severityJustification)? vuln.severityJustification : "");
+                                // newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                                // newCell.StyleIndex = 0;
+                                // newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "H" + rowNumber.ToString() };
+                                // row.InsertBefore(newCell, refCell);
+                                // newCell.CellValue = new CellValue(!string.IsNullOrEmpty(vuln.severityOverride)? vuln.severityOverride : "");
+                                // newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
+                                // newCell.StyleIndex = 0;
+                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "M" + rowNumber.ToString() };
+                                row.InsertBefore(newCell, refCell);
+                                newCell.CellValue = new CellValue(vuln.checklistType + " V" + vuln.checklistVersion + " " + vuln.checklistRelease);
+                                newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                                newCell.StyleIndex = 0;
+                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "N" + rowNumber.ToString() };
+                                row.InsertBefore(newCell, refCell);
+                                newCell.CellValue = new CellValue(vuln.status);
+                                newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                                newCell.StyleIndex = 0;
+                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "O" + rowNumber.ToString() };
+                                row.InsertBefore(newCell, refCell);
+                                newCell.CellValue = new CellValue("Devices affected: " + vuln.hostname + "\n\n" + vuln.comments);
+                                newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                                newCell.StyleIndex = 0;
+
+                                // add the row to the sheet now
+                                sheetData.Append(row);
+                            }                        
+
+                        }
 
                         // Save the new worksheet.
                         workbookpart.Workbook.Save();
