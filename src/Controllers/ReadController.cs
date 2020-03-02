@@ -1145,10 +1145,10 @@ namespace openrmf_read_api.Controllers
                             lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 6, Max = 6, Width = 20, CustomWidth = true });
                             lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 7, Max = 7, Width = 20, CustomWidth = true }); // col G Mitigations
                             lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 8, Max = 8, Width = 20, CustomWidth = true }); // col H
-                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 9, Max = 9, Width = 40, CustomWidth = true }); // col I
-                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 10, Max = 10, Width = 40, CustomWidth = true }); // col J
-                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 11, Max = 11, Width = 40, CustomWidth = true }); // col K
-                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 12, Max = 12, Width = 40, CustomWidth = true }); 
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 9, Max = 9, Width = 30, CustomWidth = true }); // col I
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 10, Max = 10, Width = 30, CustomWidth = true }); // col J
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 11, Max = 11, Width = 30, CustomWidth = true }); // col K
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 12, Max = 12, Width = 30, CustomWidth = true }); 
                             lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 13, Max = 13, Width = 40, CustomWidth = true }); // col M source identifying
                             lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 14, Max = 14, Width = 10, CustomWidth = true }); // col N Status
                             lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 15, Max = 15, Width = 40, CustomWidth = true }); // col O comments
@@ -1244,14 +1244,17 @@ namespace openrmf_read_api.Controllers
                         _logger.LogInformation("ExportSystemPOAM({0}) getting all system checklists.", systemGroupId);
                         IEnumerable<Artifact> checklists = await _artifactRepo.GetSystemArtifacts(systemGroupId);
                         if (checklists != null) {
-                            _logger.LogInformation("ExportSystemPOAM({0}) cycling through the checklists to get all Open or N/R vulnerabilities.", systemGroupId);
                             // put all VULNs in here to order later
                             List<VulnerabilityReport> vulnerabilities = new List<VulnerabilityReport>();
+                            _logger.LogInformation("ExportSystemPOAM({0}) reading the list of all CCI to NIST controls.", systemGroupId);
+                            List<CciItem> cciList = NATSClient.GetCCIListing();
+                            _logger.LogInformation("ExportSystemPOAM({0}) cycling through the checklists to get all Open or N/R vulnerabilities.", systemGroupId);
                             VulnerabilityReport vulnReport;
                             string hostname;
                             string checklistType;
                             string checklistVersion;
                             string checklistRelease;
+                            string cciReferences;
                             foreach (Artifact a in checklists) {
                                 // for each checklist, cycle through the vulnerabilities that are Open or N/R and add them to a listing of VULN
                                 a.CHECKLIST = ChecklistLoader.LoadChecklist(a.rawChecklist);
@@ -1276,6 +1279,36 @@ namespace openrmf_read_api.Controllers
                                         vulnReport.severity = v.STIG_DATA.Where(x => x.VULN_ATTRIBUTE == "Severity").FirstOrDefault().ATTRIBUTE_DATA;
                                         vulnReport.severityJustification = v.SEVERITY_JUSTIFICATION;
                                         vulnReport.severityOverride = v.SEVERITY_OVERRIDE;
+                                        
+                                        // collect all CCI references
+                                        cciReferences = "";
+                                        for (int i = 24; i < v.STIG_DATA.Count; i++) { 
+                                            if (v.STIG_DATA[i].VULN_ATTRIBUTE == "CCI_REF") 
+                                                cciReferences += v.STIG_DATA[i].ATTRIBUTE_DATA + ", ";
+                                        }
+                                        // take off the ", " at the end
+                                        if (!string.IsNullOrEmpty(cciReferences) && cciReferences.Length > 2)
+                                            cciReferences = cciReferences.Substring(0, cciReferences.Length-2);
+                                        else 
+                                            cciReferences = "";
+    
+                                        if (!string.IsNullOrEmpty(cciReferences)) { // split it, put into the listing
+                                            List<CciReference> cciRefs = new List<CciReference>();
+
+                                            // now, go get the actual NIST controls for the CCI-REF numbers we collected
+                                            // do a search for each of the CCI-REF and then get back all of the "index" field values
+                                            // there can be more than 1 per CCI-REF, and more than 1 CCI-REF per VULN record :)
+                                            foreach (string cci in cciReferences.Split(",").ToList()) {
+                                                if (cciList.Where(z => z.cciId == cci).Select(y => y.references).FirstOrDefault() != null)
+                                                    cciRefs.AddRange(cciList.Where(z => z.cciId == cci).Select(y => y.references).FirstOrDefault());
+                                            }
+                                            if (cciRefs != null && cciRefs.Count > 0) { // get the indexes
+                                                foreach (string cciRef in cciRefs.Select(y => y.index).Distinct().ToList()) { // put the distinct strings together for this
+                                                    vulnReport.securityControlNumbers += cciRef + "\n";
+                                                }
+                                            }
+                                        }
+                                        // add the Vulnerability Report record to the listing we cycle through
                                         vulnerabilities.Add(vulnReport);
                                     }
                                 }
@@ -1292,6 +1325,11 @@ namespace openrmf_read_api.Controllers
 
                                 // make a new row for this set of items
                                 row = MakeDataRow(rowNumber, "B", vuln.ruleTitle, styleIndex);
+                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "C" + rowNumber.ToString() };
+                                row.InsertBefore(newCell, refCell);
+                                newCell.CellValue = new CellValue(vuln.securityControlNumbers);
+                                newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                                newCell.StyleIndex = 0;
                                 newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowNumber.ToString() };
                                 row.InsertBefore(newCell, refCell);
                                 newCell.CellValue = new CellValue(vuln.vulnid);
@@ -1749,11 +1787,9 @@ namespace openrmf_read_api.Controllers
                 return BadRequest();
             }
         } 
-
         private string CreateXLSXFilename(string title) {
             return title.Trim().Replace(" ", "_") + ".xlsx";
         }
-
         private bool ShowVulnerabilityInExcel(string status, bool NotAFinding, bool NotReviewed, 
                 bool Open, bool NotApplicable) {
             if (status.ToLower() == "not_reviewed" && NotReviewed)
