@@ -1285,6 +1285,7 @@ namespace openrmf_read_api.Controllers
                                         vulnReport.severity = v.STIG_DATA.Where(x => x.VULN_ATTRIBUTE == "Severity").FirstOrDefault().ATTRIBUTE_DATA;
                                         vulnReport.severityJustification = v.SEVERITY_JUSTIFICATION;
                                         vulnReport.severityOverride = v.SEVERITY_OVERRIDE;
+                                        vulnReport.status = v.STATUS;
                                         
                                         // collect all CCI references
                                         cciReferences = "";
