@@ -1198,6 +1198,7 @@ namespace openrmf_read_api.Controllers
                         // get the list of hosts to use
                         _logger.LogInformation("ExportSystemPOAM({0}) getting Hosts from Nessus patch data file", systemGroupId);
                         string reportName = patchData.reportName;
+                        string severityName = "";
                         // for each patch issue, cycle through and put a row -- order by severity and then hostname if in the correct order!!
                         // only severity 1 - 4 items
                         patchData.summary = patchData.summary.Where(z => z.severity > 0).OrderBy(y => y.hostname).OrderByDescending(x => x.severity).ToList();
@@ -1214,9 +1215,14 @@ namespace openrmf_read_api.Controllers
                             newCell.StyleIndex = 0;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "F" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
-                            newCell.CellValue = new CellValue(p.severity.ToString());
-                            newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
-                            newCell.StyleIndex = 0;
+                            if (p.severity == 4) severityName = "Critical";
+                            else if (p.severity == 3) severityName = "High";
+                            else if (p.severity == 2) severityName = "Medium";
+                            else if (p.severity == 1) severityName = "Low";
+                            newCell.CellValue = new CellValue(severityName);
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            // color code the information
+                            newCell.StyleIndex = GetPatchScanStatus(p.severity);
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "M" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             if (!string.IsNullOrEmpty(p.scanVersion))
@@ -1337,9 +1343,9 @@ namespace openrmf_read_api.Controllers
                                 newCell.StyleIndex = 0;
                                 newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "F" + rowNumber.ToString() };
                                 row.InsertBefore(newCell, refCell);
-                                newCell.CellValue = new CellValue(vuln.severityCategory.ToString());
-                                newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
-                                newCell.StyleIndex = 0;
+                                newCell.CellValue = new CellValue(vuln.severity);
+                                newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                                newCell.StyleIndex = GetVulnerabilityStatus(vuln.status, vuln.severity);
                                 newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "G" + rowNumber.ToString() };
                                 row.InsertBefore(newCell, refCell);
                                 newCell.CellValue = new CellValue(!string.IsNullOrEmpty(vuln.severityJustification)? vuln.severityJustification : "");
