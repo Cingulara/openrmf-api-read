@@ -1364,7 +1364,7 @@ namespace openrmf_read_api.Controllers
                                 newCell.StyleIndex = 0;
                                 newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "N" + rowNumber.ToString() };
                                 row.InsertBefore(newCell, refCell);
-                                newCell.CellValue = new CellValue(vuln.status);
+                                newCell.CellValue = new CellValue(vuln.status.Replace("_", " "));
                                 newCell.DataType = new EnumValue<CellValues>(CellValues.String);
                                 newCell.StyleIndex = 0;
                                 newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "O" + rowNumber.ToString() };
