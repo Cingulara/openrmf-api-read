@@ -1617,6 +1617,7 @@ namespace openrmf_read_api.Controllers
                                         vulnReport.checklistVersion = checklistVersion;
                                         vulnReport.checklistRelease = checklistRelease;
                                         // get the VULN information in here now
+                                        vulnReport.discussion = v.STIG_DATA.Where(x => x.VULN_ATTRIBUTE == "Vuln_Discuss").FirstOrDefault().ATTRIBUTE_DATA;
                                         vulnReport.vulnid = v.STIG_DATA.Where(x => x.VULN_ATTRIBUTE == "Vuln_Num").FirstOrDefault().ATTRIBUTE_DATA;
                                         vulnReport.ruleTitle = v.STIG_DATA.Where(x => x.VULN_ATTRIBUTE == "Rule_Title").FirstOrDefault().ATTRIBUTE_DATA;
                                         vulnReport.comments = v.COMMENTS;
@@ -1638,7 +1639,8 @@ namespace openrmf_read_api.Controllers
                                             cciReferences = cciReferences.Substring(0, cciReferences.Length-2);
                                         else 
                                             cciReferences = "";
-    
+                                        vulnReport.cciReferences = cciReferences;
+
                                         if (!string.IsNullOrEmpty(cciReferences)) { // split it, put into the listing
                                             List<CciReference> cciRefs = new List<CciReference>();
 
@@ -1674,7 +1676,10 @@ namespace openrmf_read_api.Controllers
                                 row = MakeDataRow(rowNumber, "B", vuln.securityControlNumbers, styleIndex);
                                 newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "C" + rowNumber.ToString() };
                                 row.InsertBefore(newCell, refCell);
-                                newCell.CellValue = new CellValue(vuln.cciReferences);
+                                if (!string.IsNullOrEmpty(vuln.cciReferences))
+                                    newCell.CellValue = new CellValue(vuln.cciReferences.Replace(", ","\n"));
+                                else 
+                                    newCell.CellValue = new CellValue("");
                                 newCell.DataType = new EnumValue<CellValues>(CellValues.String);
                                 newCell.StyleIndex = 0;
                                 newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "D" + rowNumber.ToString() };
