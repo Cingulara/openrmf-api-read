@@ -174,12 +174,12 @@ namespace openrmf_read_api.Controllers
                         DocumentFormat.OpenXml.Spreadsheet.Row row = MakeTitleRow("OpenRMF by Cingulara and Tutela");
                         sheetData.Append(row);
                         if (artifacts != null && artifacts.Count() > 0) {
-                            row = MakeChecklistInfoRow("Checklist Listing", artifacts.FirstOrDefault().systemTitle, 2);
+                            row = MakeXLSXInfoRow("Checklist Listing", artifacts.FirstOrDefault().systemTitle, 2);
                         } else {
-                            row = MakeChecklistInfoRow("Checklist Listing", systemGroupId, 2);
+                            row = MakeXLSXInfoRow("Checklist Listing", systemGroupId, 2);
                         }
                         sheetData.Append(row);
-                        row = MakeChecklistInfoRow("Printed Date", DateTime.Now.ToString("MM/dd/yy hh:mm"),3);
+                        row = MakeXLSXInfoRow("Printed Date", DateTime.Now.ToString("MM/dd/yy hh:mm"),3);
                         sheetData.Append(row);
                         row = MakeChecklistListingHeaderRows(rowNumber);
                         sheetData.Append(row);
@@ -704,11 +704,11 @@ namespace openrmf_read_api.Controllers
 
                         DocumentFormat.OpenXml.Spreadsheet.Row row = MakeTitleRow("OpenRMF by Cingulara and Tutela");
                         sheetData.Append(row);
-                        row = MakeChecklistInfoRow("Nessus Patch Summary Export", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss tt"),2);
+                        row = MakeXLSXInfoRow("Nessus Patch Summary Export", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss tt"),2);
                         sheetData.Append(row);
-                        row = MakeChecklistInfoRow("System Name", sg.title,3);
+                        row = MakeXLSXInfoRow("System Name", sg.title,3);
                         sheetData.Append(row);
-                        row = MakeChecklistInfoRow("Report Name", patchData.reportName,4);
+                        row = MakeXLSXInfoRow("Report Name", patchData.reportName,4);
                         sheetData.Append(row);
                         row = MakeNessusSummaryHeaderRows(rowNumber, summaryOnly);
                         sheetData.Append(row);
@@ -901,9 +901,9 @@ namespace openrmf_read_api.Controllers
                         _logger.LogInformation("ExportSystemTestPlan({0}) setting title XLSX information", systemGroupId);
                         DocumentFormat.OpenXml.Spreadsheet.Row row = MakeTitleRow("OpenRMF by Cingulara and Tutela");
                         sheetData.Append(row);
-                        row = MakeChecklistInfoRow("System Test Plan Summary", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss tt"),2);
+                        row = MakeXLSXInfoRow("System Test Plan Summary", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss tt"),2);
                         sheetData.Append(row);
-                        row = MakeChecklistInfoRow("System Name", sg.title,3);
+                        row = MakeXLSXInfoRow("System Name", sg.title,3);
                         sheetData.Append(row);
                         row = MakeTestPlanHeaderRows(rowNumber, true);
                         sheetData.Append(row);
@@ -1402,6 +1402,349 @@ namespace openrmf_read_api.Controllers
             }
         }        
 
+        /// <summary>
+        /// GET The XLSX export of the system risk assessment report.
+        /// </summary>
+        /// <param name="systemGroupId">The ID of the system to use</param>
+        /// <returns>
+        /// HTTP Status showing it was found or that there is an error. And the XLSX RAR file.
+        /// </returns>
+        /// <response code="200">Returns the count of records</response>
+        /// <response code="400">If the item did not query correctly</response>
+        /// <response code="404">If the ID passed in does not have a valid system record</response>
+        [HttpGet("system/{systemGroupId}/rarexport")]
+        [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
+        public async Task<IActionResult> ExportSystemRAR(string systemGroupId)
+        {
+            if (!string.IsNullOrEmpty(systemGroupId)) {
+                try {
+                    _logger.LogInformation("Calling ExportSystemRAR({0})", systemGroupId);
+                    SystemGroup sg = new SystemGroup();
+                    sg = await _systemGroupRepo.GetSystemGroup(systemGroupId);
+                    if (sg == null) {
+                        _logger.LogWarning("ExportSystemRAR({0}) an invalid system record");
+                        return NotFound();
+                    }
+                    // load the NessusPatch XML into a List
+                    // do a count of Critical, High, and Medium and Low items
+                    // return the class of numbers for this
+                    NessusPatchData patchData = new NessusPatchData();
+                    if (!string.IsNullOrEmpty(sg.rawNessusFile)) {
+                        _logger.LogInformation("ExportSystemRAR({0}) loading Nessus patch data file", systemGroupId);
+                        patchData = NessusPatchLoader.LoadPatchData(sg.rawNessusFile);
+                        _logger.LogInformation("ExportSystemRAR({0}) Nessus patch data file loaded", systemGroupId);
+                    }
+                    
+                    // starting row number for data
+                    uint rowNumber = 5;
+
+                    // create the XLSX in memory and send it out
+                    var memory = new MemoryStream();
+                    using (SpreadsheetDocument spreadSheet = SpreadsheetDocument.Create(memory, SpreadsheetDocumentType.Workbook))
+                    {
+                        _logger.LogInformation("ExportSystemRAR({0}) setting up XLSX file", systemGroupId);
+                        // Add a WorkbookPart to the document.
+                        WorkbookPart workbookpart = spreadSheet.AddWorkbookPart();
+                        workbookpart.Workbook = new Workbook();
+                        
+                        // add styles to workbook
+                        WorkbookStylesPart wbsp = workbookpart.AddNewPart<WorkbookStylesPart>();
+
+                        // Add a WorksheetPart to the WorkbookPart.
+                        WorksheetPart worksheetPart = workbookpart.AddNewPart<WorksheetPart>();
+                        worksheetPart.Worksheet = new Worksheet(new SheetData());
+
+                        // add stylesheet to use cell formats 1 - 4
+                        wbsp.Stylesheet = ExcelStyleSheet.GenerateStylesheet();
+
+                        // generate the column listings we need with custom widths
+                        DocumentFormat.OpenXml.Spreadsheet.Columns lstColumns = worksheetPart.Worksheet.GetFirstChild<DocumentFormat.OpenXml.Spreadsheet.Columns>();
+                        if (lstColumns == null) {
+                            lstColumns = new DocumentFormat.OpenXml.Spreadsheet.Columns();
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 1, Max = 1, Width = 30, CustomWidth = true }); // col A
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 2, Max = 2, Width = 30, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 3, Max = 3, Width = 30, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 4, Max = 4, Width = 50, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 5, Max = 5, Width = 30, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 6, Max = 6, Width = 50, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 7, Max = 7, Width = 40, CustomWidth = true }); // col G Devices Affected
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 8, Max = 8, Width = 40, CustomWidth = true }); // col H
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 9, Max = 9, Width = 30, CustomWidth = true }); // col I
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 10, Max = 10, Width = 50, CustomWidth = true }); // col J
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 11, Max = 11, Width = 50, CustomWidth = true }); // col K
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 12, Max = 12, Width = 30, CustomWidth = true }); 
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 13, Max = 13, Width = 30, CustomWidth = true }); // col M Relevance of Threat
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 14, Max = 14, Width = 50, CustomWidth = true }); // col N Threat Description
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 15, Max = 15, Width = 50, CustomWidth = true }); // col O Likelihood
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 16, Max = 16, Width = 30, CustomWidth = true }); // col P Impact
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 17, Max = 17, Width = 50, CustomWidth = true }); // col Q Impact Description
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 18, Max = 18, Width = 50, CustomWidth = true }); // col R
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 19, Max = 19, Width = 40, CustomWidth = true }); // col S Proposed Mitigations from POA&M
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 20, Max = 20, Width = 50, CustomWidth = true }); // col T
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 21, Max = 21, Width = 50, CustomWidth = true }); // col URecommendations
+                            worksheetPart.Worksheet.InsertAt(lstColumns, 0);
+                        }
+
+                        // Add Sheets to the Workbook.
+                        Sheets sheets = spreadSheet.WorkbookPart.Workbook.AppendChild<Sheets>(new Sheets());
+
+                        // Append a new worksheet and associate it with the workbook.
+                        Sheet sheet = new Sheet() { Id = spreadSheet.WorkbookPart.
+                            GetIdOfPart(worksheetPart), SheetId = 1, Name = "System-RAR" };
+                        sheets.Append(sheet);
+                        // Get the sheetData cell table.
+                        SheetData sheetData = worksheetPart.Worksheet.GetFirstChild<SheetData>();
+                        DocumentFormat.OpenXml.Spreadsheet.Cell refCell = null;
+                        DocumentFormat.OpenXml.Spreadsheet.Cell newCell = null;
+                        var claim = this.User.Claims.Where(x => x.Type == System.Security.Claims.ClaimTypes.NameIdentifier).FirstOrDefault();
+                        string strClaimName = "Unknown";
+                        if (claim != null) {
+                            strClaimName = claim.Value; // userid
+                            if (claim.Subject.Claims.Where(x => x.Type == "name").FirstOrDefault() != null) 
+                                strClaimName = claim.Subject.Claims.Where(x => x.Type == "name").FirstOrDefault().Value;
+                            else if (claim.Subject.Claims.Where(x => x.Type == "preferred_username").FirstOrDefault() != null)
+                                strClaimName = claim.Subject.Claims.Where(x => x.Type == "preferred_username").FirstOrDefault().Value;
+                            else if (claim.Subject.Claims.Where(x => x.Type.Contains("emailaddress")).FirstOrDefault() != null)
+                                strClaimName = claim.Subject.Claims.Where(x => x.Type.Contains("emailaddress")).FirstOrDefault().Value;
+                        }
+                        _logger.LogInformation("ExportSystemRAR({0}) setting title XLSX information", systemGroupId);
+                        DocumentFormat.OpenXml.Spreadsheet.Row row = MakeTitleRow("OpenRMF by Cingulara and Tutela");
+                        sheetData.Append(row);
+                        row = MakeXLSXInfoRow("System Name", sg.title,2);
+                        sheetData.Append(row);
+                        if (sg.updatedOn.HasValue)
+                            row = MakeXLSXInfoRow("Last Updated", sg.updatedOn.Value.ToString("MM/dd/yy hh:mm tt"),3);
+                        else 
+                            row = MakeXLSXInfoRow("Last Updated", sg.created.ToString("MM/dd/yy hh:mm tt"),3);
+                        sheetData.Append(row);
+                        // make the header row COL B to COL U
+                        row = MakeRARHeaderRows(rowNumber, true);
+                        sheetData.Append(row);
+
+                        uint styleIndex = 0; // use this for 4, 5, 6, or 7 for status
+                        
+                        // get the list of hosts to use
+                        _logger.LogInformation("ExportSystemRAR({0}) getting Hosts from Nessus patch data file", systemGroupId);
+                        string reportName = patchData.reportName;
+                        string severityName = "";
+                        // for each patch issue, cycle through and put a row -- order by severity and then hostname if in the correct order!!
+                        // only severity 1 - 4 items
+                        patchData.summary = patchData.summary.Where(z => z.severity > 0).OrderBy(y => y.hostname).OrderByDescending(x => x.severity).ToList();
+                        foreach (NessusPatchSummary p in patchData.summary) {
+                            _logger.LogInformation("ExportSystemRAR({0}) adding Nessus patch summary row for {1}", systemGroupId, p.pluginId);
+                            rowNumber++;
+
+                            // make a new row for this set of items
+                            row = MakeDataRow(rowNumber, "B", "", styleIndex);
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "D" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            if (!string.IsNullOrEmpty(p.scanVersion))
+                                newCell.CellValue = new CellValue("Assured Compliance Assessment Solution (ACAS) Nessus Scanner :: " + p.scanVersion);
+                            else 
+                                newCell.CellValue = new CellValue("Assured Compliance Assessment Solution (ACAS) Nessus Scanner :: (version)");
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = 0;
+                            
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue(p.pluginId);
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = 0;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "F" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue(p.pluginName);
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = 0;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "G" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue(p.hostname);
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = 0;
+
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "I" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            if (p.severity == 4) severityName = "Critical";
+                            else if (p.severity == 3) severityName = "High";
+                            else if (p.severity == 2) severityName = "Medium";
+                            else if (p.severity == 1) severityName = "Low";
+                            newCell.CellValue = new CellValue(severityName);
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            // color code the information
+                            newCell.StyleIndex = GetPatchScanStatus(p.severity);
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "N" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue(p.description);
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = 0;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "Q" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue(p.description);
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = 0;
+
+                            // add the row to the sheet now
+                            sheetData.Append(row);
+                        }
+
+                        // get the list of checklists
+                        _logger.LogInformation("ExportSystemRAR({0}) getting all system checklists.", systemGroupId);
+                        IEnumerable<Artifact> checklists = await _artifactRepo.GetSystemArtifacts(systemGroupId);
+                        if (checklists != null) {
+                            // put all VULNs in here to order later
+                            List<VulnerabilityReport> vulnerabilities = new List<VulnerabilityReport>();
+                            _logger.LogInformation("ExportSystemRAR({0}) reading the list of all CCI to NIST controls.", systemGroupId);
+                            List<CciItem> cciList = NATSClient.GetCCIListing();
+                            _logger.LogInformation("ExportSystemRAR({0}) cycling through the checklists to get all Open or N/R vulnerabilities.", systemGroupId);
+                            VulnerabilityReport vulnReport;
+                            string hostname;
+                            string checklistType;
+                            string checklistVersion;
+                            string checklistRelease;
+                            string cciReferences;
+                            foreach (Artifact a in checklists) {
+                                // for each checklist, cycle through the vulnerabilities that are Open or N/R and add them to a listing of VULN
+                                a.CHECKLIST = ChecklistLoader.LoadChecklist(a.rawChecklist);
+                                // get the main info every single VULN will need
+                                hostname = a.CHECKLIST.ASSET.HOST_NAME;
+                                checklistType = a.CHECKLIST.STIGS.iSTIG.STIG_INFO.SI_DATA.Where(x => x.SID_NAME == "title").FirstOrDefault().SID_DATA;
+                                checklistVersion = a.CHECKLIST.STIGS.iSTIG.STIG_INFO.SI_DATA.Where(x => x.SID_NAME == "version").FirstOrDefault().SID_DATA;
+                                checklistRelease = a.CHECKLIST.STIGS.iSTIG.STIG_INFO.SI_DATA.Where(x => x.SID_NAME == "releaseinfo").FirstOrDefault().SID_DATA;
+                                foreach (VULN v in a.CHECKLIST.STIGS.iSTIG.VULN){
+                                    if (v.STATUS.ToLower() == "open" || v.STATUS.ToLower() == "not_reviewed"){
+                                        vulnReport = new VulnerabilityReport();
+                                        vulnReport.hostname = hostname;
+                                        vulnReport.checklistType = checklistType;
+                                        vulnReport.checklistVersion = checklistVersion;
+                                        vulnReport.checklistRelease = checklistRelease;
+                                        // get the VULN information in here now
+                                        vulnReport.vulnid = v.STIG_DATA.Where(x => x.VULN_ATTRIBUTE == "Vuln_Num").FirstOrDefault().ATTRIBUTE_DATA;
+                                        vulnReport.ruleTitle = v.STIG_DATA.Where(x => x.VULN_ATTRIBUTE == "Rule_Title").FirstOrDefault().ATTRIBUTE_DATA;
+                                        vulnReport.comments = v.COMMENTS;
+                                        vulnReport.checkContent = v.STIG_DATA.Where(x => x.VULN_ATTRIBUTE == "Check_Content").FirstOrDefault().ATTRIBUTE_DATA;
+                                        vulnReport.fixText = v.STIG_DATA.Where(x => x.VULN_ATTRIBUTE == "Fix_Text").FirstOrDefault().ATTRIBUTE_DATA;
+                                        vulnReport.severity = v.STIG_DATA.Where(x => x.VULN_ATTRIBUTE == "Severity").FirstOrDefault().ATTRIBUTE_DATA;
+                                        vulnReport.severityJustification = v.SEVERITY_JUSTIFICATION;
+                                        vulnReport.severityOverride = v.SEVERITY_OVERRIDE;
+                                        vulnReport.status = v.STATUS;
+                                        
+                                        // collect all CCI references
+                                        cciReferences = "";
+                                        for (int i = 24; i < v.STIG_DATA.Count; i++) { 
+                                            if (v.STIG_DATA[i].VULN_ATTRIBUTE == "CCI_REF") 
+                                                cciReferences += v.STIG_DATA[i].ATTRIBUTE_DATA + ", ";
+                                        }
+                                        // take off the ", " at the end
+                                        if (!string.IsNullOrEmpty(cciReferences) && cciReferences.Length > 2)
+                                            cciReferences = cciReferences.Substring(0, cciReferences.Length-2);
+                                        else 
+                                            cciReferences = "";
+    
+                                        if (!string.IsNullOrEmpty(cciReferences)) { // split it, put into the listing
+                                            List<CciReference> cciRefs = new List<CciReference>();
+
+                                            // now, go get the actual NIST controls for the CCI-REF numbers we collected
+                                            // do a search for each of the CCI-REF and then get back all of the "index" field values
+                                            // there can be more than 1 per CCI-REF, and more than 1 CCI-REF per VULN record :)
+                                            foreach (string cci in cciReferences.Split(",").ToList()) {
+                                                if (cciList.Where(z => z.cciId == cci).Select(y => y.references).FirstOrDefault() != null)
+                                                    cciRefs.AddRange(cciList.Where(z => z.cciId == cci).Select(y => y.references).FirstOrDefault());
+                                            }
+                                            if (cciRefs != null && cciRefs.Count > 0) { // get the indexes
+                                                foreach (string cciRef in cciRefs.Select(y => y.index).Distinct().ToList()) { // put the distinct strings together for this
+                                                    vulnReport.securityControlNumbers += cciRef + "\n";
+                                                }
+                                            }
+                                        }
+                                        // add the Vulnerability Report record to the listing we cycle through
+                                        vulnerabilities.Add(vulnReport);
+                                    }
+                                }
+                            }
+
+                            // Order by severity, and then VULN ID
+                            vulnerabilities = vulnerabilities.OrderByDescending(c => c.severityCategory).ThenBy(d => d.vulnid).ToList();
+
+                            // cycle through the listing and add each VULN ID for a row
+
+                            foreach (VulnerabilityReport vuln in vulnerabilities) {
+                                _logger.LogInformation("ExportSystemRAR({0}) adding Vulnerabilities for {1}", systemGroupId, vuln.vulnid);
+                                rowNumber++;
+
+                                // make a new row for this set of items
+                                row = MakeDataRow(rowNumber, "B", vuln.securityControlNumbers, styleIndex);
+                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "C" + rowNumber.ToString() };
+                                row.InsertBefore(newCell, refCell);
+                                newCell.CellValue = new CellValue(vuln.cciReferences);
+                                newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                                newCell.StyleIndex = 0;
+                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "D" + rowNumber.ToString() };
+                                row.InsertBefore(newCell, refCell);
+                                newCell.CellValue = new CellValue(vuln.checklistType + " V" + vuln.checklistVersion + " " + vuln.checklistRelease);
+                                newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                                newCell.StyleIndex = 0;
+                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowNumber.ToString() };
+                                row.InsertBefore(newCell, refCell);
+                                newCell.CellValue = new CellValue(vuln.vulnid);
+                                newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                                newCell.StyleIndex = 0;
+                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "F" + rowNumber.ToString() };
+                                row.InsertBefore(newCell, refCell);
+                                newCell.CellValue = new CellValue(vuln.ruleTitle);
+                                newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                                //newCell.StyleIndex = GetVulnerabilityStatus(vuln.status, vuln.severity);
+                                newCell.StyleIndex = 0;
+                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "H" + rowNumber.ToString() };
+                                row.InsertBefore(newCell, refCell);
+                                newCell.CellValue = new CellValue(!string.IsNullOrEmpty(vuln.severityOverride)? vuln.severityOverride : "");
+                                newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                                newCell.StyleIndex = 0;
+                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "I" + rowNumber.ToString() };
+                                row.InsertBefore(newCell, refCell);
+                                newCell.CellValue = new CellValue(vuln.severity);
+                                newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                                newCell.StyleIndex = GetVulnerabilityStatus(vuln.status, vuln.severity);
+                                
+                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "N" + rowNumber.ToString() };
+                                row.InsertBefore(newCell, refCell);
+                                newCell.CellValue = new CellValue(vuln.discussion);
+                                newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                                newCell.StyleIndex = 0;
+                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "Q" + rowNumber.ToString() };
+                                row.InsertBefore(newCell, refCell);
+                                newCell.CellValue = new CellValue(vuln.discussion);
+                                newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                                newCell.StyleIndex = 0;
+
+                                // add the row to the sheet now
+                                sheetData.Append(row);
+                            }                        
+
+                        }
+
+                        // Save the new worksheet.
+                        workbookpart.Workbook.Save();
+                        // Close the document.
+                        _logger.LogInformation("ExportSystemRAR({0}) closing the XLSX risk assessment report", systemGroupId);
+                        spreadSheet.Close();
+                        // set the filename
+                        string filename = sg.title + "-SystemPOAM";
+                        memory.Seek(0, SeekOrigin.Begin);
+                        _logger.LogInformation("Called ExportSystemRAR({0}) successfully", systemGroupId);
+                        return File(memory, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", CreateXLSXFilename(filename));
+                    }
+                }
+                catch (Exception ex) {
+                    _logger.LogError(ex, "ExportSystemRAR() Error getting the risk assessment report XLSX export for system {0}", systemGroupId);
+                    return BadRequest();
+                }
+            }
+            else {
+                _logger.LogWarning("Called ExportSystemRAR() with no system ID");
+                return BadRequest(); // no systemGroupId entered
+            }
+        }        
+
+
         #endregion
 
         #region Artifacts and Checklists
@@ -1574,17 +1917,17 @@ namespace openrmf_read_api.Controllers
 
                             DocumentFormat.OpenXml.Spreadsheet.Row row = MakeTitleRow("OpenRMF by Cingulara and Tutela");
                             sheetData.Append(row);
-                            row = MakeChecklistInfoRow("System Name", art.systemTitle,2);
+                            row = MakeXLSXInfoRow("System Name", art.systemTitle,2);
                             sheetData.Append(row);
-                            row = MakeChecklistInfoRow("Checklist Name", art.title,3);
+                            row = MakeXLSXInfoRow("Checklist Name", art.title,3);
                             sheetData.Append(row);
-                            row = MakeChecklistInfoRow("Host Name", art.hostName,4);
+                            row = MakeXLSXInfoRow("Host Name", art.hostName,4);
                             sheetData.Append(row);
-                            row = MakeChecklistInfoRow("Type", art.stigType,5);
+                            row = MakeXLSXInfoRow("Type", art.stigType,5);
                             sheetData.Append(row);
-                            row = MakeChecklistInfoRow("Release", art.stigRelease,6);
+                            row = MakeXLSXInfoRow("Release", art.stigRelease,6);
                             sheetData.Append(row);
-                            row = MakeChecklistInfoRow("Last Updated", art.updatedOn.Value.ToString("MM/dd/yy hh:mm tt"),7);
+                            row = MakeXLSXInfoRow("Last Updated", art.updatedOn.Value.ToString("MM/dd/yy hh:mm tt"),7);
                             sheetData.Append(row);
                             row = MakeChecklistHeaderRows(rowNumber);
                             sheetData.Append(row);
@@ -1884,7 +2227,7 @@ namespace openrmf_read_api.Controllers
             newCell.StyleIndex = 2;
             return row;
         }
-        private DocumentFormat.OpenXml.Spreadsheet.Row MakeChecklistInfoRow(string title, string value, uint rowindex) {
+        private DocumentFormat.OpenXml.Spreadsheet.Row MakeXLSXInfoRow(string title, string value, uint rowindex) {
             DocumentFormat.OpenXml.Spreadsheet.Row row = new DocumentFormat.OpenXml.Spreadsheet.Row() { RowIndex = rowindex };
             DocumentFormat.OpenXml.Spreadsheet.Cell refCell = null;
             DocumentFormat.OpenXml.Spreadsheet.Cell newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "A" + rowindex.ToString()};
@@ -2330,7 +2673,140 @@ namespace openrmf_read_api.Controllers
 
             return row;
         }
+private DocumentFormat.OpenXml.Spreadsheet.Row MakeRARHeaderRows(uint rowindex, bool credentialed) {
+            DocumentFormat.OpenXml.Spreadsheet.Cell refCell = null;
+            DocumentFormat.OpenXml.Spreadsheet.Row row = new DocumentFormat.OpenXml.Spreadsheet.Row() { RowIndex = rowindex };
+            DocumentFormat.OpenXml.Spreadsheet.Cell newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "A" + rowindex.ToString() };
+            uint styleIndex = 3;
 
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "B" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Non-Compliant Security Controls (16a)");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "C" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Affected CCI (16a.1)");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "D" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Source of Discovery (16a.2)");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Vulnerability ID (16a.3)");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "F" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Vulnerability Description (16b)");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "G" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Devices Affected (16b.1)");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "H" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Security Objectives (C-I-A) (16c)");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "I" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Raw Test Result (16d)");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "J" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Predisposing Condition(s) (16d.1)");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "K" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Technical Mitigation(s) (16d.2)");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "L" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Severity or Pervasiveness (VL-VH) (16d.3)");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "M" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Relevance of Threat (VL-VH) (16e)");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "N" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Threat Description (16e.1)");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "O" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Likelihood (Cells 16d.3 & 16e) (VL-VH) (16f)");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "P" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Impact (VL-VH) (16g)");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "Q" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Impact Description (16h)");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "R" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Risk (Cells 16f & 16g) (VL-VH) (16i)");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "S" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Proposed Mitigations (From POA&M) (16j)");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "T" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Residual Risk (After Proposed Mitigations) (16k)");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "U" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("Recommendations (16l)");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+
+            return row;
+        }
+        
         private DocumentFormat.OpenXml.Spreadsheet.Row MakeDataRow(uint rowNumber, string cellReference, string value, uint styleIndex) {
             DocumentFormat.OpenXml.Spreadsheet.Row row = new DocumentFormat.OpenXml.Spreadsheet.Row() { RowIndex = rowNumber };
             DocumentFormat.OpenXml.Spreadsheet.Cell refCell = null;
