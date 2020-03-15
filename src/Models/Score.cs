@@ -59,7 +59,7 @@ namespace openrmf_read_api.Models
 
         public int totalCat1 { get { return totalCat1NotAFinding + totalCat1NotApplicable + totalCat1NotReviewed + totalCat1Open;} }
         public int totalCat2 { get { return totalCat2NotAFinding + totalCat2NotApplicable + totalCat2NotReviewed + totalCat2Open;} }
-        public int totalCat3 { get { return totalCat3NotAFinding + totalCat2NotApplicable + totalCat3NotReviewed + totalCat3Open;} }
+        public int totalCat3 { get { return totalCat3NotAFinding + totalCat3NotApplicable + totalCat3NotReviewed + totalCat3Open;} }
 
     }
 }

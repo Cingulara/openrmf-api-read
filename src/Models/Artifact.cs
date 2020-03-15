@@ -25,8 +25,9 @@ namespace openrmf_read_api.Models
         public string hostName { get; set;}
         public string stigType { get; set; }
         public string stigRelease { get; set; }
+        public string version {get; set;}
         public string title { get {
-            return hostName.Trim() + "-" + stigType.Trim() + "-" + stigRelease.Trim();
+            return hostName.Trim() + "-" + stigType.Trim() + "-V" + version + "-" + stigRelease.Trim();
         }}
         
         [BsonId]
