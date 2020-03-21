@@ -2145,6 +2145,7 @@ namespace openrmf_read_api.Controllers
         private string CreateXLSXFilename(string title) {
             return title.Trim().Replace(" ", "_") + ".xlsx";
         }
+
         private bool ShowVulnerabilityInExcel(string status, bool NotAFinding, bool NotReviewed, 
                 bool Open, bool NotApplicable) {
             if (status.ToLower() == "not_reviewed" && NotReviewed)
@@ -2678,7 +2679,7 @@ namespace openrmf_read_api.Controllers
 
             return row;
         }
-private DocumentFormat.OpenXml.Spreadsheet.Row MakeRARHeaderRows(uint rowindex, bool credentialed) {
+        private DocumentFormat.OpenXml.Spreadsheet.Row MakeRARHeaderRows(uint rowindex, bool credentialed) {
             DocumentFormat.OpenXml.Spreadsheet.Cell refCell = null;
             DocumentFormat.OpenXml.Spreadsheet.Row row = new DocumentFormat.OpenXml.Spreadsheet.Row() { RowIndex = rowindex };
             DocumentFormat.OpenXml.Spreadsheet.Cell newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "A" + rowindex.ToString() };
