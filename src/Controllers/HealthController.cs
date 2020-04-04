@@ -4,17 +4,20 @@
 using System;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using openrmf_read_api.Data;
 
 namespace openrmf_read_api.Controllers
 {
     [Route("healthz")]
     public class HealthController : Controller
     {
-       private readonly ILogger<HealthController> _logger;
+        private readonly ILogger<HealthController> _logger;
+        private readonly ISystemGroupRepository _systemGroupRepo;
 
-        public HealthController(ILogger<HealthController> logger)
+        public HealthController(ISystemGroupRepository systemGroupRepo, ILogger<HealthController> logger)
         {
             _logger = logger;
+            _systemGroupRepo = systemGroupRepo;
         }
 
         /// <summary>
@@ -29,7 +32,10 @@ namespace openrmf_read_api.Controllers
         {
             try {
                 _logger.LogInformation(string.Format("/healthz: healthcheck heartbeat"));
-                return Ok("ok");
+                if (_systemGroupRepo.HealthStatus())
+                    return Ok("ok");
+                else
+                    return BadRequest("database error");
             }
             catch (Exception ex){
                 _logger.LogError(ex, "Healthz check failed!");

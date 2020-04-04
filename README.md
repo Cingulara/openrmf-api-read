@@ -1,3 +1,5 @@
+![.NET Core Build and Test](https://github.com/Cingulara/openrmf-api-read/workflows/.NET%20Core%20Build%20and%20Test/badge.svg)
+
 # openrmf-api-read
 This is the openRMF Read API for reading a checklist and all its metadata we store. It has two calls.
 

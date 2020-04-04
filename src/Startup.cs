@@ -44,17 +44,12 @@ namespace openrmf_read_api
             
             // Use "OpenTracing.Contrib.NetCore" to automatically generate spans for ASP.NET Core
             services.AddSingleton<ITracer>(serviceProvider =>  
-            {  
-                string serviceName = System.Reflection.Assembly.GetEntryAssembly().GetName().Name;  
-            
+            {                
+                //var loggerFactory = new LoggerFactory();
                 ILoggerFactory loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();  
-            
-                ISampler sampler = new ConstSampler(sample: true);  
-            
-                ITracer tracer = new Tracer.Builder(serviceName)  
-                    .WithLoggerFactory(loggerFactory)  
-                    .WithSampler(sampler)  
-                    .Build();  
+                // use the environment variables to setup the Jaeger endpoints
+                var config = Jaeger.Configuration.FromEnv(loggerFactory);
+                var tracer = config.GetTracer();
             
                 GlobalTracer.Register(tracer);  
             

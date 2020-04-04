@@ -11,6 +11,7 @@ namespace openrmf_read_api.Data {
     {
         Task<IEnumerable<SystemGroup>> GetAllSystemGroups();
         Task<SystemGroup> GetSystemGroup(string id);
+        bool HealthStatus();
 
         /******************************************** 
          Dashboard specific calls
