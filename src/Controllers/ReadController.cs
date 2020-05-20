@@ -530,7 +530,7 @@ namespace openrmf_read_api.Controllers
         /// <response code="200">Returns the Nessus file in XML format</response>
         /// <response code="400">If the item did not query correctly</response>
         /// <response code="404">If the ID passed in is not valid or the Nessus file is not there</response>
-        [HttpGet("/system/{systemGroupId}/downloadnessus")]
+        [HttpGet("system/{systemGroupId}/downloadnessus")]
         [Authorize(Roles = "Administrator,Editor,Download")]
         public async Task<IActionResult> DownloadSystemNessus(string systemGroupId)
         {
