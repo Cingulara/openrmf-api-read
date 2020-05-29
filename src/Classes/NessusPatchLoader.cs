@@ -49,7 +49,20 @@ namespace openrmf_read_api.Classes
             XmlAttributeCollection colAttributes;
             string hostname = "";
             string netbiosname = "";
-            foreach (XmlNode node in nodes) {  
+            string operatingSystem = "";
+            string systemType = "";
+            bool credentialed = false;
+            string ipAddress = "";
+            string scanVersion = "";
+
+            foreach (XmlNode node in nodes) {
+                // reset the variables for each reporthost listing
+                hostname = "";
+                netbiosname = "";
+                operatingSystem = "";
+                systemType = "";
+                credentialed = false;
+                ipAddress = "";
                 colAttributes = node.Attributes;
                 foreach (XmlAttribute attr in colAttributes) {
                     if (attr.Name == "name") {
@@ -61,6 +74,11 @@ namespace openrmf_read_api.Classes
                     foreach (XmlElement child in node.ChildNodes) {
                         if (child.Name == "HostProperties") {
                             // for each child node in here
+                            netbiosname = "";
+                            operatingSystem = "";
+                            systemType = "";
+                            credentialed = false;
+                            ipAddress = "";
                             foreach (XmlElement hostChild in child.ChildNodes) {
                                 // get the child
                                 foreach (XmlAttribute childAttr in hostChild.Attributes) {
@@ -69,7 +87,14 @@ namespace openrmf_read_api.Classes
                                         netbiosname = hostChild.InnerText; // get the outside child text;
                                     } else if (childAttr.InnerText == "hostname") {
                                         hostname = hostChild.InnerText; // get the outside child text;
-                                        break; // we are good to jump to report items if we can find this
+                                    } else if (childAttr.InnerText == "operating-system") {
+                                        operatingSystem = hostChild.InnerText; // get the outside child text;
+                                    } else if (childAttr.InnerText == "system-type") {
+                                        systemType = hostChild.InnerText; // get the outside child text;
+                                    } else if (childAttr.InnerText == "Credentialed_Scan") {
+                                        bool.TryParse(hostChild.InnerText, out credentialed); // get the outside child text;
+                                    } else if (childAttr.InnerText == "host-rdns") {
+                                        ipAddress = hostChild.InnerText; // get the outside child text;
                                     }
                                 }// for each childAttr in hostChild
                             } // for each hostChild
@@ -79,8 +104,12 @@ namespace openrmf_read_api.Classes
                             // get all ReportItems and their attributes in the tag 
                             colAttributes = child.Attributes;
                             summary = new NessusPatchSummary();
-                            // set the hostname
+                            // set the hostname and other host data for every single record
                             summary.hostname = hostname;
+                            summary.operatingSystem = operatingSystem;
+                            summary.ipAddress = SanitizeHostname(ipAddress); // if an IP clean up the information octets
+                            summary.systemType = systemType;
+                            summary.credentialed = credentialed;
                             // get all the attributes
                             foreach (XmlAttribute attr in colAttributes) {
                                 if (attr.Name == "severity") {
@@ -106,7 +135,23 @@ namespace openrmf_read_api.Classes
                                     summary.riskFactor = reportData.InnerText;
                                 else if (reportData.Name == "synopsis")
                                     summary.synopsis = reportData.InnerText;
+
+                                if (summary.family == "Settings" && summary.pluginName == "Nessus Scan Information") { // get the version of ACAS
+                                    if (reportData.Name == "plugin_output") { // parse the data in here
+                                        int strPlacement = 0;
+                                        strPlacement = reportData.InnerText.IndexOf("Nessus version : ");
+                                        if (strPlacement > 0) { // record the version
+                                            scanVersion = reportData.InnerText.Substring(strPlacement+17, reportData.InnerText.IndexOf("\n",strPlacement+19)-(strPlacement+17)).Trim();
+                                            strPlacement = reportData.InnerText.IndexOf("Plugin feed version : ");
+                                            if (strPlacement > 0) // add the plugin feed version to the end of the ACAS version
+                                                scanVersion += "." + reportData.InnerText.Substring(strPlacement+22, reportData.InnerText.IndexOf("\n",strPlacement+24)-(strPlacement+22)).Trim();
+                                        }
+                                    }
+                                }
                             }
+                            // record the ACAS version for the POA&M export
+                            if (!string.IsNullOrEmpty(scanVersion)) summary.scanVersion = scanVersion;
+
                             // add the record
                             summaryListing.Add(summary);
                         }
@@ -124,7 +169,7 @@ namespace openrmf_read_api.Classes
         /// The hostname if just a string, the IP address if an IP with xxx.xxx. to start 
         /// the IP range. So the first two octets are hidden from view for security reasons.
         /// </returns>
-        private static string SanitizeHostname(string hostname){
+        public static string SanitizeHostname(string hostname){
             // if this is not an IP, just return the host
             if (hostname.IndexOf(".") <= 0)
                 return hostname;

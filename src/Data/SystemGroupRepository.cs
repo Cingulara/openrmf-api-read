@@ -72,5 +72,12 @@ namespace openrmf_read_api.Data {
             }
         }
 
+        // check that the database is responding and it returns at least one collection name
+        public bool HealthStatus(){
+            var result = _context.SystemGroups.Database.ListCollectionNamesAsync().GetAwaiter().GetResult().FirstOrDefault();
+            if (!string.IsNullOrEmpty(result)) // we are good to go
+                return true;
+            return false;
+        }
     }
 }

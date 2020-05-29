@@ -23,6 +23,7 @@ namespace openrmf_read_api.Models
         
         // stores the raw XML of the Nessus file from a scan
         public string rawNessusFile { get; set;}
+        public string nessusFilename { get; set;}
 
         [BsonDateTimeOptions]
         // attribute to gain control on datetime serialization

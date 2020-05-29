@@ -11,6 +11,11 @@ namespace openrmf_read_api.Models
     {
         public NessusPatchSummary () {        }
         public string hostname { get; set;}
+        public string operatingSystem { get; set;}
+        public string systemType { get; set;}
+        public string ipAddress { get; set;}
+        public bool credentialed { get; set;}
+        
         public string pluginId { get; set; }
 
         public string pluginIdSort { get {
@@ -45,5 +50,8 @@ namespace openrmf_read_api.Models
         public string pluginType { get; set; }
         public string riskFactor { get; set; }
         public string synopsis { get; set; }
+
+        // Nessus ACAS Scanner Version
+        public string scanVersion { get; set; }
     }
 }

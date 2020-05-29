@@ -1,11 +1,26 @@
+![.NET Core Build and Test](https://github.com/Cingulara/openrmf-api-read/workflows/.NET%20Core%20Build%20and%20Test/badge.svg)
+
 # openrmf-api-read
 This is the openRMF Read API for reading a checklist and all its metadata we store. It has two calls.
 
-GET to / to list all records
-GET to /{id} to get a record
-GET to /download/{id} to download the CKL file to use in the STIG viewer
-
-/swagger/ gives you the API structure.
+* GET to / to list all records
+* GET to /artifact/{id} to get a checklist record
+* GET to /download/{id} to download a checklist record CKL file to use in the STIG viewer
+* GET to /export/{id} to export a checklist to XLSX format color coded
+* GET to /{id}/control/{control} to get all vulnerability IDs for a particular control type for this checklist (used for compliance generation view)
+* GET to /system/export/{systemGroupId} to get a list of all checklists for a system in XLSX
+* GET to /systems to get a list of all systems
+* GET to /systems/{systemGroupId} to get all checklists for a system
+* GET to /system/{systemGroupId} to get the system record
+* GET to /system/{systemGroupId}/downloadnessus to download any NESSUS ACAS results file
+* GET to /system/{systemGroupId}/nessuspatchsummary to download a Nessus ACAS Patch Summary XLSX
+* GET to /system/{systemGroupId}/exportnessus to export the NESSUS ACAS results file
+* GET to /system/{systemGroupId}/testplanexport to create a test plan in XLSX format
+* GET to /system/{systemGroupId}/poamexport to export a POAM
+* GET to /system/{systemGroupId}/rarexport to export a Risk Assessment Report
+* GET to /count/artifacts to get a count of all checklists across all systems total
+* GET to /count/systems to get a count of all systems
+* /swagger/ gives you the API structure.
 
 ## Making your local Docker image
 * make build
@@ -23,10 +38,10 @@ GET to /download/{id} to download the CKL file to use in the STIG viewer
 
 ## Messaging Platform
 Using NATS from Synadia to have a messaging backbone and eventual consistency. Currently publishing to these known items:
-* openrmf.save.new with payload (new Guid Id)
-* openrmf.save.update with payload (new Guid Id)
-* openrmf.upload.new with payload (new Guid Id)
-* openrmf.upload.update with payload (new Guid Id)
+* openrmf.score.read to get a score for a checklist
+* openrmf.compliance.cci.control return a list of vulnerability IDs based on the control
+* openrmf.scores.system get scores for all checklists in a system
+* openrmf.compliance.cci get a list of all CCI items
 
 More will follow as this expands for auditing, logging, etc.
 
