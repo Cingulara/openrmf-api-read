@@ -53,3 +53,6 @@ More will follow as this expands for auditing, logging, etc.
 ## Using Jaeger
 
 The Jaeger Client is https://github.com/jaegertracing/jaeger-client-csharp. We use defaults but you can specify ENV for configuration.
+
+## .NET Core 3.1
+Need to at a minimum use the `mcr.microsoft.com/dotnet/core/aspnet:3.1` image to run this.
