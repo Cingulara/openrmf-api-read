@@ -26,6 +26,8 @@ namespace openrmf_read_api
 {
     public class Startup
     {
+        readonly string MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
+        
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -117,24 +119,15 @@ namespace openrmf_read_api
                 options.AddPolicy("Assessor", policy => policy.RequireRole("roles", "[Assessor]"));
             });
 
-            // ********************
-            // USE CORS
-            // ********************
-            // services.AddCors(options =>
-            // {
-            //     options.AddPolicy("AllowAll",
-            //         builder =>
-            //         {
-            //             builder
-            //             .AllowAnyOrigin() 
-            //             .AllowAnyMethod()
-            //             .AllowAnyHeader()
-            //             .AllowCredentials();
-            //         });
-            // });
-
-            // services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
-            //     .AddXmlSerializerFormatters();
+            // add the CORS setup
+            services.AddCors(options =>
+            {
+                options.AddPolicy(name: MyAllowSpecificOrigins,
+                    builder =>
+                    {
+                        builder.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin();
+                    });
+            });
             
             services.AddControllers();
         }
@@ -177,6 +170,7 @@ namespace openrmf_read_api
 
             app.UseHttpsRedirection();
             app.UseRouting();
+            app.UseCors();
             // this has to go here
             app.UseAuthentication();
             app.UseAuthorization();
