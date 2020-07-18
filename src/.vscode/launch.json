@@ -10,7 +10,7 @@
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/bin/Debug/netcoreapp2.2/openrmf-api-read.dll",
+            "program": "${workspaceFolder}/bin/Debug/netcoreapp3.1/openrmf-api-read.dll",
             "args": [],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,
@@ -32,8 +32,9 @@
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development",
                 "ASPNETCORE_URLS": "http://*:8084",
-                "MONGODBCONNECTION": "mongodb://openrmf:openrmf1234!@localhost/openrmf?authSource=admin",
-                "MONGODB": "openrmf",
+                "DBCONNECTION": "mongodb://openrmf:openrmf1234!@localhost/openrmf?authSource=admin",
+                "DB": "openrmf",
+                "DBTYPE": "mongo",
                 "NATSSERVERURL" : "nats://127.0.0.1:4222",
                 "JWT-AUTHORITY" : "http://localhost:9001/auth/realms/openrmf",
                 "JWT-CLIENT": "openrmf",
