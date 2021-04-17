@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using openrmf_read_api.Classes;
 using openrmf_read_api.Models;
 using System.IO;
+using System.IO.Compression;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Logging;
 
@@ -1749,7 +1750,160 @@ namespace openrmf_read_api.Controllers
             }
         }        
 
+        /// <summary>
+        /// GET The list of checklists for the given System ID and download as a zip file
+        /// </summary>
+        /// <param name="systemGroupId">The ID of the system to use</param>
+        /// <param name="naf">True/False include Not a Finding vulnerabilities</param>
+        /// <param name="open">True/False include Open vulnerabilities</param>
+        /// <param name="na">True/False include Not Applicable vulnerabilities</param>
+        /// <param name="nr">True/False include Not Reviewed vulnerabilities</param>
+        /// <param name="cat1">True/False include CAT 1 / High vulnerabilities</param>
+        /// <param name="cat2">True/False include CAT 2 / Medium vulnerabilities</param>
+        /// <param name="cat3">True/False include CAT 3 / Low vulnerabilities</param>
+        /// <param name="hostname">The hostname of the checklist to filter on</param>
+        /// <returns>
+        /// HTTP Status showing it was found or that there is an error. And the list of system records 
+        /// exported to an XLSX file to download.
+        /// </returns>
+        /// <response code="200">Returns the Artifact List of records for the passed in system in XLSX format</response>
+        /// <response code="400">If the item did not query correctly</response>
+        [HttpGet("system/download/{systemGroupId}")]
+        [Authorize(Roles = "Administrator,Reader,Assessor")]
+        public async Task<IActionResult> DownloadChecklistListingToZip(string systemGroupId, bool naf = true, bool open = true, bool na = true, 
+            bool nr = true, bool cat1 = true, bool cat2 = true, bool cat3 = true, string hostname = "")
+        {
+            try {
+                _logger.LogInformation("Calling DownloadChecklistListingToZip({0})", systemGroupId);
+                IEnumerable<Artifact> artifacts;
+                // if they pass in a system, get all for that system
+                if (string.IsNullOrEmpty(systemGroupId))
+                {
+                    _logger.LogWarning("DownloadChecklistListingToZip() Getting a listing of all checklists to export to XLSX");
+                    return BadRequest("You must specify a system to export");
+                }
+                _logger.LogInformation(string.Format("DownloadChecklistListingToZip() Getting a listing of all {0} checklists to export to XLSX", systemGroupId));
+                artifacts = await _artifactRepo.GetSystemArtifacts(systemGroupId);
+                if (!naf || !open || !na || !nr || !cat1 || !cat2 || !cat3) {
+                    // used to store the allowed checklists
+                    List<string> allowedChecklists = new List<string>();
+                    bool allowChecklist = false;
+                    List<Score> scoreListing = NATSClient.GetSystemScores(systemGroupId);
+                    // get the list of scores for all of them
+                    if (scoreListing != null && scoreListing.Count > 0) {
+                        // see for each if they should be included
+                        foreach (Score s in scoreListing) {
+                            allowChecklist = false;
+                            // now we can check status and boolean
+                            if (s.totalCat1Open > 0 && cat1 && open)
+                                allowChecklist = true;
+                            else if (s.totalCat2Open > 0 && cat2 && open)
+                                allowChecklist = true;
+                            else if (s.totalCat3Open > 0 && cat3 && open)
+                                allowChecklist = true;
+                            else if (s.totalCat1NotReviewed > 0 && cat1 && nr)
+                                allowChecklist = true;
+                            else if (s.totalCat2NotReviewed > 0 && cat2 && nr)
+                                allowChecklist = true;
+                            else if (s.totalCat3NotReviewed > 0 && cat3 && nr)
+                                allowChecklist = true;
+                            else if (s.totalCat1NotApplicable > 0 && cat1 && na)
+                                allowChecklist = true;
+                            else if (s.totalCat2NotApplicable > 0 && cat2 && na)
+                                allowChecklist = true;
+                            else if (s.totalCat3NotApplicable > 0 && cat3 && na)
+                                allowChecklist = true;
+                            else if (s.totalCat1NotAFinding > 0 && cat1 && naf)
+                                allowChecklist = true;
+                            else if (s.totalCat2NotAFinding > 0 && cat2 && naf)
+                                allowChecklist = true;
+                            else if (s.totalCat3NotAFinding > 0 && cat3 && naf)
+                                allowChecklist = true;
+                            else
+                                allowChecklist = false; // only if no severity is checked, which is not smart
 
+                            if (allowChecklist) // then add it, we will do a distinct later
+                                allowedChecklists.Add(s.artifactId);
+                        }
+                        if (allowedChecklists.Count == 0)
+                            artifacts = new List<Artifact>(); // there are not allowed, so empty it
+                        else {
+                            // otherwise remove from the systemChecklists before going on
+                            artifacts = artifacts.Where(o => allowedChecklists.Contains(o.InternalId.ToString()));
+                        }
+                    }
+                } 
+                // check for hostname being used
+                if (!string.IsNullOrEmpty(hostname)) {
+                    artifacts = artifacts.Where(z => z.hostName.Contains(hostname));
+                }
+
+                // now use the listing
+                if (artifacts != null && artifacts.Count() > 0) {
+                    using (var ms = new MemoryStream())
+                    {
+                        using (var zipArchive = new ZipArchive(ms, ZipArchiveMode.Create, true))
+                        {
+
+                            _logger.LogInformation("DownloadChecklistListingToZip({0}) cycling through checklists to list", systemGroupId);
+                            foreach (Artifact art in artifacts.OrderBy(x => x.title).ToList()) {
+                                // add to the ZIP from the rawData field
+                                ZipArchiveEntry checklistEntry = zipArchive.CreateEntry(art.title.Replace(" ","-") + ".ckl", CompressionLevel.Fastest);
+                                // add the TEXT and then close it up
+                                using (StreamWriter writer = new StreamWriter(checklistEntry.Open()))
+                                {                           
+                                    art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist);
+                                    if (string.IsNullOrEmpty(art.CHECKLIST.ASSET.ROLE)) art.CHECKLIST.ASSET.ROLE = "";
+                                    if (string.IsNullOrEmpty(art.CHECKLIST.ASSET.ASSET_TYPE)) art.CHECKLIST.ASSET.ASSET_TYPE = "";
+                                    if (string.IsNullOrEmpty(art.CHECKLIST.ASSET.HOST_NAME)) art.CHECKLIST.ASSET.HOST_NAME = "";
+                                    if (string.IsNullOrEmpty(art.CHECKLIST.ASSET.HOST_IP)) art.CHECKLIST.ASSET.HOST_IP = "";
+                                    if (string.IsNullOrEmpty(art.CHECKLIST.ASSET.HOST_MAC)) art.CHECKLIST.ASSET.HOST_MAC = "";
+                                    if (string.IsNullOrEmpty(art.CHECKLIST.ASSET.HOST_FQDN)) art.CHECKLIST.ASSET.HOST_FQDN = "";
+                                    if (string.IsNullOrEmpty(art.CHECKLIST.ASSET.TECH_AREA)) art.CHECKLIST.ASSET.TECH_AREA = "";
+                                    if (string.IsNullOrEmpty(art.CHECKLIST.ASSET.TARGET_KEY)) art.CHECKLIST.ASSET.TARGET_KEY = "";
+                                    if (string.IsNullOrEmpty(art.CHECKLIST.ASSET.WEB_OR_DATABASE)) art.CHECKLIST.ASSET.WEB_OR_DATABASE = "";
+                                    if (string.IsNullOrEmpty(art.CHECKLIST.ASSET.WEB_DB_SITE)) art.CHECKLIST.ASSET.WEB_DB_SITE = "";
+                                    if (string.IsNullOrEmpty(art.CHECKLIST.ASSET.WEB_DB_INSTANCE)) art.CHECKLIST.ASSET.WEB_DB_INSTANCE = "";
+
+                                    System.Xml.Serialization.XmlSerializer checklistWriter = new System.Xml.Serialization.XmlSerializer(typeof(CHECKLIST)); 
+                                    using(StringWriter textWriter = new StringWriter())                
+                                    {
+                                        checklistWriter.Serialize(textWriter, art.CHECKLIST);
+                                        art.rawChecklist = textWriter.ToString();
+                                    }
+                                    // strip out all the extra formatting crap and clean up the XML to be as simple as possible
+                                    System.Xml.Linq.XDocument xDoc = System.Xml.Linq.XDocument.Parse(art.rawChecklist, System.Xml.Linq.LoadOptions.PreserveWhitespace);
+                                    // save the new serialized checklist record to the database
+                                    art.rawChecklist = xDoc.ToString(System.Xml.Linq.SaveOptions.DisableFormatting);
+                                    string rawChecklist = art.rawChecklist.Substring(art.rawChecklist.IndexOf("<STIGS>")); // save the rest but redo the top part
+                                    rawChecklist = string.Format("<CHECKLIST><ASSET><ROLE>{0}</ROLE><ASSET_TYPE>{1}</ASSET_TYPE><HOST_NAME>{2}</HOST_NAME><HOST_IP>{3}</HOST_IP><HOST_MAC>{4}</HOST_MAC><HOST_FQDN>{5}</HOST_FQDN><TECH_AREA>{6}</TECH_AREA><TARGET_KEY>{7}</TARGET_KEY><WEB_OR_DATABASE>{8}</WEB_OR_DATABASE><WEB_DB_SITE>{9}</WEB_DB_SITE><WEB_DB_INSTANCE>{10}</WEB_DB_INSTANCE></ASSET>",
+                                        art.CHECKLIST.ASSET.ROLE,art.CHECKLIST.ASSET.ASSET_TYPE,art.CHECKLIST.ASSET.HOST_NAME,art.CHECKLIST.ASSET.HOST_IP,
+                                        art.CHECKLIST.ASSET.HOST_MAC,art.CHECKLIST.ASSET.HOST_FQDN,art.CHECKLIST.ASSET.TECH_AREA,
+                                        art.CHECKLIST.ASSET.TARGET_KEY,art.CHECKLIST.ASSET.WEB_OR_DATABASE,art.CHECKLIST.ASSET.WEB_DB_SITE,
+                                        art.CHECKLIST.ASSET.WEB_DB_INSTANCE) + rawChecklist;
+                                    
+                                    // take the final cleanup and write it out to the ZIP memory
+                                    writer.WriteLine(CleanupData(rawChecklist.Trim().Replace("\n","")));
+                                }
+                            }
+                        }
+                        
+                        ms.Position = 0;
+                        ms.Seek(0, SeekOrigin.Begin);
+                        _logger.LogInformation("Called DownloadChecklistListingToZip({0}) successfully", systemGroupId);
+                        return File(ms.ToArray(), "application/zip", "checklistfiles.zip");
+                    }
+                }
+                else {
+                    _logger.LogInformation("Calling DownloadChecklistListingToZip({0}) but had no checklists to show", systemGroupId);
+                    return NotFound();
+                }
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "DownloadChecklistListingToZip({0}) Error Retrieving Artifacts for Exporting", systemGroupId);
+                return NotFound();
+            }
+        } 
         #endregion
 
         #region Artifacts and Checklists
@@ -1811,8 +1965,41 @@ namespace openrmf_read_api.Controllers
                     _logger.LogWarning("Called DownloadChecklist({0}) with an invalid Artifact ID", id);
                     return NotFound();
                 }
+
+                // cleanup the checklist data so it loads correctly                        
+                _logger.LogInformation("Called DownloadChecklist({0}) cleaning up checklist data", id);
+                art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist);
+                if (string.IsNullOrEmpty(art.CHECKLIST.ASSET.ROLE)) art.CHECKLIST.ASSET.ROLE = "";
+                if (string.IsNullOrEmpty(art.CHECKLIST.ASSET.ASSET_TYPE)) art.CHECKLIST.ASSET.ASSET_TYPE = "";
+                if (string.IsNullOrEmpty(art.CHECKLIST.ASSET.HOST_NAME)) art.CHECKLIST.ASSET.HOST_NAME = "";
+                if (string.IsNullOrEmpty(art.CHECKLIST.ASSET.HOST_IP)) art.CHECKLIST.ASSET.HOST_IP = "";
+                if (string.IsNullOrEmpty(art.CHECKLIST.ASSET.HOST_MAC)) art.CHECKLIST.ASSET.HOST_MAC = "";
+                if (string.IsNullOrEmpty(art.CHECKLIST.ASSET.HOST_FQDN)) art.CHECKLIST.ASSET.HOST_FQDN = "";
+                if (string.IsNullOrEmpty(art.CHECKLIST.ASSET.TECH_AREA)) art.CHECKLIST.ASSET.TECH_AREA = "";
+                if (string.IsNullOrEmpty(art.CHECKLIST.ASSET.TARGET_KEY)) art.CHECKLIST.ASSET.TARGET_KEY = "";
+                if (string.IsNullOrEmpty(art.CHECKLIST.ASSET.WEB_OR_DATABASE)) art.CHECKLIST.ASSET.WEB_OR_DATABASE = "";
+                if (string.IsNullOrEmpty(art.CHECKLIST.ASSET.WEB_DB_SITE)) art.CHECKLIST.ASSET.WEB_DB_SITE = "";
+                if (string.IsNullOrEmpty(art.CHECKLIST.ASSET.WEB_DB_INSTANCE)) art.CHECKLIST.ASSET.WEB_DB_INSTANCE = "";
+
+                System.Xml.Serialization.XmlSerializer checklistWriter = new System.Xml.Serialization.XmlSerializer(typeof(CHECKLIST)); 
+                using(StringWriter textWriter = new StringWriter())                
+                {
+                    checklistWriter.Serialize(textWriter, art.CHECKLIST);
+                    art.rawChecklist = textWriter.ToString();
+                }
+                // strip out all the extra formatting crap and clean up the XML to be as simple as possible
+                System.Xml.Linq.XDocument xDoc = System.Xml.Linq.XDocument.Parse(art.rawChecklist, System.Xml.Linq.LoadOptions.PreserveWhitespace);
+                // save the new serialized checklist record to the database
+                art.rawChecklist = xDoc.ToString(System.Xml.Linq.SaveOptions.DisableFormatting);
+                string rawChecklist = art.rawChecklist.Substring(art.rawChecklist.IndexOf("<STIGS>")); // save the rest but redo the top part
+                rawChecklist = string.Format("<CHECKLIST><ASSET><ROLE>{0}</ROLE><ASSET_TYPE>{1}</ASSET_TYPE><HOST_NAME>{2}</HOST_NAME><HOST_IP>{3}</HOST_IP><HOST_MAC>{4}</HOST_MAC><HOST_FQDN>{5}</HOST_FQDN><TECH_AREA>{6}</TECH_AREA><TARGET_KEY>{7}</TARGET_KEY><WEB_OR_DATABASE>{8}</WEB_OR_DATABASE><WEB_DB_SITE>{9}</WEB_DB_SITE><WEB_DB_INSTANCE>{10}</WEB_DB_INSTANCE></ASSET>",
+                    art.CHECKLIST.ASSET.ROLE,art.CHECKLIST.ASSET.ASSET_TYPE,art.CHECKLIST.ASSET.HOST_NAME,art.CHECKLIST.ASSET.HOST_IP,
+                    art.CHECKLIST.ASSET.HOST_MAC,art.CHECKLIST.ASSET.HOST_FQDN,art.CHECKLIST.ASSET.TECH_AREA,
+                    art.CHECKLIST.ASSET.TARGET_KEY,art.CHECKLIST.ASSET.WEB_OR_DATABASE,art.CHECKLIST.ASSET.WEB_DB_SITE,
+                    art.CHECKLIST.ASSET.WEB_DB_INSTANCE) + rawChecklist;
+
                 _logger.LogInformation("Called DownloadChecklist({0}) successfully", id);
-                return Ok(art.rawChecklist);
+                return Ok(CleanupData(rawChecklist));
             }
             catch (Exception ex) {
                 _logger.LogError(ex, "DownloadChecklist({0}) Error Retrieving Artifact for Download", id);
@@ -2982,5 +3169,8 @@ namespace openrmf_read_api.Controllers
         }
         #endregion
 
+        private string CleanupData (string rawdata) {
+            return rawdata.Replace("\t","").Replace(">\n<","><");
+        }
     }
 }
