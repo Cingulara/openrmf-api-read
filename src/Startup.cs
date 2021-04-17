@@ -47,19 +47,23 @@ namespace openrmf_read_api
                 });
             }
             
-            // Use "OpenTracing.Contrib.NetCore" to automatically generate spans for ASP.NET Core
-            services.AddSingleton<ITracer>(serviceProvider =>  
-            {                
-                ILoggerFactory loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();  
-                // use the environment variables to setup the Jaeger endpoints
-                var config = Jaeger.Configuration.FromEnv(loggerFactory);
-                var tracer = config.GetTracer();
-            
-                GlobalTracer.Register(tracer);  
-            
-                return tracer;  
-            });
-            services.AddOpenTracing();
+            if (Environment.GetEnvironmentVariable("JAEGER_AGENT_HOST") != null && 
+                !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("JAEGER_AGENT_HOST"))) {
+
+                    // Use "OpenTracing.Contrib.NetCore" to automatically generate spans for ASP.NET Core
+                    services.AddSingleton<ITracer>(serviceProvider =>  
+                    {                
+                        ILoggerFactory loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();  
+                        // use the environment variables to setup the Jaeger endpoints
+                        var config = Jaeger.Configuration.FromEnv(loggerFactory);
+                        var tracer = config.GetTracer();
+                    
+                        GlobalTracer.Register(tracer);  
+                    
+                        return tracer;  
+                    });
+                    services.AddOpenTracing();
+                }
 
             // add repositories
             services.AddTransient<IArtifactRepository, ArtifactRepository>();
