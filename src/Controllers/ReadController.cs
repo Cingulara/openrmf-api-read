@@ -1560,7 +1560,7 @@ namespace openrmf_read_api.Controllers
                                         art.CHECKLIST.ASSET.WEB_DB_INSTANCE) + rawChecklist;
                                     
                                     // take the final cleanup and write it out to the ZIP memory
-                                    writer.WriteLine(CleanupData(rawChecklist.Trim().Replace("\n","")));
+                                    writer.WriteLine(CleanupData(rawChecklist.Trim()));
                                 }
                             }
                         }
