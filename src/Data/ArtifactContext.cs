@@ -25,5 +25,13 @@ namespace openrmf_read_api.Data
                 return _database.GetCollection<Artifact>("Artifacts");
             }
         }
+
+        public IMongoCollection<SystemGroup> SystemGroups
+        {
+            get
+            {
+                return _database.GetCollection<SystemGroup>("SystemGroups");
+            }
+        }
     }
 }
