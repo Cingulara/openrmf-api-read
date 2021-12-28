@@ -12,11 +12,11 @@ using Microsoft.Extensions.Options;
 namespace openrmf_read_api.Data {
     public class SystemGroupRepository : ISystemGroupRepository
     {
-        private readonly SystemGroupContext _context = null;
+        private readonly ArtifactContext _context = null;
 
         public SystemGroupRepository(IOptions<Settings> settings)
         {
-            _context = new SystemGroupContext(settings);
+            _context = new ArtifactContext(settings);
         }
 
         public async Task<IEnumerable<SystemGroup>> GetAllSystemGroups()

@@ -1608,7 +1608,7 @@ namespace openrmf_read_api.Controllers
                     _logger.LogWarning("Called GetArtifact({0}) with an invalid Artifact ID", id);
                     return NotFound();
                 }
-                art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist.Replace("\t","").Replace(">\n<","><"));
+                art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist.Replace("\t",""));
                 art.rawChecklist = string.Empty;
                 _logger.LogInformation("Called GetArtifact({0}) successfully", id);
                 return Ok(art);
@@ -2780,7 +2780,7 @@ namespace openrmf_read_api.Controllers
         #endregion
 
         private string CleanupData (string rawdata) {
-            return rawdata.Replace("\t","").Replace(">\n<","><");
+            return rawdata.Replace("\t","");
         }
     }
 }
