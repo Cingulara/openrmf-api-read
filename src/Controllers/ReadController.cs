@@ -1155,7 +1155,7 @@ namespace openrmf_read_api.Controllers
                     }
                     
                     // starting row number for data
-                    uint rowNumber = 8;
+                    uint rowNumber = 11;
 
                     // create the XLSX in memory and send it out
                     var memory = new MemoryStream();
@@ -1179,34 +1179,39 @@ namespace openrmf_read_api.Controllers
                         // generate the column listings we need with custom widths
                         DocumentFormat.OpenXml.Spreadsheet.Columns lstColumns = worksheetPart.Worksheet.GetFirstChild<DocumentFormat.OpenXml.Spreadsheet.Columns>();
                         if (lstColumns == null) {
-                            lstColumns = new DocumentFormat.OpenXml.Spreadsheet.Columns();
-                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 1, Max = 1, Width = 10, CustomWidth = true }); // col A
-                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 2, Max = 2, Width = 20, CustomWidth = true }); // col B
-                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 3, Max = 3, Width = 60, CustomWidth = true });
-                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 4, Max = 4, Width = 30, CustomWidth = true });
-                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 5, Max = 5, Width = 30, CustomWidth = true });
-                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 6, Max = 6, Width = 20, CustomWidth = true });
-                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 7, Max = 7, Width = 20, CustomWidth = true });
-                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 8, Max = 8, Width = 20, CustomWidth = true }); // col H
-                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 9, Max = 9, Width = 20, CustomWidth = true }); 
-                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 10, Max = 10, Width = 30, CustomWidth = true }); // col K
-                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 11, Max = 11, Width = 30, CustomWidth = true }); 
-                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 12, Max = 12, Width = 30, CustomWidth = true }); // col L
-                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 13, Max = 13, Width = 30, CustomWidth = true }); 
-                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 14, Max = 14, Width = 25, CustomWidth = true });  
-                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 15, Max = 17, Width = 40, CustomWidth = true }); // col O
-                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 18, Max = 19, Width = 25, CustomWidth = true }); // col R S 
-                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 20, Max = 20, Width = 40, CustomWidth = true }); 
-                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 21, Max = 22, Width = 25, CustomWidth = true }); // col U V
-                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 23, Max = 23, Width = 40, CustomWidth = true }); // col W
-                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 24, Max = 24, Width = 25, CustomWidth = true }); // col X 
-                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 25, Max = 25, Width = 40, CustomWidth = true }); // col Y
-                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 26, Max = 26, Width = 25, CustomWidth = true }); // col Z
+                            lstColumns = new DocumentFormat.OpenXml.Spreadsheet.Columns();                            
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 1, Max = 2, Width = 20, CustomWidth = true }); // col A B
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 3, Max = 3, Width = 15, CustomWidth = true }); 
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 4, Max = 5, Width = 10, CustomWidth = true }); // D E
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 6, Max = 6, Width = 20, CustomWidth = true }); // F
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 7, Max = 7, Width = 10, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 8, Max = 8, Width = 15, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 9, Max = 9, Width = 20, CustomWidth = true }); // col I
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 10, Max = 10, Width = 10, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 11, Max = 11, Width = 20, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 12, Max = 12, Width = 15, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 13, Max = 13, Width = 10, CustomWidth = true }); // col M
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 14, Max = 14, Width = 20, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 15, Max = 15, Width = 15, CustomWidth = true }); // col O
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 16, Max = 16, Width = 25, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 17, Max = 17, Width = 20, CustomWidth = true }); // col Q
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 18, Max = 18, Width = 30, CustomWidth = true }); // col R
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 19, Max = 19, Width = 20, CustomWidth = true }); // col S
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 20, Max = 20, Width = 40, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 21, Max = 21, Width = 20, CustomWidth = true }); // col U
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 22, Max = 22, Width = 25, CustomWidth = true });
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 23, Max = 26, Width = 15, CustomWidth = true }); // col W - Z
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 27, Max = 27, Width = 25, CustomWidth = true }); // col AA
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 28, Max = 28, Width = 20, CustomWidth = true }); 
+                            lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 29, Max = 29, Width = 25, CustomWidth = true }); // col AC
                             worksheetPart.Worksheet.InsertAt(lstColumns, 0);
                         }
 
                         // Add Sheets to the Workbook.
                         Sheets sheets = spreadSheet.WorkbookPart.Workbook.AppendChild<Sheets>(new Sheets());
+
+                        // a placeholder for merged cells later
+                        MergeCells mergeCells = new MergeCells();
 
                         // Append a new worksheet and associate it with the workbook.
                         Sheet sheet = new Sheet() { Id = spreadSheet.WorkbookPart.
@@ -1228,22 +1233,95 @@ namespace openrmf_read_api.Controllers
                                 strClaimName = claim.Subject.Claims.Where(x => x.Type.Contains("emailaddress")).FirstOrDefault().Value;
                         }
                         _logger.LogInformation("ExportSystemPOAM({0}) setting title XLSX information", systemGroupId);
-                        DocumentFormat.OpenXml.Spreadsheet.Row row = MakeTitleRow("OpenRMF by Cingulara and Tutela");
+                        // DocumentFormat.OpenXml.Spreadsheet.Row row = MakeTitleRow("OpenRMF by Cingulara and Tutela");
+                        // sheetData.Append(row);
+                        // row = MakePOAMInfoRow("Date Created:",DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss tt"),"System Type:","","OMB Project ID:","",2);
+                        // sheetData.Append(row);
+                        // row = MakePOAMInfoRow("Created By:",strClaimName,"","","","",3);
+                        // sheetData.Append(row);
+                        // row = MakePOAMInfoRow("DoD Component:","","POC Name:","","","",4);
+                        // sheetData.Append(row);
+                        // row = MakePOAMInfoRow("System Project Name:", sg.title, "POC Phone:", "", "Security Costs:","",5);
+                        // sheetData.Append(row);
+                        // row = MakePOAMInfoRow("DoD IT Registration Number:","","POC Email:","","","",6);
+                        // sheetData.Append(row);
+                        // row = MakePOAMHeaderRows(rowNumber, true);
+                        // sheetData.Append(row);
+                        DocumentFormat.OpenXml.Spreadsheet.Row row = MakeDataRow(1, "A", "CONTROLLED UNCLASSIFIED INFORMATION", 20);
                         sheetData.Append(row);
-                        row = MakePOAMInfoRow("Date Created:",DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss tt"),"System Type:","","OMB Project ID:","",2);
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("A1:AC1") });
+                        row = MakeDataRow(2, "A", "Plan of Action and Milestones (POA&M)", 20);
                         sheetData.Append(row);
-                        row = MakePOAMInfoRow("Created By:",strClaimName,"","","","",3);
-                        sheetData.Append(row);
-                        row = MakePOAMInfoRow("DoD Component:","","POC Name:","","","",4);
-                        sheetData.Append(row);
-                        row = MakePOAMInfoRow("System Project Name:", sg.title, "POC Phone:", "", "Security Costs:","",5);
-                        sheetData.Append(row);
-                        row = MakePOAMInfoRow("DoD IT Registration Number:","","POC Email:","","","",6);
-                        sheetData.Append(row);
-                        row = MakePOAMHeaderRows(rowNumber, true);
-                        sheetData.Append(row);
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("A2:AC2") });
 
-                        uint styleIndex = 0; // use this for 4, 5, 6, or 7 for status
+                        row = MakePOAMInfoRow("Date Initiated:", "","System Type:","","OMB Project ID:","",3);
+                        sheetData.Append(row);
+                        row = MakePOAMInfoRow("", "","","","","",4);
+                        sheetData.Append(row);
+                        row = MakePOAMInfoRow("Date Last Updated:", "","","","","",5);
+                        sheetData.Append(row);
+                        row = MakePOAMInfoRow("", "","","","","",6);
+                        sheetData.Append(row);
+                        row = MakePOAMInfoRow("", "","","","","",7);
+                        sheetData.Append(row);
+                        row = MakePOAMInfoRow("DoD Component:", "","POC Name:","","","",8);
+                        sheetData.Append(row);
+                        row = MakePOAMInfoRow("System/Project Name:", sg.title,"POC Phone:","","Security Costs:","",9);
+                        sheetData.Append(row);
+                        row = MakePOAMInfoRow("System Identification:", "","POC Email:","","","",10);
+                        sheetData.Append(row);
+                        
+                        // merge the data fields up top
+                        // first section
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("A3:A4") });
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("B3:D4") });
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("E3:G4") });
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("H3:J4") });
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("K3:L7") });
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("M3:N7") });
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("O3:AC7") });
+                        // second row sections
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("A5:A7") });
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("B5:D7") });
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("E5:G7") });
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("H5:J7") });
+                        // third row sections
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("B8:D8") });
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("E8:G8") });
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("H8:J8") });
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("K8:N8") });
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("O8:AC8") });
+
+                        // fourth row sections
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("B9:D9") });
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("E9:G9") });
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("H9:J9") });
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("K9:L9") });
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("M9:N9") });
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("O9:AC9") });
+
+                        // fifth row sections
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("B10:D10") });
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("E10:G10") });
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("H10:J10") });
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("K10:N10") });
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("O10:AC10") });
+
+                        row = MakeHeaderRows(new List<string>(){"Vulnerability Description", "", "Security Control Acronym",
+                            "AP Acronym", "", "Office / Org", "Security Checks", "", 
+                            "Resources Required", "Scheduled Completion Date", "", "", "", "Milestones with Completion Date", "", 
+                            "Milestone Changes", "Artifacts", "Source Identifying Vulnerability", 
+                            "Status", "Comments", "Raw Severity", "Mitigations","Severity","Relevance of Threat", "Likelihood",
+                            "Impact","Impact Description","Residual Risk Level","Recommendations" }, rowNumber, 17);
+                        sheetData.Append(row);
+                        // column header sections
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("A" + rowNumber + ":B" + rowNumber) });
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("D" + rowNumber + ":E" + rowNumber) });
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("G" + rowNumber + ":H" + rowNumber) });
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("J" + rowNumber + ":M" + rowNumber) });
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("N" + rowNumber + ":O" + rowNumber) });
+
+                        uint styleIndex = 18; // use this for 4, 5, 6, or 7 for status
                         
                         // get the list of hosts to use
                         _logger.LogInformation("ExportSystemPOAM({0}) getting Hosts from Nessus patch data file", systemGroupId);
@@ -1257,32 +1335,107 @@ namespace openrmf_read_api.Controllers
                             rowNumber++;
 
                             // make a new row for this set of items
-                            row = MakeDataRow(rowNumber, "A", "", styleIndex);
+                            row = MakeDataRow(rowNumber, "A", "Title:\n" + p.pluginName + "\n\nDescription:\n" + p.description, styleIndex);
+
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "B" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue("");
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = styleIndex;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "C" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
-                            newCell.CellValue = new CellValue("Title:\n" + p.pluginName + "\n\nDescription:\n" + p.description);
+                            newCell.CellValue = new CellValue("");
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                            newCell.StyleIndex = 0;
-
+                            newCell.StyleIndex = styleIndex;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "D" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue("");
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = styleIndex;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue("");
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = styleIndex;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "F" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue("");
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = styleIndex;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "G" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(p.pluginId);
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                            newCell.StyleIndex = 0;
+                            newCell.StyleIndex = styleIndex;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "H" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue("");
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = styleIndex;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "I" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue("");
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = styleIndex;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "J" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue("");
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = styleIndex;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "K" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue("");
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = styleIndex;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "L" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue("");
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = styleIndex;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "M" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue("");
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = styleIndex;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "N" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue("");
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = styleIndex;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "0" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue("");
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = styleIndex;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "P" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue("");
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = styleIndex;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "Q" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue("");
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = styleIndex;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "R" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             if (!string.IsNullOrEmpty(p.scanVersion))
                                 newCell.CellValue = new CellValue("Assured Compliance Assessment Solution (ACAS) Nessus Scanner :: " + p.scanVersion);
                             else 
                                 newCell.CellValue = new CellValue("Assured Compliance Assessment Solution (ACAS) Nessus Scanner :: (version)");
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                            newCell.StyleIndex = 0;
-                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "L" + rowNumber.ToString() };
+                            newCell.StyleIndex = styleIndex;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "S" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue("Ongoing");
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                            newCell.StyleIndex = 0;
-                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "N" + rowNumber.ToString() };
+                            newCell.StyleIndex = styleIndex;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "T" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue("");
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = styleIndex;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "U" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             if (p.severity == 4) severityName = "Critical";
                             else if (p.severity == 3) severityName = "High";
@@ -1292,14 +1445,56 @@ namespace openrmf_read_api.Controllers
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
                             // color code the information
                             newCell.StyleIndex = GetPatchScanStatus(p.severity);
-                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "O" + rowNumber.ToString() };
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "V" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
-                            newCell.CellValue = new CellValue("Devices affected: " + p.hostname);
+                            newCell.CellValue = new CellValue("");
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                            newCell.StyleIndex = 0;
+                            newCell.StyleIndex = styleIndex;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "W" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue("");
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = styleIndex;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "X" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue("");
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = styleIndex;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "Y" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue("");
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = styleIndex;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "Z" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue("");
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = styleIndex;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "AA" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue("");
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = styleIndex;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "AB" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue("");
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = styleIndex;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "AC" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue("");
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = styleIndex;
 
                             // add the row to the sheet now
                             sheetData.Append(row);
+                                
+                            // merge appropriate data cells    
+                            mergeCells.Append(new MergeCell() { Reference = new StringValue("A" + rowNumber + ":B" + rowNumber) });
+                            mergeCells.Append(new MergeCell() { Reference = new StringValue("D" + rowNumber + ":E" + rowNumber) });
+                            mergeCells.Append(new MergeCell() { Reference = new StringValue("G" + rowNumber + ":H" + rowNumber) });
+                            mergeCells.Append(new MergeCell() { Reference = new StringValue("J" + rowNumber + ":M" + rowNumber) });
+                            mergeCells.Append(new MergeCell() { Reference = new StringValue("N" + rowNumber + ":O" + rowNumber) });
                         }
 
                         // get the list of checklists
@@ -1381,71 +1576,169 @@ namespace openrmf_read_api.Controllers
                             vulnerabilities = vulnerabilities.OrderByDescending(c => c.severityCategory).ThenBy(d => d.vulnid).ToList();
 
                             // cycle through the listing and add each VULN ID for a row
-
                             foreach (VulnerabilityReport vuln in vulnerabilities) {
                                 _logger.LogInformation("ExportSystemPOAM({0}) adding Vulnerabilities for {1}", systemGroupId, vuln.vulnid);
                                 rowNumber++;
 
                                 // make a new row for this set of items
-                                row = MakeDataRow(rowNumber, "A", "", styleIndex);
+                                row = MakeDataRow(rowNumber, "A", vuln.ruleTitle, styleIndex);
 
-                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "C" + rowNumber.ToString() };
+                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "B" + rowNumber.ToString() };
                                 row.InsertBefore(newCell, refCell);
-                                newCell.CellValue = new CellValue(vuln.ruleTitle);
+                                newCell.CellValue = new CellValue("");
                                 newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                                newCell.StyleIndex = 0;
-
-                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "D" + rowNumber.ToString() };
+                                newCell.StyleIndex = styleIndex;
+                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "C" + rowNumber.ToString() };
                                 row.InsertBefore(newCell, refCell);
                                 newCell.CellValue = new CellValue(vuln.securityControlNumbers);
                                 newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                                newCell.StyleIndex = 0;
+                                newCell.StyleIndex = styleIndex;
+                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "D" + rowNumber.ToString() };
+                                row.InsertBefore(newCell, refCell);
+                                newCell.CellValue = new CellValue("");
+                                newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                                newCell.StyleIndex = styleIndex;
+                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowNumber.ToString() };
+                                row.InsertBefore(newCell, refCell);
+                                newCell.CellValue = new CellValue("");
+                                newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                                newCell.StyleIndex = styleIndex;
                                 newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "F" + rowNumber.ToString() };
+                                row.InsertBefore(newCell, refCell);
+                                newCell.CellValue = new CellValue("");
+                                newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                                newCell.StyleIndex = styleIndex;
+                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "G" + rowNumber.ToString() };
                                 row.InsertBefore(newCell, refCell);
                                 newCell.CellValue = new CellValue(vuln.vulnid);
                                 newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                                newCell.StyleIndex = 0;
-
+                                newCell.StyleIndex = styleIndex;
+                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "H" + rowNumber.ToString() };
+                                row.InsertBefore(newCell, refCell);
+                                newCell.CellValue = new CellValue("");
+                                newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                                newCell.StyleIndex = styleIndex;
+                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "I" + rowNumber.ToString() };
+                                row.InsertBefore(newCell, refCell);
+                                newCell.CellValue = new CellValue("");
+                                newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                                newCell.StyleIndex = styleIndex;
+                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "J" + rowNumber.ToString() };
+                                row.InsertBefore(newCell, refCell);
+                                newCell.CellValue = new CellValue("");
+                                newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                                newCell.StyleIndex = styleIndex;
                                 newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "K" + rowNumber.ToString() };
+                                row.InsertBefore(newCell, refCell);
+                                newCell.CellValue = new CellValue("");
+                                newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                                newCell.StyleIndex = styleIndex;
+                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "L" + rowNumber.ToString() };
+                                row.InsertBefore(newCell, refCell);
+                                newCell.CellValue = new CellValue("");
+                                newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                                newCell.StyleIndex = styleIndex;
+                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "M" + rowNumber.ToString() };
+                                row.InsertBefore(newCell, refCell);
+                                newCell.CellValue = new CellValue("");
+                                newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                                newCell.StyleIndex = styleIndex;
+                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "N" + rowNumber.ToString() };
+                                row.InsertBefore(newCell, refCell);
+                                newCell.CellValue = new CellValue("");
+                                newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                                newCell.StyleIndex = styleIndex;
+                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "0" + rowNumber.ToString() };
+                                row.InsertBefore(newCell, refCell);
+                                newCell.CellValue = new CellValue("");
+                                newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                                newCell.StyleIndex = styleIndex;
+                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "P" + rowNumber.ToString() };
+                                row.InsertBefore(newCell, refCell);
+                                newCell.CellValue = new CellValue("");
+                                newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                                newCell.StyleIndex = styleIndex;
+                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "Q" + rowNumber.ToString() };
+                                row.InsertBefore(newCell, refCell);
+                                newCell.CellValue = new CellValue("");
+                                newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                                newCell.StyleIndex = styleIndex;
+                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "R" + rowNumber.ToString() };
                                 row.InsertBefore(newCell, refCell);
                                 newCell.CellValue = new CellValue(vuln.checklistType + " V" + vuln.checklistVersion + " " + vuln.checklistRelease);
                                 newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                                newCell.StyleIndex = 0;
-                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "L" + rowNumber.ToString() };
+                                newCell.StyleIndex = styleIndex;
+                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "S" + rowNumber.ToString() };
                                 row.InsertBefore(newCell, refCell);
                                 newCell.CellValue = new CellValue("Ongoing");
                                 newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                                newCell.StyleIndex = 0;
-                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "M" + rowNumber.ToString() };
+                                newCell.StyleIndex = styleIndex;
+                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "T" + rowNumber.ToString() };
                                 row.InsertBefore(newCell, refCell);
                                 newCell.CellValue = new CellValue(vuln.comments);
                                 newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                                newCell.StyleIndex = 0;
-
-                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "N" + rowNumber.ToString() };
+                                newCell.StyleIndex = styleIndex;
+                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "U" + rowNumber.ToString() };
                                 row.InsertBefore(newCell, refCell);
                                 newCell.CellValue = new CellValue(vuln.severity);
                                 newCell.DataType = new EnumValue<CellValues>(CellValues.String);
                                 newCell.StyleIndex = GetVulnerabilityStatus(vuln.status, vuln.severity);
-
-                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "O" + rowNumber.ToString() };
-                                row.InsertBefore(newCell, refCell);
-                                newCell.CellValue = new CellValue("Devices affected: " + vuln.hostname + "\n\n" + vuln.comments);
-                                newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                                newCell.StyleIndex = 0;
-
-                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "P" + rowNumber.ToString() };
+                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "V" + rowNumber.ToString() };
                                 row.InsertBefore(newCell, refCell);
                                 newCell.CellValue = new CellValue(!string.IsNullOrEmpty(vuln.severityJustification)? vuln.severityJustification : "");
                                 newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                                newCell.StyleIndex = 0;
+                                newCell.StyleIndex = styleIndex;
+                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "W" + rowNumber.ToString() };
+                                row.InsertBefore(newCell, refCell);
+                                newCell.CellValue = new CellValue("");
+                                newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                                newCell.StyleIndex = styleIndex;
+                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "X" + rowNumber.ToString() };
+                                row.InsertBefore(newCell, refCell);
+                                newCell.CellValue = new CellValue("");
+                                newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                                newCell.StyleIndex = styleIndex;
+                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "Y" + rowNumber.ToString() };
+                                row.InsertBefore(newCell, refCell);
+                                newCell.CellValue = new CellValue("");
+                                newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                                newCell.StyleIndex = styleIndex;
+                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "Z" + rowNumber.ToString() };
+                                row.InsertBefore(newCell, refCell);
+                                newCell.CellValue = new CellValue("");
+                                newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                                newCell.StyleIndex = styleIndex;
+                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "AA" + rowNumber.ToString() };
+                                row.InsertBefore(newCell, refCell);
+                                newCell.CellValue = new CellValue("");
+                                newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                                newCell.StyleIndex = styleIndex;
+                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "AB" + rowNumber.ToString() };
+                                row.InsertBefore(newCell, refCell);
+                                newCell.CellValue = new CellValue("");
+                                newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                                newCell.StyleIndex = styleIndex;
+                                newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "AC" + rowNumber.ToString() };
+                                row.InsertBefore(newCell, refCell);
+                                newCell.CellValue = new CellValue("");
+                                newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                                newCell.StyleIndex = styleIndex;
 
                                 // add the row to the sheet now
                                 sheetData.Append(row);
+
+                                // merge appropriate data cells    
+                                mergeCells.Append(new MergeCell() { Reference = new StringValue("A" + rowNumber + ":B" + rowNumber) });
+                                mergeCells.Append(new MergeCell() { Reference = new StringValue("D" + rowNumber + ":E" + rowNumber) });
+                                mergeCells.Append(new MergeCell() { Reference = new StringValue("G" + rowNumber + ":H" + rowNumber) });
+                                mergeCells.Append(new MergeCell() { Reference = new StringValue("J" + rowNumber + ":M" + rowNumber) });
+                                mergeCells.Append(new MergeCell() { Reference = new StringValue("N" + rowNumber + ":O" + rowNumber) });
                             }                        
 
                         }
 
+                        // save the merged cells
+                        worksheetPart.Worksheet.InsertAfter(mergeCells, worksheetPart.Worksheet.Elements<SheetData>().First());
                         // Save the new worksheet.
                         workbookpart.Workbook.Save();
                         // Close the document.
@@ -2142,6 +2435,9 @@ namespace openrmf_read_api.Controllers
         #endregion
 
         #region XLSX Formatting
+        private static string[] headerColumns = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S",
+            "T", "U", "V", "W", "X", "Y", "Z","AA", "AB", "AC", "AD", "AE", "AF", "AG", "AH", "AI", "AJ", "AK", "AL", "AM", "AN", "AO", "AP", "AQ", 
+            "AR", "AS", "AT", "AU", "AV", "AW", "AX", "AY", "AZ"};
         private DocumentFormat.OpenXml.Spreadsheet.Row MakeTitleRow(string title) {
             DocumentFormat.OpenXml.Spreadsheet.Row row = new DocumentFormat.OpenXml.Spreadsheet.Row() { RowIndex = 1 };
             DocumentFormat.OpenXml.Spreadsheet.Cell refCell = null;
@@ -2456,10 +2752,34 @@ namespace openrmf_read_api.Controllers
             }
             return row;
         }
+
+        public static DocumentFormat.OpenXml.Spreadsheet.Row MakeHeaderRows(List<string> headers, uint rowindex, uint styleIndex = 3) {
+            DocumentFormat.OpenXml.Spreadsheet.Cell refCell = null;
+            DocumentFormat.OpenXml.Spreadsheet.Row row = new DocumentFormat.OpenXml.Spreadsheet.Row() { RowIndex = rowindex };
+
+            if (headers.Count > 0) {
+                DocumentFormat.OpenXml.Spreadsheet.Cell newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "A" + rowindex.ToString() };
+                row.InsertBefore(newCell, refCell);
+                newCell.CellValue = new CellValue(headers[0]);
+                newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                newCell.StyleIndex = styleIndex;
+                // cycle through all other columns
+                for (int i = 1; i < headers.Count; i++)
+                {
+                    newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = headerColumns[i] + rowindex.ToString() };
+                    row.InsertBefore(newCell, refCell);
+                    newCell.CellValue = new CellValue(headers[i]);
+                    newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                    newCell.StyleIndex = styleIndex;
+                }
+            }
+            
+            return row;
+        }
         private DocumentFormat.OpenXml.Spreadsheet.Row MakePOAMInfoRow(string colAlabel, string colBvalue, string colIlabel, string colJvalue, string colLlabel, string colMvalue, uint rowindex) {
             DocumentFormat.OpenXml.Spreadsheet.Row row = new DocumentFormat.OpenXml.Spreadsheet.Row() { RowIndex = rowindex };
             DocumentFormat.OpenXml.Spreadsheet.Cell refCell = null;
-            DocumentFormat.OpenXml.Spreadsheet.Cell newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "B" + rowindex.ToString()};
+            DocumentFormat.OpenXml.Spreadsheet.Cell newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "A" + rowindex.ToString()};
             uint styleIndex = 16; // background color grey
 
             row.InsertBefore(newCell, refCell);
@@ -2467,37 +2787,77 @@ namespace openrmf_read_api.Controllers
             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
             newCell.StyleIndex = styleIndex;
             // next column
-            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "C" + rowindex.ToString() };
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "B" + rowindex.ToString() };
             row.InsertBefore(newCell, refCell);
             newCell.CellValue = new CellValue(colBvalue);
             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-            newCell.StyleIndex = 0;
+            newCell.StyleIndex = 18;
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "C" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = 18;
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "D" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = 18;
 
             // next column
-            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "I" + rowindex.ToString() };
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowindex.ToString() };
             row.InsertBefore(newCell, refCell);
             newCell.CellValue = new CellValue(colIlabel);
             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
             newCell.StyleIndex = styleIndex;
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "F" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "G" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
             // next column
-            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "J" + rowindex.ToString() };
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "H" + rowindex.ToString() };
             row.InsertBefore(newCell, refCell);
             newCell.CellValue = new CellValue(colJvalue);
             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-            newCell.StyleIndex = 0;
+            newCell.StyleIndex = 18;
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "I" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = 18;
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "J" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = 18;
 
             // next column
-            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "L" + rowindex.ToString() };
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "K" + rowindex.ToString() };
             row.InsertBefore(newCell, refCell);
             newCell.CellValue = new CellValue(colLlabel);
             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
             newCell.StyleIndex = styleIndex;
-            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "L" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = styleIndex;
             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "M" + rowindex.ToString() };
+            row.InsertBefore(newCell, refCell);
+            newCell.CellValue = new CellValue("");
+            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+            newCell.StyleIndex = 18;
+            // next column
+            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "N" + rowindex.ToString() };
             row.InsertBefore(newCell, refCell);
             newCell.CellValue = new CellValue(colMvalue);
             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-            newCell.StyleIndex = 0;
+            newCell.StyleIndex = 18;
 
             return row;
         }
