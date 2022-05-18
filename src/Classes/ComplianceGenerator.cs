@@ -42,7 +42,6 @@ namespace openrmf_read_api.Classes
 
           // get all the variables ready
           List<STIG_DATA> sd;
-          //Artifact art;
           ComplianceRecord rec;
           List<ControlSet> controlSet;
           ControlSet controlRecord;
@@ -55,8 +54,9 @@ namespace openrmf_read_api.Classes
           if (checklists != null && checklists.Count > 0) {
             controlSet = NATSClient.GetControlRecords(filter, pii);
             foreach (Artifact art in checklists) {
-              //art = NATSClient.GetChecklist(a.InternalId.ToString());
               if (art != null) {
+                // load the XML class structure
+                art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist);
                 host = !string.IsNullOrEmpty(art.CHECKLIST.ASSET.HOST_NAME)? art.CHECKLIST.ASSET.HOST_NAME : "";
                 foreach (VULN v in art.CHECKLIST.STIGS.iSTIG.VULN){
                   // grab each CCI and then match to one or more NIST Control records
@@ -92,10 +92,6 @@ namespace openrmf_read_api.Classes
                             }
                           }
                         }
-                        // moved this above where there is a real title, otherwise this is a ghost control not used anymore 
-                        // also means it is not linked to Low / Moderate / High which is a required param calling this code
-                        //compliance.sortString = GenerateControlIndexSort(ctrl.index);
-                        //complianceList.Add(compliance); // add it to the listing
                       }
                       // For the compliance record, does it have a listing for the checklist/artifactId
                       if (compliance.complianceRecords.Where(c => c.artifactId == art.InternalId.ToString()).Count() > 0) { // if a new record, will be 0
@@ -124,7 +120,6 @@ namespace openrmf_read_api.Classes
               compliance = new NISTCompliance();
               compliance.control = index; // add the control family
               compliance.title = "Unknown";
-              //controlRecord = controlSet.Where(x => x.number == index.Replace(" ", "") || x.subControlNumber == index.Replace(" ", "")).FirstOrDefault();
               controlRecord = controlSet.Where(x => x.number == index.Replace(" ", "")).FirstOrDefault();
               if (controlRecord != null) {
                 compliance.title = controlRecord.title;
@@ -147,9 +142,6 @@ namespace openrmf_read_api.Classes
                   Console.WriteLine(string.Format("control not found: {0}", index));
                 }
               }
-              // moved this to above where we find a title, otherwise these are orphaned are not listed
-              //compliance.sortString = GenerateControlIndexSort(index);
-              //complianceList.Add(compliance); // add it to the listing
             }
             // order by the index, which also groups them by the major control
             return complianceList.OrderBy(x => x.sortString).ToList();

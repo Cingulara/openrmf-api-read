@@ -28,8 +28,8 @@ namespace openrmf_read_api.Controllers
 
         public ComplianceController(IArtifactRepository artifactRepo, ISystemGroupRepository systemGroupRepo, ILogger<ComplianceController> logger)
         {
-            _logger = logger;
             _artifactRepo = artifactRepo;
+            _systemGroupRepo = systemGroupRepo;
             _logger = logger;
         }
 
@@ -79,7 +79,6 @@ namespace openrmf_read_api.Controllers
             }
         }
         
-        
         /// <summary>
         /// GET The compliance of a system based on the system ID passed in, if it has PII, 
         /// and whatever filter we have such as the impact level. Export as XLSX.
@@ -117,7 +116,7 @@ namespace openrmf_read_api.Controllers
                         _logger.LogInformation("Called GetCompliancBySystemExport({0}, {1}, {2}) successfully. Putting into XLSX.", id, filter, pii.ToString());
 
                         // starting row
-                        uint rowNumber = 7;
+                        uint rowNumber = 4;
                         // create the XLSX in memory and send it out
                         var memory = new MemoryStream();
                         using (SpreadsheetDocument spreadSheet = SpreadsheetDocument.Create(memory, SpreadsheetDocumentType.Workbook))
@@ -160,13 +159,18 @@ namespace openrmf_read_api.Controllers
 
                             DocumentFormat.OpenXml.Spreadsheet.Row row = MakeTitleRow("OpenRMF by Cingulara and Tutela");
                             sheetData.Append(row);
-                            row = MakeXLSXInfoRow("System Name", sg.title,2);
+                            row = MakeXLSXInfoRow("System Package", sg.title,2);
                             sheetData.Append(row);
-                            row = MakeXLSXInfoRow("Generated", DateTime.Now.ToString("MM/dd/yy hh:mm tt"),7);
+                            row = MakeXLSXInfoRow("Generated", DateTime.Now.ToString("MM/dd/yy hh:mm tt"),3);
                             sheetData.Append(row);
                             row = MakeComplianceHeaderRows(rowNumber);
                             sheetData.Append(row);
 
+                            MergeCells mergeCells = new MergeCells();
+                            mergeCells.Append(new MergeCell() { Reference = new StringValue("A1:F1") });
+                            mergeCells.Append(new MergeCell() { Reference = new StringValue("A2:F2") });
+                            mergeCells.Append(new MergeCell() { Reference = new StringValue("A3:F3") });
+                            
                             uint styleIndex = 0; // use this for 4, 5, 6, or 7 for status
 
                             _logger.LogInformation("GetCompliancBySystemExport() cycling through all the vulnerabilities");
@@ -217,6 +221,8 @@ namespace openrmf_read_api.Controllers
                                 }
                             }
 
+                            // save the merged cells
+                            worksheetPart.Worksheet.InsertAfter(mergeCells, worksheetPart.Worksheet.Elements<SheetData>().First());
                             // Save the new worksheet.
                             workbookpart.Workbook.Save();
                             // Close the document.
@@ -330,7 +336,7 @@ namespace openrmf_read_api.Controllers
                 cellValue += "N/A";
             newCell.CellValue = new CellValue(cellValue);
             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-            newCell.StyleIndex = 3;
+            newCell.StyleIndex = 19;
             return row;
         }
         private DocumentFormat.OpenXml.Spreadsheet.Row MakeComplianceHeaderRows(uint rowindex) {
