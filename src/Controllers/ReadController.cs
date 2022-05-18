@@ -21,7 +21,7 @@ using openrmf_read_api.Data;
 
 namespace openrmf_read_api.Controllers
 {
-    [Route("/")]
+    [Route("/artifact")]
     public class ReadController : Controller
     {
 	    private readonly IArtifactRepository _artifactRepo;
