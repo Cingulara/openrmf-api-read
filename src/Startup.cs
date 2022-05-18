@@ -134,6 +134,9 @@ namespace openrmf_read_api
                     });
             });
             
+            // add service for allowing caching of responses
+            services.AddResponseCaching();
+
             services.AddControllers();
         }
 
@@ -173,6 +176,8 @@ namespace openrmf_read_api
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "OpenRMF Read API V1");
             });
 
+            // allow response caching directives in the API Controllers
+            app.UseResponseCaching();
             app.UseHttpsRedirection();
             app.UseRouting();
             app.UseCors(MyAllowSpecificOrigins);
