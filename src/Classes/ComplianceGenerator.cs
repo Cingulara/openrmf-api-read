@@ -138,9 +138,9 @@ namespace openrmf_read_api.Classes
                       complianceList.Add(compliance); // add it to the listing
                   }
                 }
-                else {
-                  Console.WriteLine(string.Format("control not found: {0}", index));
-                }
+                //else {
+                  //Console.WriteLine(string.Format("control not required: {0}", index));
+                //}
               }
             }
             // order by the index, which also groups them by the major control

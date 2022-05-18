@@ -208,13 +208,23 @@ namespace openrmf_read_api.Controllers
                                     }
                                 } else {
                                     rowNumber++;
-                                    styleIndex = 0;
+                                    styleIndex = 18;
                                     // make a new row for this set of items
                                     row = MakeDataRow(rowNumber, "A", nist.control, styleIndex);
                                     // now cycle through the rest of the items
                                     newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "B" + rowNumber.ToString() };
                                     row.InsertBefore(newCell, refCell);
                                     newCell.CellValue = new CellValue(nist.title);
+                                    newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                                    newCell.StyleIndex = styleIndex;
+                                    newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "C" + rowNumber.ToString() };
+                                    row.InsertBefore(newCell, refCell);
+                                    newCell.CellValue = new CellValue("");
+                                    newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                                    newCell.StyleIndex = styleIndex;
+                                    newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "D" + rowNumber.ToString() };
+                                    row.InsertBefore(newCell, refCell);
+                                    newCell.CellValue = new CellValue("");
                                     newCell.DataType = new EnumValue<CellValues>(CellValues.String);
                                     newCell.StyleIndex = styleIndex;
                                     sheetData.Append(row);
