@@ -116,7 +116,7 @@ namespace openrmf_read_api.Controllers
                         _logger.LogInformation("Called GetCompliancBySystemExport({0}, {1}, {2}) successfully. Putting into XLSX.", id, filter, pii.ToString());
 
                         // starting row
-                        uint rowNumber = 4;
+                        uint rowNumber = 5;
                         // create the XLSX in memory and send it out
                         var memory = new MemoryStream();
                         using (SpreadsheetDocument spreadSheet = SpreadsheetDocument.Create(memory, SpreadsheetDocumentType.Workbook))
@@ -167,9 +167,9 @@ namespace openrmf_read_api.Controllers
                             sheetData.Append(row);
 
                             MergeCells mergeCells = new MergeCells();
-                            mergeCells.Append(new MergeCell() { Reference = new StringValue("A1:F1") });
-                            mergeCells.Append(new MergeCell() { Reference = new StringValue("A2:F2") });
-                            mergeCells.Append(new MergeCell() { Reference = new StringValue("A3:F3") });
+                            mergeCells.Append(new MergeCell() { Reference = new StringValue("A1:D1") });
+                            mergeCells.Append(new MergeCell() { Reference = new StringValue("A2:D2") });
+                            mergeCells.Append(new MergeCell() { Reference = new StringValue("A3:D3") });
                             
                             uint styleIndex = 0; // use this for 4, 5, 6, or 7 for status
 
