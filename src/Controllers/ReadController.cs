@@ -128,7 +128,7 @@ namespace openrmf_read_api.Controllers
                 // now use the listing
                 if (artifacts != null && artifacts.Count() > 0) {
                     // starting row number for data
-                    uint rowNumber = 6;
+                    uint rowNumber = 5;
 
                     // create the XLSX in memory and send it out
                     var memory = new MemoryStream();
@@ -185,7 +185,13 @@ namespace openrmf_read_api.Controllers
                         row = MakeChecklistListingHeaderRows(rowNumber);
                         sheetData.Append(row);
 
-                        uint styleIndex = 0; // use this for 4, 5, 6, or 7 for status
+                        MergeCells mergeCells = new MergeCells();
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("A1:F1") });
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("A2:F2") });
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("A3:F3") });
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("A4:F4") });
+                        
+                        uint styleIndex = 18; // use this for 4, 5, 6, or 7 for status
                         Score checklistScore;
 
                         // cycle through the checklists and grab the score for each individually
@@ -208,7 +214,7 @@ namespace openrmf_read_api.Controllers
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(art.title);
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                            newCell.StyleIndex = 0;
+                            newCell.StyleIndex = styleIndex;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "C" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(checklistScore.totalOpen.ToString());
@@ -238,7 +244,7 @@ namespace openrmf_read_api.Controllers
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue("CAT 1");
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                            newCell.StyleIndex = 0;
+                            newCell.StyleIndex = styleIndex;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "C" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(checklistScore.totalCat1Open.ToString());
@@ -267,7 +273,7 @@ namespace openrmf_read_api.Controllers
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue("CAT 2");
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                            newCell.StyleIndex = 0;
+                            newCell.StyleIndex = styleIndex;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "C" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(checklistScore.totalCat2Open.ToString());
@@ -296,7 +302,7 @@ namespace openrmf_read_api.Controllers
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue("CAT 3");
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                            newCell.StyleIndex = 0;
+                            newCell.StyleIndex = styleIndex;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "C" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(checklistScore.totalCat3Open.ToString());
@@ -319,6 +325,9 @@ namespace openrmf_read_api.Controllers
                             newCell.StyleIndex = 11;
                             sheetData.Append(row);
                         }
+
+                        // save the merged cells
+                        worksheetPart.Worksheet.InsertAfter(mergeCells, worksheetPart.Worksheet.Elements<SheetData>().First());
 
                         // Save the new worksheet.
                         workbookpart.Workbook.Save();
@@ -657,7 +666,7 @@ namespace openrmf_read_api.Controllers
                     // generate the XLSX file from this
                     
                     // starting row number for data
-                    uint rowNumber = 7;
+                    uint rowNumber = 6;
 
                     // create the XLSX in memory and send it out
                     var memory = new MemoryStream();
@@ -714,7 +723,14 @@ namespace openrmf_read_api.Controllers
                         row = MakeNessusSummaryHeaderRows(rowNumber, summaryOnly);
                         sheetData.Append(row);
 
-                        uint styleIndex = 0; // use this for 4, 5, 6, or 7 for status
+                        MergeCells mergeCells = new MergeCells();
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("A1:F1") });
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("A2:F2") });
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("A3:F3") });
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("A4:F4") });
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("A5:F5") });
+                        
+                        uint styleIndex = 18; // use this for 4, 5, 6, or 7 for status
 
                         // cycle through the vulnerabilities to export into columns
                         _logger.LogInformation("ExportNessusPatchSummary() grouping the patch information by host");
@@ -790,6 +806,9 @@ namespace openrmf_read_api.Controllers
                             sheetData.Append(row);
                         }
 
+                        // save the merged cells
+                        worksheetPart.Worksheet.InsertAfter(mergeCells, worksheetPart.Worksheet.Elements<SheetData>().First());
+                        
                         // Save the new worksheet.
                         workbookpart.Workbook.Save();
                         // Close the document.
@@ -845,10 +864,9 @@ namespace openrmf_read_api.Controllers
                         _logger.LogInformation("ExportSystemTestPlan({0}) Nessus patch data file loaded", systemGroupId);
                     }
                     
-                    // generate the XLSX file from this
-                    
+                    // generate the XLSX file from this                    
                     // starting row number for data
-                    uint rowNumber = 7;
+                    uint rowNumber = 5;
 
                     // create the XLSX in memory and send it out
                     var memory = new MemoryStream();
@@ -909,7 +927,13 @@ namespace openrmf_read_api.Controllers
                         row = MakeTestPlanHeaderRows(rowNumber, true);
                         sheetData.Append(row);
 
-                        uint styleIndex = 0; // use this for 4, 5, 6, or 7 for status
+                        MergeCells mergeCells = new MergeCells();
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("A1:E1") });
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("A2:E2") });
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("A3:E3") });
+                        mergeCells.Append(new MergeCell() { Reference = new StringValue("A4:E4") });
+
+                        uint styleIndex = 18; // use this for 4, 5, 6, or 7 for status
                         Score checklistScore;
 
                         //     styleIndex = GetPatchScanStatus(summary.severity);
@@ -934,17 +958,22 @@ namespace openrmf_read_api.Controllers
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(patchData.summary.Where(x => x.hostname == host).Select(y => y.ipAddress).FirstOrDefault());
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                            newCell.StyleIndex = 0;
+                            newCell.StyleIndex = styleIndex;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "C" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue("");
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = styleIndex;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "D" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(patchData.summary.Where(x => x.hostname == host).Select(y => y.operatingSystem).FirstOrDefault());
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                            newCell.StyleIndex = 0;
+                            newCell.StyleIndex = styleIndex;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(!string.IsNullOrEmpty(sg.nessusFilename)? sg.nessusFilename : "Latest Scan file");
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                            newCell.StyleIndex = 0;
+                            newCell.StyleIndex = styleIndex;
                             // now cycle through the rest of the items
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "F" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
@@ -986,7 +1015,7 @@ namespace openrmf_read_api.Controllers
                             else
                                 newCell.CellValue = new CellValue("No");
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                            newCell.StyleIndex = 0;
+                            newCell.StyleIndex = styleIndex;
                             sheetData.Append(row);
                         }
 
@@ -1022,12 +1051,22 @@ namespace openrmf_read_api.Controllers
                                 ipAddress = "";
                             newCell.CellValue = new CellValue(ipAddress);
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                            newCell.StyleIndex = 0;
+                            newCell.StyleIndex = styleIndex;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "C" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue("");
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = styleIndex;
+                            newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "D" + rowNumber.ToString() };
+                            row.InsertBefore(newCell, refCell);
+                            newCell.CellValue = new CellValue("");
+                            newCell.DataType = new EnumValue<CellValues>(CellValues.String);
+                            newCell.StyleIndex = styleIndex;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "E" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(art.title+ ".ckl");
                             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-                            newCell.StyleIndex = 0;
+                            newCell.StyleIndex = styleIndex;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "F" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(checklistScore.totalCat1Open.ToString());
@@ -1047,14 +1086,17 @@ namespace openrmf_read_api.Controllers
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue("0");
                             newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
-                            newCell.StyleIndex = 0;
+                            newCell.StyleIndex = styleIndex;
                             newCell = new DocumentFormat.OpenXml.Spreadsheet.Cell() { CellReference = "J" + rowNumber.ToString() };
                             row.InsertBefore(newCell, refCell);
                             newCell.CellValue = new CellValue(checklistScore.totalOpen.ToString());
                             newCell.DataType = new EnumValue<CellValues>(CellValues.Number);
-                            newCell.StyleIndex = 0;
+                            newCell.StyleIndex = styleIndex;
                             sheetData.Append(row);
                         }
+
+                        // save the merged cells
+                        worksheetPart.Worksheet.InsertAfter(mergeCells, worksheetPart.Worksheet.Elements<SheetData>().First());
 
                         // Save the new worksheet.
                         workbookpart.Workbook.Save();
@@ -1718,7 +1760,7 @@ namespace openrmf_read_api.Controllers
                         art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist);
                         _logger.LogInformation("ExportChecklist({0}....) checklist formatted");
                         // starting row number for data
-                        uint rowNumber = 10;
+                        uint rowNumber = 9;
 
                         // create the XLSX in memory and send it out
                         var memory = new MemoryStream();
@@ -1746,7 +1788,7 @@ namespace openrmf_read_api.Controllers
                                 lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 3, Max = 3, Width = 20, CustomWidth = true });
                                 lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 4, Max = 4, Width = 20, CustomWidth = true });
                                 lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 5, Max = 5, Width = 20, CustomWidth = true });
-                                lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 6, Max = 6, Width = 100, CustomWidth = true });
+                                lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 6, Max = 6, Width = 60, CustomWidth = true });
                                 lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 7, Max = 7, Width = 100, CustomWidth = true }); // col G Discussion
                                 lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 8, Max = 8, Width = 20, CustomWidth = true });
                                 lstColumns.Append(new DocumentFormat.OpenXml.Spreadsheet.Column() { Min = 9, Max = 9, Width = 100, CustomWidth = true });
@@ -1800,6 +1842,16 @@ namespace openrmf_read_api.Controllers
                             sheetData.Append(row);
                             row = MakeChecklistHeaderRows(rowNumber);
                             sheetData.Append(row);
+
+                            MergeCells mergeCells = new MergeCells();
+                            mergeCells.Append(new MergeCell() { Reference = new StringValue("A1:F1") });
+                            mergeCells.Append(new MergeCell() { Reference = new StringValue("A2:F2") });
+                            mergeCells.Append(new MergeCell() { Reference = new StringValue("A3:F3") });
+                            mergeCells.Append(new MergeCell() { Reference = new StringValue("A4:F4") });
+                            mergeCells.Append(new MergeCell() { Reference = new StringValue("A5:F5") });
+                            mergeCells.Append(new MergeCell() { Reference = new StringValue("A6:F6") });
+                            mergeCells.Append(new MergeCell() { Reference = new StringValue("A7:F7") });
+                            mergeCells.Append(new MergeCell() { Reference = new StringValue("A8:F8") });
 
                             uint styleIndex = 0; // use this for 4, 5, 6, or 7 for status
                             // if this is from a compliance generated listing link to a checklist, go grab all the CCIs for that control
@@ -1977,6 +2029,9 @@ namespace openrmf_read_api.Controllers
                                 }
                             }
 
+                            // save the merged cells
+                            worksheetPart.Worksheet.InsertAfter(mergeCells, worksheetPart.Worksheet.Elements<SheetData>().First());
+
                             // Save the new worksheet.
                             workbookpart.Workbook.Save();
                             // Close the document.
@@ -2109,7 +2164,7 @@ namespace openrmf_read_api.Controllers
                 cellValue += "N/A";
             newCell.CellValue = new CellValue(cellValue);
             newCell.DataType = new EnumValue<CellValues>(CellValues.String);
-            newCell.StyleIndex = 3;
+            newCell.StyleIndex = 19;
             return row;
         }
         private DocumentFormat.OpenXml.Spreadsheet.Row MakeChecklistHeaderRows(uint rowindex) {
