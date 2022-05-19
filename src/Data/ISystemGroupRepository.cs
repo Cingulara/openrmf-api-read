@@ -6,7 +6,8 @@ using System.Collections.Generic;
 using System;
 using System.Threading.Tasks;
 
-namespace openrmf_read_api.Data {
+namespace openrmf_read_api.Data
+{
     public interface ISystemGroupRepository
     {
         Task<IEnumerable<SystemGroup>> GetAllSystemGroups();
@@ -20,6 +21,7 @@ namespace openrmf_read_api.Data {
 
         // update just a single system document
         Task<bool> UpdateSystemGroup(string id, SystemGroup body);
+        Task<bool> DeleteSystemGroup(string id);
 
         bool HealthStatus();
 

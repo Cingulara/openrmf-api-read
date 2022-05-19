@@ -55,6 +55,38 @@ namespace openrmf_read_api.Data
             return await query.ToListAsync();
         }
 
+        // query after Id or InternalId (BSonId value) by checking artifactId and systemGroupId
+        public async Task<Artifact> GetArtifactBySystem(string systemGroupId, string artifactId)
+        {
+            try
+            {
+                ObjectId internalId = GetInternalId(artifactId);
+                return await _context.Artifacts
+                    .Find(artifact => artifact.InternalId == internalId && artifact.systemGroupId == systemGroupId).FirstOrDefaultAsync();
+            }
+            catch (Exception ex)
+            {
+                // log or manage the exception
+                throw ex;
+            }
+        }
+        
+        // query on the artifact stigType and version
+        public async Task<IEnumerable<Artifact>> GetArtifactsByStigType(string systemGroupId, string stigType)
+        {
+            try
+            {
+                var query = _context.Artifacts.Find(artifact => artifact.stigType == stigType && 
+                            artifact.systemGroupId == systemGroupId);
+                return await query.ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                // log or manage the exception
+                throw ex;
+            }
+        }
+
         public async Task<long> CountChecklists()
         {
             long result = await _context.Artifacts.CountDocumentsAsync(Builders<Artifact>.Filter.Empty);
@@ -117,6 +149,30 @@ namespace openrmf_read_api.Data
             body.InternalId = GetInternalId(id);
             var actionResult = await _context.Artifacts.ReplaceOneAsync(filter, body);
             return actionResult.IsAcknowledged && actionResult.ModifiedCount > 0;
+        }
+
+        public async Task<bool> DeleteArtifact(string id)
+        {
+            var filter = Builders<Artifact>.Filter.Eq(s => s.InternalId, GetInternalId(id));
+            try
+            {
+                Artifact art = new Artifact();
+                art.InternalId = GetInternalId(id);
+                // only save the data outside of the checklist, update the date
+                var currentRecord = await _context.Artifacts.Find(artifact => artifact.InternalId == art.InternalId).FirstOrDefaultAsync();
+                if (currentRecord != null){
+                    DeleteResult actionResult = await _context.Artifacts.DeleteOneAsync(Builders<Artifact>.Filter.Eq("_id", art.InternalId));
+                    return actionResult.IsAcknowledged && actionResult.DeletedCount > 0;
+                } 
+                else {
+                    throw new KeyNotFoundException();
+                }
+            }
+            catch (Exception ex)
+            {
+                // log or manage the exception
+                throw ex;
+            }
         }
 
         #region Systems

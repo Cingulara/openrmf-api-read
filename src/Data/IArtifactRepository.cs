@@ -16,6 +16,11 @@ namespace openrmf_read_api.Data
         // query after multiple parameters
         Task<IEnumerable<Artifact>> GetArtifact(string bodyText, DateTime updatedFrom, long headerSizeLimit);
 
+        Task<Artifact> GetArtifactBySystem(string systemGroupId, string artifactId);
+        
+        // get all artifacts by checklist STIG type and version
+        Task<IEnumerable<Artifact>> GetArtifactsByStigType(string systemGroupId, string stigType);
+
         /******************************************** 
          System specific calls
         ********************************************/
@@ -48,5 +53,7 @@ namespace openrmf_read_api.Data
 
         // see if there is a checklist based on the system, hostname, and STIG checklist type
         Task<Artifact> GetArtifactBySystemHostnameAndType(string systemGroupId, string hostName, string stigType);
+
+        Task<bool> DeleteArtifact(string id);
     }
 }

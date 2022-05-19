@@ -67,6 +67,24 @@ namespace openrmf_read_api.Data
             return actionResult.IsAcknowledged && actionResult.ModifiedCount > 0;
         }
 
+        public async Task<bool> DeleteSystemGroup(string id)
+        {
+            var filter = Builders<SystemGroup>.Filter.Eq(s => s.InternalId, GetInternalId(id));
+            SystemGroup sys = new SystemGroup();
+            sys.InternalId = GetInternalId(id);
+            // only save the data outside of the checklist, update the date
+            var currentRecord = await _context.SystemGroups.Find(s => s.InternalId == sys.InternalId).FirstOrDefaultAsync();
+            if (currentRecord != null)
+            {
+                DeleteResult actionResult = await _context.SystemGroups.DeleteOneAsync(Builders<SystemGroup>.Filter.Eq("_id", sys.InternalId));
+                return actionResult.IsAcknowledged && actionResult.DeletedCount > 0;
+            }
+            else
+            {
+                throw new KeyNotFoundException();
+            }
+        }
+
         public async Task<long> CountSystems()
         {
             long result = await _context.SystemGroups.CountDocumentsAsync(Builders<SystemGroup>.Filter.Empty);
