@@ -6,7 +6,8 @@ using System.Collections.Generic;
 using System;
 using System.Threading.Tasks;
 
-namespace openrmf_read_api.Data {
+namespace openrmf_read_api.Data
+{
     public interface IArtifactRepository
     {
         Task<IEnumerable<Artifact>> GetAllArtifacts();
@@ -35,5 +36,17 @@ namespace openrmf_read_api.Data {
          Reports specific calls
         ********************************************/
         Task<IEnumerable<object>> GetCountByType(string system);
+
+        // add new note document
+        Task<Artifact> AddArtifact(Artifact item);
+
+        // remove a single document
+        Task<bool> RemoveArtifact(string id);
+
+        // update just a single document
+        Task<bool> UpdateArtifact(string id, Artifact body);
+
+        // see if there is a checklist based on the system, hostname, and STIG checklist type
+        Task<Artifact> GetArtifactBySystemHostnameAndType(string systemGroupId, string hostName, string stigType);
     }
 }

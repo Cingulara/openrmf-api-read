@@ -11,7 +11,8 @@ using MongoDB.Bson;
 using MongoDB.Driver.Linq;
 using Microsoft.Extensions.Options;
 
-namespace openrmf_read_api.Data {
+namespace openrmf_read_api.Data
+{
     public class ArtifactRepository : IArtifactRepository
     {
         private readonly ArtifactContext _context = null;
@@ -23,16 +24,8 @@ namespace openrmf_read_api.Data {
 
         public async Task<IEnumerable<Artifact>> GetAllArtifacts()
         {
-            try
-            {
-                return await _context.Artifacts
-                        .Find(_ => true).ToListAsync();
-            }
-            catch (Exception ex)
-            {
-                // log or manage the exception
-                throw ex;
-            }
+            return await _context.Artifacts
+                    .Find(_ => true).ToListAsync();
         }
 
 
@@ -49,100 +42,89 @@ namespace openrmf_read_api.Data {
         //
         public async Task<Artifact> GetArtifact(string id)
         {
-            try
-            {
-                return await _context.Artifacts.Find(artifact => artifact.InternalId == GetInternalId(id)).FirstOrDefaultAsync();
-            }
-            catch (Exception ex)
-            {
-                // log or manage the exception
-                throw ex;
-            }
+            return await _context.Artifacts.Find(artifact => artifact.InternalId == GetInternalId(id)).FirstOrDefaultAsync();
         }
 
         // query after body text, updated time, and header image size
         //
         public async Task<IEnumerable<Artifact>> GetArtifact(string bodyText, DateTime updatedFrom, long headerSizeLimit)
         {
-            try
-            {
-                var query = _context.Artifacts.Find(artifact => artifact.title.Contains(bodyText) &&
-                                    artifact.updatedOn >= updatedFrom);
+            var query = _context.Artifacts.Find(artifact => artifact.title.Contains(bodyText) &&
+                                artifact.updatedOn >= updatedFrom);
 
-                return await query.ToListAsync();
-            }
-            catch (Exception ex)
-            {
-                // log or manage the exception
-                throw ex;
-            }
+            return await query.ToListAsync();
         }
-        
-        public async Task<long> CountChecklists(){
-            try {
-                long result = await _context.Artifacts.CountDocumentsAsync(Builders<Artifact>.Filter.Empty);
-                return result;
-            }
-            catch (Exception ex)
-            {
-                // log or manage the exception
-                throw ex;
-            }
+
+        public async Task<long> CountChecklists()
+        {
+            long result = await _context.Artifacts.CountDocumentsAsync(Builders<Artifact>.Filter.Empty);
+            return result;
         }
 
         public async Task<IEnumerable<Artifact>> GetLatestArtifacts(int number)
         {
-            try
-            {
-                return await _context.Artifacts.Find(_ => true).SortByDescending(y => y.updatedOn).Limit(number).ToListAsync();
-            }
-            catch (Exception ex)
-            {
-                // log or manage the exception
-                throw ex;
-            }
+            return await _context.Artifacts.Find(_ => true).SortByDescending(y => y.updatedOn).Limit(number).ToListAsync();
         }
 
         public async Task<IEnumerable<object>> GetCountByType(string systemGroupId)
         {
-            try
+            // show them all by type
+            if (string.IsNullOrEmpty(systemGroupId))
             {
-                // show them all by type
-                if (string.IsNullOrEmpty(systemGroupId)) {
-                    var groupArtifactItemsByType = _context.Artifacts.Aggregate()
-                            .Group(s => s.stigType,
-                            g => new ArtifactCount {stigType = g.Key, count = g.Count()}).ToListAsync();
-                    return await groupArtifactItemsByType;
-                }
-                else {
-                    var groupArtifactItemsByType = _context.Artifacts.Aggregate().Match(artifact => artifact.systemGroupId == systemGroupId)
-                            .Group(s => s.stigType,
-                            g => new ArtifactCount {stigType = g.Key, count = g.Count()}).ToListAsync();
-                    return await groupArtifactItemsByType;
-                }
+                var groupArtifactItemsByType = _context.Artifacts.Aggregate()
+                        .Group(s => s.stigType,
+                        g => new ArtifactCount { stigType = g.Key, count = g.Count() }).ToListAsync();
+                return await groupArtifactItemsByType;
             }
-            catch (Exception ex)
+            else
             {
-                // log or manage the exception
-                throw ex;
+                var groupArtifactItemsByType = _context.Artifacts.Aggregate().Match(artifact => artifact.systemGroupId == systemGroupId)
+                        .Group(s => s.stigType,
+                        g => new ArtifactCount { stigType = g.Key, count = g.Count() }).ToListAsync();
+                return await groupArtifactItemsByType;
             }
         }
-    
-    
+
+        // query after body text, updated time, and header image size
+        //
+        public async Task<Artifact> GetArtifactBySystemHostnameAndType(string systemGroupId, string hostName, string stigType)
+        {
+            var query = _context.Artifacts.Find(artifact => artifact.systemGroupId == systemGroupId &&
+                                artifact.hostName == hostName && artifact.stigType == stigType);
+
+            return await query.FirstOrDefaultAsync();
+        }
+
+        public async Task<Artifact> AddArtifact(Artifact item)
+        {
+            await _context.Artifacts.InsertOneAsync(item);
+            return item;
+        }
+
+        public async Task<bool> RemoveArtifact(string id)
+        {
+            DeleteResult actionResult
+                = await _context.Artifacts.DeleteOneAsync(
+                    Builders<Artifact>.Filter.Eq("Id", id));
+
+            return actionResult.IsAcknowledged
+                && actionResult.DeletedCount > 0;
+        }
+
+        public async Task<bool> UpdateArtifact(string id, Artifact body)
+        {
+            var filter = Builders<Artifact>.Filter.Eq(s => s.InternalId, GetInternalId(id));
+            body.InternalId = GetInternalId(id);
+            var actionResult = await _context.Artifacts.ReplaceOneAsync(filter, body);
+            return actionResult.IsAcknowledged && actionResult.ModifiedCount > 0;
+        }
+
         #region Systems
 
         public async Task<IEnumerable<Artifact>> GetSystemArtifacts(string systemGroupId)
         {
-            try
-            {
-                var query = await _context.Artifacts.FindAsync(artifact => artifact.systemGroupId == systemGroupId);
-                return query.ToList().OrderBy(x => x.title);
-            }
-            catch (Exception ex)
-            {
-                // log or manage the exception
-                throw ex;
-            }
+            var query = await _context.Artifacts.FindAsync(artifact => artifact.systemGroupId == systemGroupId);
+            return query.ToList().OrderBy(x => x.title);
         }
         #endregion
     }

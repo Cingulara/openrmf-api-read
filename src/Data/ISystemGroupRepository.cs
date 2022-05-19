@@ -11,6 +11,16 @@ namespace openrmf_read_api.Data {
     {
         Task<IEnumerable<SystemGroup>> GetAllSystemGroups();
         Task<SystemGroup> GetSystemGroup(string id);
+
+        // add new system document
+        Task<SystemGroup> AddSystemGroup(SystemGroup item);
+
+        // remove a system document
+        Task<bool> RemoveSystemGroup(string id);
+
+        // update just a single system document
+        Task<bool> UpdateSystemGroup(string id, SystemGroup body);
+
         bool HealthStatus();
 
         /******************************************** 
