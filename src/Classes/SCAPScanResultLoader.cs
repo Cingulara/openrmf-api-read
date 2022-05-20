@@ -28,7 +28,7 @@ namespace openrmf_read_api.Models
                 searchTag = "cdf:";
             // see if this is a Nessus SCAP
             if (xmlfile.IndexOf("</xccdf:") > 0)
-                searchTag = "xccdf";
+                searchTag = "xccdf:";
 
             // now process the document
             XmlDocument xmlDoc = new XmlDocument();
