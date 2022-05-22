@@ -18,6 +18,7 @@ using OpenTracing;
 using OpenTracing.Util;
 using Jaeger;
 using Jaeger.Samplers;
+using NATS.Client;
 
 using openrmf_read_api.Models;
 using openrmf_read_api.Data;
@@ -38,6 +39,7 @@ namespace openrmf_read_api
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            var logger = NLog.Web.NLogBuilder.ConfigureNLog("nlog.config").GetCurrentClassLogger();
             // Register the database components
             if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DBTYPE")) || Environment.GetEnvironmentVariable("DBTYPE").ToLower() == "mongo") {
                 services.Configure<Settings>(options =>
@@ -50,20 +52,64 @@ namespace openrmf_read_api
             if (Environment.GetEnvironmentVariable("JAEGER_AGENT_HOST") != null && 
                 !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("JAEGER_AGENT_HOST"))) {
 
-                    // Use "OpenTracing.Contrib.NetCore" to automatically generate spans for ASP.NET Core
-                    services.AddSingleton<ITracer>(serviceProvider =>  
-                    {                
-                        ILoggerFactory loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();  
-                        // use the environment variables to setup the Jaeger endpoints
-                        var config = Jaeger.Configuration.FromEnv(loggerFactory);
-                        var tracer = config.GetTracer();
-                    
-                        GlobalTracer.Register(tracer);  
-                    
-                        return tracer;  
-                    });
-                    services.AddOpenTracing();
-                }
+                // Use "OpenTracing.Contrib.NetCore" to automatically generate spans for ASP.NET Core
+                services.AddSingleton<ITracer>(serviceProvider =>  
+                {                
+                    ILoggerFactory loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();  
+                    // use the environment variables to setup the Jaeger endpoints
+                    var config = Jaeger.Configuration.FromEnv(loggerFactory);
+                    var tracer = config.GetTracer();
+                
+                    GlobalTracer.Register(tracer);  
+                
+                    return tracer;  
+                });
+                services.AddOpenTracing();
+            }
+
+            
+            // Create a new connection factory to create a connection.
+            ConnectionFactory cf = new ConnectionFactory();
+            
+            // add the options for the server, reconnecting, and the handler events
+            Options opts = ConnectionFactory.GetDefaultOptions();
+            opts.MaxReconnect = -1;
+            opts.ReconnectWait = 1000;
+            opts.Name = "openrmf-api-read";
+            opts.Url = Environment.GetEnvironmentVariable("NATSSERVERURL");
+            opts.AsyncErrorEventHandler += (sender, events) =>
+            {
+                logger.Info("NATS client error. Server: {0}. Message: {1}. Subject: {2}", events.Conn.ConnectedUrl, events.Error, events.Subscription.Subject);
+            };
+
+            opts.ServerDiscoveredEventHandler += (sender, events) =>
+            {
+                logger.Info("A new server has joined the cluster: {0}", events.Conn.DiscoveredServers);
+            };
+
+            opts.ClosedEventHandler += (sender, events) =>
+            {
+                logger.Info("Connection Closed: {0}", events.Conn.ConnectedUrl);
+            };
+
+            opts.ReconnectedEventHandler += (sender, events) =>
+            {
+                logger.Info("Connection Reconnected: {0}", events.Conn.ConnectedUrl);
+            };
+
+            opts.DisconnectedEventHandler += (sender, events) =>
+            {
+                logger.Info("Connection Disconnected: {0}", events.Conn.ConnectedUrl);
+            };
+            
+            // Creates a live connection to the NATS Server with the above options
+            IConnection conn = cf.CreateConnection(opts);
+
+            // setup the NATS server
+            services.Configure<NATSServer>(options =>
+            {
+                options.connection = conn;
+            });
 
             // add repositories
             services.AddTransient<IArtifactRepository, ArtifactRepository>();
@@ -73,7 +119,7 @@ namespace openrmf_read_api
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "OpenRMF Read API", Version = "v1", 
-                    Description = "The Read API that goes with the OpenRMF tool",
+                    Description = "The Read API that goes with the OpenRMF OSS Application",
                     Contact = new OpenApiContact
                     {
                         Name = "Dale Bingham",
@@ -118,6 +164,7 @@ namespace openrmf_read_api
             services.AddAuthorization(options =>
             {
                 options.AddPolicy("Administrator", policy => policy.RequireRole("roles", "[Administrator]"));
+                options.AddPolicy("Download", policy => policy.RequireRole("roles", "[Download]"));
                 options.AddPolicy("Editor", policy => policy.RequireRole("roles", "[Editor]"));
                 options.AddPolicy("Reader", policy => policy.RequireRole("roles", "[Reader]"));
                 options.AddPolicy("Assessor", policy => policy.RequireRole("roles", "[Assessor]"));
@@ -133,6 +180,9 @@ namespace openrmf_read_api
                     });
             });
             
+            // add service for allowing caching of responses
+            services.AddResponseCaching();
+
             services.AddControllers();
         }
 
@@ -172,6 +222,8 @@ namespace openrmf_read_api
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "OpenRMF Read API V1");
             });
 
+            // allow response caching directives in the API Controllers
+            app.UseResponseCaching();
             app.UseHttpsRedirection();
             app.UseRouting();
             app.UseCors(MyAllowSpecificOrigins);

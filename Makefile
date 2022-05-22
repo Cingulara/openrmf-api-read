@@ -1,4 +1,4 @@
-VERSION ?= 1.07.00
+VERSION ?= 1.08.01
 NAME ?= "openrmf-api-read"
 AUTHOR ?= "Dale Bingham"
 PORT_EXT ?= 8084
@@ -22,6 +22,8 @@ latest:
 clean:
 	@rm -f -r src/obj
 	@rm -f -r src/bin
+	@rm -f -r tests/obj
+	@rm -f -r tests/bin
 
 version:
 	@echo ${VERSION}

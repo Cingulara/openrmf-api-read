@@ -151,21 +151,32 @@ namespace openrmf_read_api.Models
             fills1.Append(fill7);
             fills1.Append(fill8);
             fills1.Append(fill9);
+            
+            Borders borders1 = new DocumentFormat.OpenXml.Spreadsheet.Borders() { Count = (DocumentFormat.OpenXml.UInt32Value)2U };
+            // Border ID = 0 (The Default Border)
+            Border border0 = new DocumentFormat.OpenXml.Spreadsheet.Border();
+            LeftBorder leftBorder0 = new DocumentFormat.OpenXml.Spreadsheet.LeftBorder();
+            RightBorder rightBorder0 = new DocumentFormat.OpenXml.Spreadsheet.RightBorder();
+            TopBorder topBorder0 = new DocumentFormat.OpenXml.Spreadsheet.TopBorder();
+            BottomBorder bottomBorder0 = new DocumentFormat.OpenXml.Spreadsheet.BottomBorder();
+            border0.Append(leftBorder0);
+            border0.Append(rightBorder0);
+            border0.Append(topBorder0);
+            border0.Append(bottomBorder0);
 
-            Borders borders1 = new Borders() { Count = (UInt32Value)1U };
+            borders1.Append(border0);
 
-            Border border1 = new Border();
-            LeftBorder leftBorder1 = new LeftBorder();
-            RightBorder rightBorder1 = new RightBorder();
-            TopBorder topBorder1 = new TopBorder();
-            BottomBorder bottomBorder1 = new BottomBorder();
-            DiagonalBorder diagonalBorder1 = new DiagonalBorder();
+            // Border ID = 1
+            Border border1 = new DocumentFormat.OpenXml.Spreadsheet.Border();
+            LeftBorder leftBorder = new DocumentFormat.OpenXml.Spreadsheet.LeftBorder() { Style = DocumentFormat.OpenXml.Spreadsheet.BorderStyleValues.Thin };
+            RightBorder rightBorder = new DocumentFormat.OpenXml.Spreadsheet.RightBorder() { Style = DocumentFormat.OpenXml.Spreadsheet.BorderStyleValues.Thin };
+            TopBorder topBorder = new DocumentFormat.OpenXml.Spreadsheet.TopBorder() { Style = DocumentFormat.OpenXml.Spreadsheet.BorderStyleValues.Thin };
+            BottomBorder bottomBorder = new DocumentFormat.OpenXml.Spreadsheet.BottomBorder() { Style = DocumentFormat.OpenXml.Spreadsheet.BorderStyleValues.Thin };
+            border1.Append(leftBorder);
+            border1.Append(rightBorder);
+            border1.Append(topBorder);
+            border1.Append(bottomBorder);
 
-            border1.Append(leftBorder1);
-            border1.Append(rightBorder1);
-            border1.Append(topBorder1);
-            border1.Append(bottomBorder1);
-            border1.Append(diagonalBorder1);
             borders1.Append(border1);
 
             CellStyleFormats cellStyleFormats1 = new CellStyleFormats() { Count = (UInt32Value)1U };
@@ -176,42 +187,54 @@ namespace openrmf_read_api.Models
             // style index 0:  normal font and wrapping of text for cell rows
             CellFormat cellFormat2 = new CellFormat(new Alignment() { WrapText = true }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)0U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U };
             // style index 1:  normal font with numerical format
-            CellFormat cellFormat3 = new CellFormat(new Alignment() { WrapText = true }) { NumberFormatId = (UInt32Value)2U, FontId = (UInt32Value)0U, FillId = (UInt32Value)0U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U, ApplyNumberFormat = true };
+            CellFormat cellFormat3 = new CellFormat(new Alignment() { WrapText = true }) { NumberFormatId = (UInt32Value)2U, FontId = (UInt32Value)0U, FillId = (UInt32Value)0U, BorderId = (UInt32Value)1U, FormatId = (UInt32Value)0U, ApplyNumberFormat = true };
             // style index 2:  title font of 30 bold
             CellFormat cellFormat4 = new CellFormat() { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)2U, FillId = (UInt32Value)0U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U, ApplyFont = true };
             // style index 3:  info row under title and header rows font bold size 18
-            CellFormat cellFormat5 = new CellFormat() { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)1U, FillId = (UInt32Value)0U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U, ApplyFont = true };
+            CellFormat cellFormat5 = new CellFormat(new Alignment() { WrapText = true, Horizontal = HorizontalAlignmentValues.Center, Vertical = VerticalAlignmentValues.Center }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)1U, FillId = (UInt32Value)0U, BorderId = (UInt32Value)1U, FormatId = (UInt32Value)0U, ApplyFont = true };
 
             // fill colors based on the fillx variables above to match the 4 statuses of the checklist vulnerabilities
             // style index 4: red or Open
-            CellFormat cellFormat6 = new CellFormat(new Alignment() { WrapText = true }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)5U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U };
+            CellFormat cellFormat6 = new CellFormat(new Alignment() { WrapText = true }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)5U, BorderId = (UInt32Value)1U, FormatId = (UInt32Value)0U };
             // style index 5: silver or Not Applicable
-            CellFormat cellFormat7 = new CellFormat(new Alignment() { WrapText = true }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)2U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U };
+            CellFormat cellFormat7 = new CellFormat(new Alignment() { WrapText = true }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)2U, BorderId = (UInt32Value)1U, FormatId = (UInt32Value)0U };
             // style index 6: green or Not a Finding
-            CellFormat cellFormat8 = new CellFormat(new Alignment() { WrapText = true }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)3U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U };
+            CellFormat cellFormat8 = new CellFormat(new Alignment() { WrapText = true }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)3U, BorderId = (UInt32Value)1U, FormatId = (UInt32Value)0U };
             // style index 7: b/w or Not Reviewed
-            CellFormat cellFormat9 = new CellFormat(new Alignment() { WrapText = true }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)4U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U };
+            CellFormat cellFormat9 = new CellFormat(new Alignment() { WrapText = true }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)4U, BorderId = (UInt32Value)1U, FormatId = (UInt32Value)0U };
 
             // CENTER The content for listings versus the excel export of a checklist above
             // style index 8: red or Open centered content
-            CellFormat cellFormat10 = new CellFormat(new Alignment() { WrapText = true, Horizontal = HorizontalAlignmentValues.Center }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)5U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U };
+            CellFormat cellFormat10 = new CellFormat(new Alignment() { WrapText = true, Horizontal = HorizontalAlignmentValues.Center }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)5U, BorderId = (UInt32Value)1U, FormatId = (UInt32Value)0U };
             // style index 9: silver or Not Applicable
-            CellFormat cellFormat11= new CellFormat(new Alignment() { WrapText = true, Horizontal = HorizontalAlignmentValues.Center }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)2U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U };
+            CellFormat cellFormat11= new CellFormat(new Alignment() { WrapText = true, Horizontal = HorizontalAlignmentValues.Center }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)2U, BorderId = (UInt32Value)1U, FormatId = (UInt32Value)0U };
             // style index 10: green or Not a Finding
-            CellFormat cellFormat12 = new CellFormat(new Alignment() { WrapText = true, Horizontal = HorizontalAlignmentValues.Center }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)3U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U };
+            CellFormat cellFormat12 = new CellFormat(new Alignment() { WrapText = true, Horizontal = HorizontalAlignmentValues.Center }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)3U, BorderId = (UInt32Value)1U, FormatId = (UInt32Value)0U };
             // style index 11: b/w or Not Reviewed
-            CellFormat cellFormat13 = new CellFormat(new Alignment() { WrapText = true, Horizontal = HorizontalAlignmentValues.Center }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)4U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U };
+            CellFormat cellFormat13 = new CellFormat(new Alignment() { WrapText = true, Horizontal = HorizontalAlignmentValues.Center }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)4U, BorderId = (UInt32Value)1U, FormatId = (UInt32Value)0U };
 
             // style index 12: orange Open CAT 2
-            CellFormat cellFormat14 = new CellFormat(new Alignment() { WrapText = true }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)6U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U };
+            CellFormat cellFormat14 = new CellFormat(new Alignment() { WrapText = true }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)6U, BorderId = (UInt32Value)1U, FormatId = (UInt32Value)0U };
             // style index 13: yellow Open CAT 3
-            CellFormat cellFormat15 = new CellFormat(new Alignment() { WrapText = true }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)7U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U };
+            CellFormat cellFormat15 = new CellFormat(new Alignment() { WrapText = true }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)7U, BorderId = (UInt32Value)1U, FormatId = (UInt32Value)0U };
             // style index 14: orange Open CAT 2 centered
-            CellFormat cellFormat16 = new CellFormat(new Alignment() { WrapText = true, Horizontal = HorizontalAlignmentValues.Center }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)6U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U };
+            CellFormat cellFormat16 = new CellFormat(new Alignment() { WrapText = true, Horizontal = HorizontalAlignmentValues.Center }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)6U, BorderId = (UInt32Value)1U, FormatId = (UInt32Value)0U };
             // style index 15: yellow Open CAT 3 centered
-            CellFormat cellFormat17 = new CellFormat(new Alignment() { WrapText = true, Horizontal = HorizontalAlignmentValues.Center }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)7U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U };
+            CellFormat cellFormat17 = new CellFormat(new Alignment() { WrapText = true, Horizontal = HorizontalAlignmentValues.Center }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)7U, BorderId = (UInt32Value)1U, FormatId = (UInt32Value)0U };
             // style index 16: yellow Open CAT 3 centered
-            CellFormat cellFormat18 = new CellFormat(new Alignment() { WrapText = true }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)1U, FillId = (UInt32Value)8U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U, ApplyFont = true };
+            CellFormat cellFormat18 = new CellFormat(new Alignment() { WrapText = true }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)1U, FillId = (UInt32Value)8U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)1U, ApplyFont = true };
+
+            // style index 17: Gray background centered
+            CellFormat cellFormat20 = new CellFormat(new Alignment() { WrapText = true, Horizontal = HorizontalAlignmentValues.Center, Vertical = VerticalAlignmentValues.Center}) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)1U, FillId = (UInt32Value)8U, BorderId = (UInt32Value)1U, FormatId = (UInt32Value)0U, ApplyFont = true };
+
+            // style index 18: normal just with a border
+            CellFormat cellFormat21 = new CellFormat(new Alignment() { WrapText = true }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)0U, BorderId = (UInt32Value)1U, FormatId = (UInt32Value)0U, ApplyBorder = true, ApplyFont = true, ApplyAlignment = true, ApplyFill = true, ApplyNumberFormat = true };
+
+            // style index 19: info row under title
+            CellFormat cellFormat22= new CellFormat() { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)1U, FillId = (UInt32Value)0U, BorderId = (UInt32Value)0U, FormatId = (UInt32Value)0U, ApplyFont = true, ApplyAlignment = true, ApplyFill = true, ApplyNumberFormat = true };
+
+            // style index 20: Like 18 but centered for POAM moderate
+            CellFormat cellFormat23 = new CellFormat(new Alignment() { WrapText = true, Horizontal = HorizontalAlignmentValues.Center, Vertical = VerticalAlignmentValues.Center }) { NumberFormatId = (UInt32Value)0U, FontId = (UInt32Value)0U, FillId = (UInt32Value)0U, BorderId = (UInt32Value)1U, FormatId = (UInt32Value)0U, ApplyBorder = true, ApplyFont = true, ApplyAlignment = true, ApplyFill = true, ApplyNumberFormat = true };
 
             // add all these formats
             cellFormats1.Append(cellFormat2);
@@ -231,6 +254,10 @@ namespace openrmf_read_api.Models
             cellFormats1.Append(cellFormat16);
             cellFormats1.Append(cellFormat17);
             cellFormats1.Append(cellFormat18);
+            cellFormats1.Append(cellFormat20);
+            cellFormats1.Append(cellFormat21);
+            cellFormats1.Append(cellFormat22);
+            cellFormats1.Append(cellFormat23);
 
             CellStyles cellStyles1 = new CellStyles() { Count = (UInt32Value)1U };
             CellStyle cellStyle1 = new CellStyle() { Name = "Normal", FormatId = 0, BuiltinId = 0 };
