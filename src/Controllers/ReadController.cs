@@ -590,11 +590,11 @@ namespace openrmf_read_api.Controllers
                     SystemGroup sg = new SystemGroup();
                     sg = await _systemGroupRepo.GetSystemGroup(systemGroupId);
                     if (sg == null) {
-                        _logger.LogWarning("GetNessusPatchSummary({0}) an invalid system record");
+                        _logger.LogWarning("GetNessusPatchSummary({0}) an invalid system record", systemGroupId);
                         return NotFound();
                     }
                     if (string.IsNullOrEmpty(sg.rawNessusFile)) {
-                        _logger.LogWarning("GetNessusPatchSummary({0}) system record has no Nessus patch file to use");
+                        _logger.LogWarning("GetNessusPatchSummary({0}) system record has no Nessus patch file to use", systemGroupId);
                         return NotFound();
                     }
                     // load the NessusPatch XML into a List
@@ -649,11 +649,11 @@ namespace openrmf_read_api.Controllers
                     SystemGroup sg = new SystemGroup();
                     sg = await _systemGroupRepo.GetSystemGroup(systemGroupId);
                     if (sg == null) {
-                        _logger.LogWarning("ExportNessusPatchSummary({0}) an invalid system record");
+                        _logger.LogWarning("ExportNessusPatchSummary({0}) an invalid system record", systemGroupId);
                         return NotFound();
                     }
                     if (string.IsNullOrEmpty(sg.rawNessusFile)) {
-                        _logger.LogWarning("ExportNessusPatchSummary({0}) system record has no Nessus patch file to use");
+                        _logger.LogWarning("ExportNessusPatchSummary({0}) system record has no Nessus patch file to use", systemGroupId);
                         return NotFound();
                     }
                     // load the NessusPatch XML into a List
@@ -851,7 +851,7 @@ namespace openrmf_read_api.Controllers
                     SystemGroup sg = new SystemGroup();
                     sg = await _systemGroupRepo.GetSystemGroup(systemGroupId);
                     if (sg == null) {
-                        _logger.LogWarning("ExportSystemTestPlan({0}) an invalid system record");
+                        _logger.LogWarning("ExportSystemTestPlan({0}) an invalid system record", systemGroupId);
                         return NotFound();
                     }
                     // load the NessusPatch XML into a List
@@ -1141,7 +1141,7 @@ namespace openrmf_read_api.Controllers
                     SystemGroup sg = new SystemGroup();
                     sg = await _systemGroupRepo.GetSystemGroup(systemGroupId);
                     if (sg == null) {
-                        _logger.LogWarning("ExportSystemPOAM({0}) an invalid system record");
+                        _logger.LogWarning("ExportSystemPOAM({0}) an invalid system record", systemGroupId);
                         return NotFound();
                     }
                     // load the NessusPatch XML into a List
@@ -2049,9 +2049,9 @@ namespace openrmf_read_api.Controllers
                         art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist);
                     if (art != null && art.CHECKLIST != null) {
                         List<string> cciList = new List<string>();
-                        _logger.LogInformation("ExportChecklist({0}....) formatting the checklist to XML from the raw string format");
+                        _logger.LogInformation("ExportChecklist({0}) formatting the checklist to XML from the raw string format", id);
                         art.CHECKLIST = ChecklistLoader.LoadChecklist(art.rawChecklist);
-                        _logger.LogInformation("ExportChecklist({0}....) checklist formatted");
+                        _logger.LogInformation("ExportChecklist({0}) checklist formatted", id);
                         // starting row number for data
                         uint rowNumber = 9;
 
