@@ -467,7 +467,7 @@ namespace openrmf_read_api.Controllers
                     
                     // check for hostname being used
                     if (!string.IsNullOrEmpty(hostname)) {
-                        systemChecklists = systemChecklists.Where(z => z.hostName.Contains(hostname));
+                        systemChecklists = systemChecklists.Where(z => z.hostName.ToLower().Contains(hostname.ToLower()));
                     }
 
                     if (systemChecklists == null) {
