@@ -308,6 +308,10 @@ namespace openrmf_read_api.Controllers
                     vulnerability = chk.STIGS.iSTIG.VULN.Where(y => vulnid == y.STIG_DATA.Where(z => z.VULN_ATTRIBUTE == "Vuln_Num").FirstOrDefault().ATTRIBUTE_DATA).FirstOrDefault();
                     if (vulnerability != null)
                     {
+                        details = RecordGenerator.DecodeHTML(details);
+                        comments = RecordGenerator.DecodeHTML(comments);
+                        justification = RecordGenerator.DecodeHTML(justification);
+
                         if (!string.IsNullOrEmpty(details)) vulnerability.FINDING_DETAILS = details;
                         else vulnerability.FINDING_DETAILS = "";
                         if (!string.IsNullOrEmpty(status)) vulnerability.STATUS = status;
