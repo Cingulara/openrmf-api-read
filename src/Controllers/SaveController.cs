@@ -309,10 +309,13 @@ namespace openrmf_read_api.Controllers
                     if (vulnerability != null)
                     {
                         if (!string.IsNullOrEmpty(details)) vulnerability.FINDING_DETAILS = details;
+                        else vulnerability.FINDING_DETAILS = "";
                         if (!string.IsNullOrEmpty(status)) vulnerability.STATUS = status;
                         if (!string.IsNullOrEmpty(comments)) vulnerability.COMMENTS = comments;
+                        else vulnerability.COMMENTS = "";
                         if (!string.IsNullOrEmpty(severityoverride)) vulnerability.SEVERITY_OVERRIDE = severityoverride;
                         if (!string.IsNullOrEmpty(justification)) vulnerability.SEVERITY_JUSTIFICATION = justification;
+                        else vulnerability.SEVERITY_JUSTIFICATION = "";
                     }
                     else
                     { // record and keep going in this list 
