@@ -308,11 +308,18 @@ namespace openrmf_read_api.Controllers
                     vulnerability = chk.STIGS.iSTIG.VULN.Where(y => vulnid == y.STIG_DATA.Where(z => z.VULN_ATTRIBUTE == "Vuln_Num").FirstOrDefault().ATTRIBUTE_DATA).FirstOrDefault();
                     if (vulnerability != null)
                     {
+                        details = RecordGenerator.DecodeHTML(details);
+                        comments = RecordGenerator.DecodeHTML(comments);
+                        justification = RecordGenerator.DecodeHTML(justification);
+
                         if (!string.IsNullOrEmpty(details)) vulnerability.FINDING_DETAILS = details;
+                        else vulnerability.FINDING_DETAILS = "";
                         if (!string.IsNullOrEmpty(status)) vulnerability.STATUS = status;
                         if (!string.IsNullOrEmpty(comments)) vulnerability.COMMENTS = comments;
+                        else vulnerability.COMMENTS = "";
                         if (!string.IsNullOrEmpty(severityoverride)) vulnerability.SEVERITY_OVERRIDE = severityoverride;
                         if (!string.IsNullOrEmpty(justification)) vulnerability.SEVERITY_JUSTIFICATION = justification;
+                        else vulnerability.SEVERITY_JUSTIFICATION = "";
                     }
                     else
                     { // record and keep going in this list 
@@ -757,7 +764,7 @@ namespace openrmf_read_api.Controllers
 
                 if (!string.IsNullOrEmpty(title))
                 {
-                    sg.title = title;
+                    sg.title = RecordGenerator.DecodeHTML(title);
                 }
                 else
                 {
@@ -788,7 +795,7 @@ namespace openrmf_read_api.Controllers
                 // add the information
                 if (!string.IsNullOrEmpty(description))
                 {
-                    sg.description = description;
+                    sg.description = RecordGenerator.DecodeHTML(description);
                 }
                 if (!string.IsNullOrEmpty(rawNessusFile))
                 {
@@ -886,7 +893,7 @@ namespace openrmf_read_api.Controllers
                 // if it is update the information
                 if (!string.IsNullOrEmpty(description))
                 {
-                    sg.description = description;
+                    sg.description = RecordGenerator.DecodeHTML(description);
                 }
                 if (!string.IsNullOrEmpty(rawNessusFile))
                 {
@@ -899,7 +906,7 @@ namespace openrmf_read_api.Controllers
                     {
                         // change in the title so update it
                         _logger.LogInformation("UpdateSystem() Updating the System Title for {0} to {1}", systemGroupId, title);
-                        sg.title = title;
+                        sg.title = RecordGenerator.DecodeHTML(title);
                         // if the title is different, it should change across all other checklist files
                         // publish to the openrmf update system realm the new title we can use it
                         _msgServer.Publish("openrmf.system.update." + systemGroupId.Trim(), Encoding.UTF8.GetBytes(title));

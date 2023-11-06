@@ -29,7 +29,12 @@ namespace openrmf_read_api.Models
         public string version {get; set;}
         public string title { get {
             string validHostname = !string.IsNullOrEmpty(hostName)? hostName.Trim() : "Unknown";
-            return validHostname + "-" + stigType.Trim() + "-V" + version + "-" + stigRelease.Trim();
+            string validStigType = "";
+            if (!string.IsNullOrWhiteSpace(stigType)) validStigType = stigType.Trim();
+            string validStigRelease = "";
+            if (!string.IsNullOrWhiteSpace(stigRelease)) validStigRelease = stigRelease.Trim();
+
+            return validHostname + "-" + validStigType + "-V" + version + "-" + validStigRelease;
         }}
         
         [BsonId]
