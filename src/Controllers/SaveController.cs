@@ -893,7 +893,7 @@ namespace openrmf_read_api.Controllers
                 // if it is update the information
                 if (!string.IsNullOrEmpty(description))
                 {
-                    sg.description = description;
+                    sg.description = RecordGenerator.DecodeHTML(description);
                 }
                 if (!string.IsNullOrEmpty(rawNessusFile))
                 {
