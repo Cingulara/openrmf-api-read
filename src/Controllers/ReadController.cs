@@ -332,7 +332,7 @@ namespace openrmf_read_api.Controllers
                         // Save the new worksheet.
                         workbookpart.Workbook.Save();
                         // Close the document.
-                        spreadSheet.Close();
+                        spreadSheet.Dispose();
                         memory.Seek(0, SeekOrigin.Begin);
                         _logger.LogInformation("Called ExportChecklistListing({0}) successfully", systemGroupId);
                         return File(memory, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "ChecklistListing.xlsx");
@@ -812,7 +812,7 @@ namespace openrmf_read_api.Controllers
                         // Save the new worksheet.
                         workbookpart.Workbook.Save();
                         // Close the document.
-                        spreadSheet.Close();
+                        spreadSheet.Dispose();
                         // set the filename
                         string filename = sg.title + "-NessusScanSummary";
                         memory.Seek(0, SeekOrigin.Begin);
@@ -1102,7 +1102,7 @@ namespace openrmf_read_api.Controllers
                         workbookpart.Workbook.Save();
                         // Close the document.
                         _logger.LogInformation("ExportSystemTestPlan({0}) closing the XLSX test plan", systemGroupId);
-                        spreadSheet.Close();
+                        spreadSheet.Dispose();
                         // set the filename
                         string filename = sg.title + "-SystemTestPlan";
                         memory.Seek(0, SeekOrigin.Begin);
@@ -1743,7 +1743,7 @@ namespace openrmf_read_api.Controllers
                         workbookpart.Workbook.Save();
                         // Close the document.
                         _logger.LogInformation("ExportSystemPOAM({0}) closing the XLSX test plan", systemGroupId);
-                        spreadSheet.Close();
+                        spreadSheet.Dispose();
                         // set the filename
                         string filename = sg.title + "-SystemPOAM";
                         memory.Seek(0, SeekOrigin.Begin);
@@ -2328,7 +2328,7 @@ namespace openrmf_read_api.Controllers
                             // Save the new worksheet.
                             workbookpart.Workbook.Save();
                             // Close the document.
-                            spreadSheet.Close();
+                            spreadSheet.Dispose();
                             // set the filename
                             string filename = art.title;
                             if (!string.IsNullOrEmpty(art.systemTitle) && art.systemTitle.ToLower().Trim() == "none")

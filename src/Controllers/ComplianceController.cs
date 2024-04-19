@@ -236,7 +236,7 @@ namespace openrmf_read_api.Controllers
                             // Save the new worksheet.
                             workbookpart.Workbook.Save();
                             // Close the document.
-                            spreadSheet.Close();
+                            spreadSheet.Dispose();
                             // set the filename
                             string filename = sg.title;
                             if (!string.IsNullOrEmpty(sg.title) && sg.title.ToLower().Trim() == "none")
