@@ -12,6 +12,7 @@ namespace openrmf_read_api.Models
 
 		public string ROLE { get; set; }
 		public string ASSET_TYPE { get; set; }
+        public string MARKING { get; set; }
 		public string HOST_NAME { get; set; }
 		public string HOST_IP { get; set; }
 		public string HOST_MAC { get; set; }

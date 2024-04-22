@@ -16,11 +16,16 @@ namespace openrmf_read_api.Models
     {
         public SCAPRuleResultSet () {
             ruleResults = new List<SCAPRuleResult>();
+            ipaddress = "";
+            fqdn = "";
+            macaddress = "";
         }
 
         public string title { get; set; }
         public string hostname { get; set; }
         public string ipaddress { get; set;}
+        public string fqdn { get; set; }
+        public string macaddress { get; set; }
         public string scanTool { get; set; }
         public string scanTime { get; set;}
         public List<SCAPRuleResult> ruleResults { get; set; }
