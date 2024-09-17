@@ -3,8 +3,8 @@
 
 using System.Collections.Generic;
 using openrmf_read_api.Models;
-using System.Xml.Serialization;
 using System.Xml;
+using System.Linq;
 
 namespace openrmf_read_api.Classes
 {
@@ -144,5 +144,176 @@ namespace openrmf_read_api.Classes
             }
             return vulns;
         }
+ 
+ 
+        public static string UpdateChecklistVulnerabilityOrder(string rawChecklist) {
+            rawChecklist = rawChecklist.Replace("\t","");
+            // load the CHECKLIST structure
+            CHECKLIST myChecklist = LoadChecklist(rawChecklist);
+
+            string finalChecklistFormat = "";
+            bool badFormat = false;
+            
+            // test the first VULN as they should all be structured the same
+            // if the first one is in the right order, off you go! just return the string
+            if (myChecklist.STIGS.iSTIG.VULN != null && myChecklist.STIGS.iSTIG.VULN.Count > 0) {
+                VULN checkVulnRecord = myChecklist.STIGS.iSTIG.VULN[0];
+                if (checkVulnRecord != null ) {
+                    if (checkVulnRecord.STIG_DATA.Count > 10) {
+                        // check vuln_num
+                        if (checkVulnRecord.STIG_DATA[0].VULN_ATTRIBUTE.ToLower() != "vuln_num")
+                            badFormat = true;
+                        // check severity
+                        if (checkVulnRecord.STIG_DATA[1].VULN_ATTRIBUTE.ToLower() != "severity")
+                            badFormat = true;
+                        // check STIG ID
+                        if (checkVulnRecord.STIG_DATA[4].VULN_ATTRIBUTE.ToLower() != "rule_ver")
+                            badFormat = true;
+                        // check rule title
+                        if (checkVulnRecord.STIG_DATA[5].VULN_ATTRIBUTE.ToLower() != "rule_title")
+                            badFormat = true;
+                        // make sure the last one is CCI_REF
+                        if (checkVulnRecord.STIG_DATA[checkVulnRecord.STIG_DATA.Count-1].VULN_ATTRIBUTE.ToLower() != "cci_ref")
+                            badFormat = true;
+                    }
+                }
+                else {
+                    // send back what junk they sent you!!
+                    return rawChecklist;
+                }
+            }
+
+            // check that the CCI References do not have a space in them
+            // if there are multiple 1 CCI_REF record per value -- Evalute-STIG was generating bad ones for the cisco config file scanner
+            if (myChecklist.STIGS.iSTIG.VULN != null && myChecklist.STIGS.iSTIG.VULN.Count > 0 &&
+                myChecklist.STIGS.iSTIG.VULN.Where(
+                    z => z.STIG_DATA.Where(x => x.VULN_ATTRIBUTE == "CCI_REF" && x.ATTRIBUTE_DATA.Contains(" ")).FirstOrDefault() != null
+                ).FirstOrDefault() != null
+            ) {
+                badFormat = true;
+            }
+
+            if (!badFormat) 
+                return rawChecklist; // good to go!
+
+            foreach (VULN currentVuln in myChecklist.STIGS.iSTIG.VULN) {
+                // make the new one in the right order, copying data from the current one
+                currentVuln.STIG_DATA = getCorrectSTIGDataRecordsOrdered(currentVuln.STIG_DATA);
+                // go on to the next one
+            }
+
+            System.Xml.Serialization.XmlSerializer writer = new System.Xml.Serialization.XmlSerializer(typeof(CHECKLIST)); 
+            using(System.IO.StringWriter textWriter = new System.IO.StringWriter())
+            {
+                writer.Serialize(textWriter, myChecklist);
+                finalChecklistFormat = textWriter.ToString();
+            }
+            // strip out all the extra formatting crap and clean up the XML to be as simple as possible
+            System.Xml.Linq.XDocument xDoc = System.Xml.Linq.XDocument.Parse(finalChecklistFormat, System.Xml.Linq.LoadOptions.PreserveWhitespace);
+            // get the finalized checklist string format
+            finalChecklistFormat = xDoc.ToString(System.Xml.Linq.SaveOptions.DisableFormatting);
+            rawChecklist = finalChecklistFormat.Substring(finalChecklistFormat.IndexOf("<STIGS>")); 
+            // save the rest but redo the top part up to the STIGS area so the XML looks pretty
+            rawChecklist = string.Format("<?xml version=\"1.0\" encoding=\"UTF-8\"?><CHECKLIST><ASSET><ROLE>{0}</ROLE><ASSET_TYPE>{1}</ASSET_TYPE><MARKING>{2}</MARKING><HOST_NAME>{3}</HOST_NAME><HOST_IP>{4}</HOST_IP><HOST_MAC>{5}</HOST_MAC><HOST_FQDN>{6}</HOST_FQDN><TARGET_COMMENT></TARGET_COMMENT><TECH_AREA>{7}</TECH_AREA><TARGET_KEY>{8}</TARGET_KEY><WEB_OR_DATABASE>{9}</WEB_OR_DATABASE><WEB_DB_SITE>{10}</WEB_DB_SITE><WEB_DB_INSTANCE>{11}</WEB_DB_INSTANCE></ASSET>",
+                myChecklist.ASSET.ROLE,myChecklist.ASSET.ASSET_TYPE,myChecklist.ASSET.MARKING,
+                myChecklist.ASSET.HOST_NAME,myChecklist.ASSET.HOST_IP,
+                myChecklist.ASSET.HOST_MAC,myChecklist.ASSET.HOST_FQDN,myChecklist.ASSET.TECH_AREA,
+                myChecklist.ASSET.TARGET_KEY,myChecklist.ASSET.WEB_OR_DATABASE,myChecklist.ASSET.WEB_DB_SITE,
+                myChecklist.ASSET.WEB_DB_INSTANCE).Trim() + rawChecklist.Trim();
+
+            return RecordGenerator.CleanData(rawChecklist.Trim());
+        }
+
+        private static List<STIG_DATA> getCorrectSTIGDataRecordsOrdered (List<STIG_DATA> currentVulnData) {
+            List<STIG_DATA> newOrderedData = new List<STIG_DATA>();
+            newOrderedData.Add(getSTIGDataFromList(currentVulnData, "Vuln_Num"));
+            newOrderedData.Add(getSTIGDataFromList(currentVulnData, "Severity"));
+            newOrderedData.Add(getSTIGDataFromList(currentVulnData, "Group_Title"));
+            newOrderedData.Add(getSTIGDataFromList(currentVulnData, "Rule_ID"));
+            newOrderedData.Add(getSTIGDataFromList(currentVulnData, "Rule_Ver"));
+            newOrderedData.Add(getSTIGDataFromList(currentVulnData, "Rule_Title"));
+            newOrderedData.Add(getSTIGDataFromList(currentVulnData, "Vuln_Discuss"));
+            newOrderedData.Add(getSTIGDataFromList(currentVulnData, "IA_Controls"));
+            newOrderedData.Add(getSTIGDataFromList(currentVulnData, "Check_Content"));
+            newOrderedData.Add(getSTIGDataFromList(currentVulnData, "Fix_Text"));
+            newOrderedData.Add(getSTIGDataFromList(currentVulnData, "False_Positives"));
+            newOrderedData.Add(getSTIGDataFromList(currentVulnData, "False_Negatives"));
+            newOrderedData.Add(getSTIGDataFromList(currentVulnData, "Documentable"));
+            newOrderedData.Add(getSTIGDataFromList(currentVulnData, "Mitigations"));
+            newOrderedData.Add(getSTIGDataFromList(currentVulnData, "Potential_Impact"));
+            newOrderedData.Add(getSTIGDataFromList(currentVulnData, "Third_Party_Tools"));
+            newOrderedData.Add(getSTIGDataFromList(currentVulnData, "Mitigation_Control"));
+            newOrderedData.Add(getSTIGDataFromList(currentVulnData, "Responsibility"));
+            newOrderedData.Add(getSTIGDataFromList(currentVulnData, "Security_Override_Guidance"));
+            newOrderedData.Add(getSTIGDataFromList(currentVulnData, "Check_Content_Ref"));
+            newOrderedData.Add(getSTIGDataFromList(currentVulnData, "Weight"));
+            newOrderedData.Add(getSTIGDataFromList(currentVulnData, "Class"));
+            newOrderedData.Add(getSTIGDataFromList(currentVulnData, "STIGRef"));
+            newOrderedData.Add(getSTIGDataFromList(currentVulnData, "TargetKey"));
+            newOrderedData.Add(getSTIGDataFromList(currentVulnData, "STIG_UUID"));
+            // Legacy ID can be multiples, so do 1 at a time
+            newOrderedData.AddRange(getSTIGDataListFromCurrentList(currentVulnData, "LEGACY_ID"));
+            // CCI REF can be multiple so do 1 at a time
+            newOrderedData.AddRange(getSTIGDataCCIREFFromCurrentList(currentVulnData, "CCI_REF"));
+            return newOrderedData;
+        }
+
+        // method to look through the listing and find the correct value pair
+        private static STIG_DATA getSTIGDataFromList (List<STIG_DATA> currentVulnData, string attribute) {
+            STIG_DATA newData = new STIG_DATA();
+            // get the actual correct attribute/data combination
+            if (currentVulnData.Where(z => z.VULN_ATTRIBUTE == attribute).FirstOrDefault() != null) {
+                newData.VULN_ATTRIBUTE = attribute;
+                newData.ATTRIBUTE_DATA = currentVulnData.Where(z => z.VULN_ATTRIBUTE == attribute).First().ATTRIBUTE_DATA;
+            }
+            else {
+                newData.VULN_ATTRIBUTE = attribute;
+                newData.ATTRIBUTE_DATA = "";
+            }
+            return newData;
+        }
+
+        // method to look through the listing and find the correct value pairs from 1 or more records
+        private static List<STIG_DATA> getSTIGDataListFromCurrentList (List<STIG_DATA> currentVulnData, string attribute) {
+            List<STIG_DATA> newDataList = new List<STIG_DATA>();
+            STIG_DATA newData;
+            // get the actual correct attribute/data combination
+            foreach (STIG_DATA multipleId in currentVulnData.Where(z => z.VULN_ATTRIBUTE == attribute).ToList()) {
+                newData = new STIG_DATA();
+                newData.VULN_ATTRIBUTE = attribute;
+                newData.ATTRIBUTE_DATA = multipleId.ATTRIBUTE_DATA;
+                // add to the list we return
+                newDataList.Add(newData);
+            }
+            return newDataList;
+        }
+
+        // method to look through the CCI_REF listing and find the correct value pairs from 1 or more records
+        // also if more than one record based on spaces in between data, separate them out
+        private static List<STIG_DATA> getSTIGDataCCIREFFromCurrentList (List<STIG_DATA> currentVulnData, string attribute) {
+            List<STIG_DATA> newDataList = new List<STIG_DATA>();
+            STIG_DATA newData;
+            // get the actual correct attribute/data combination
+            foreach (STIG_DATA multipleId in currentVulnData.Where(z => z.VULN_ATTRIBUTE == attribute).ToList()) {
+                if (multipleId.ATTRIBUTE_DATA.IndexOf(" ") > 0) {
+                    foreach (string cci in multipleId.ATTRIBUTE_DATA.Split(" ")) {
+                        newData = new STIG_DATA();
+                        newData.VULN_ATTRIBUTE = attribute;
+                        newData.ATTRIBUTE_DATA = cci; // the individiual CCI_REF
+                        // add to the list we return
+                        newDataList.Add(newData);
+                    }
+                } 
+                else {
+                    newData = new STIG_DATA();
+                    newData.VULN_ATTRIBUTE = attribute;
+                    newData.ATTRIBUTE_DATA = multipleId.ATTRIBUTE_DATA;
+                    // add to the list we return
+                    newDataList.Add(newData);
+                }
+            }
+            return newDataList;
+        }
+
     }
 }

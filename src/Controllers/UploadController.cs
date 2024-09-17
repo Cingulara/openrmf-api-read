@@ -122,6 +122,15 @@ namespace openrmf_read_api.Controllers
                       {
                           rawChecklist = reader.ReadToEnd();  
                       }
+                      if (!string.IsNullOrEmpty(rawChecklist)) {
+                        if (rawChecklist.Substring(0, 100).ToLower().IndexOf("evaluate-stig") > 0 || 
+                              rawChecklist.Substring(0, 100).ToLower().IndexOf("evaluatestig") > 0) {
+                              // sanitize this
+                              rawChecklist = ChecklistLoader.UpdateChecklistVulnerabilityOrder(rawChecklist);
+                              if (_logger.IsEnabled(LogLevel.Information)) 
+                                  _logger.LogInformation("Sanitizing Evaluate-STIG formatted Checklist " + file.FileName);
+                          } 
+                      }
                     }
                     else {
                       // log this is a bad file
@@ -424,14 +433,18 @@ namespace openrmf_read_api.Controllers
 
         // shorten the names a bit
         if (newArtifact != null && !string.IsNullOrEmpty(newArtifact.stigType)){
-          newArtifact.stigType = newArtifact.stigType.Replace("Security Technical Implementation Guide", "STIG");
-          newArtifact.stigType = newArtifact.stigType.Replace("Windows", "WIN");
-          newArtifact.stigType = newArtifact.stigType.Replace("Application Security and Development", "ASD");
-          newArtifact.stigType = newArtifact.stigType.Replace("Microsoft Internet Explorer", "MSIE");
-          newArtifact.stigType = newArtifact.stigType.Replace("Red Hat Enterprise Linux", "REL");
-          newArtifact.stigType = newArtifact.stigType.Replace("MS SQL Server", "MSSQL");
-          newArtifact.stigType = newArtifact.stigType.Replace("Server", "SVR");
-          newArtifact.stigType = newArtifact.stigType.Replace("Workstation", "WRK");
+          newArtifact.stigType = newArtifact.stigType.Replace("MS Windows","Windows")
+                .Replace("SCAP Benchmark","").Replace(" SCAP","").Replace("Cisco IOS-XE","Cisco IOS XE").Replace("Cisco NX-OS", "Cisco NX OS")
+                .Replace("Cisco IOS-XR","Cisco IOS XR").Replace("Microsoft Windows","Windows").Replace("Microsoft Windows Defender", "Microsoft Defender")
+                .Replace("Windows Defender", "Microsoft Defender").Replace("Windows Server 2012 MS", "Windows Server 2012/2012 R2 Member Server")
+                .Replace("Windows Firewall with Advanced Security", "Windows Defender Firewall with Advanced Security")
+                .Replace("Microsoft Windows Defender Firewall with Advanced Security", "Windows Defender Firewall with Advanced Security")
+                .Replace("Microsoft Defender Firewall with Advanced Security", "Windows Defender Firewall with Advanced Security")
+                .Replace("Security Technical Implementation Guide", "STIG").Replace("Windows 7", "WIN 7").Replace("Windows 8", "WIN 8")
+                .Replace("Windows 10", "WIN 10").Replace("Windows 11", "WIN 11").Replace("Windows Server", "WIN SVR").Replace("Windows 2008", "WIN 2008")
+                .Replace("Application Security and Development", "ASD").Replace("Windows 2012", "WIN 2012")
+                .Replace("Microsoft Internet Explorer", "MSIE").Replace("Red Hat Enterprise Linux", "REL").Replace("MS SQL Server", "MSSQL")
+                .Replace("Server", "SVR").Replace("Workstation", "WRK").Trim();
         }
         if (newArtifact != null && !string.IsNullOrEmpty(newArtifact.stigRelease)) {
           newArtifact.stigRelease = newArtifact.stigRelease.Replace("Release: ", "R"); // i.e. R11, R2 for the release number
