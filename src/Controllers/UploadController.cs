@@ -159,8 +159,9 @@ namespace openrmf_read_api.Controllers
                     
                     // if there is a hostname, see if this is an UPDATE or a new one based on the checklist type for this system
                     if (!string.IsNullOrEmpty(newArtifact.hostName) && newArtifact.hostName.ToLower() != "unknown") {
-                      // we got this far, so it is a valid checklist. Let's see if it is an update or a new one that we uploaded.
-                      oldArtifact = await _artifactRepo.GetArtifactBySystemHostnameAndType(newArtifact.systemGroupId, newArtifact.hostName, newArtifact.stigType);
+                      // we got this far, so it is a valid checklist. Let's see if it is an update or a new one that we uploaded
+                      // v1.12 adds in the web or database 3 fields for uniqueness
+                      oldArtifact = await _artifactRepo.GetArtifactBySystemHostnameAndTypeWithWebDatabase(newArtifact.systemGroupId, newArtifact.hostName, newArtifact.stigType, newArtifact.isWebDatabase, newArtifact.webDatabaseSite, newArtifact.webDatabaseInstance);
                       if (oldArtifact != null && oldArtifact.createdBy != Guid.Empty) {
                         _logger.LogInformation("UploadNewChecklist({0}) this is an update, not a new checklist", newArtifact.systemGroupId);
                         // this is an update of an older one, keep the createdBy intact
@@ -408,6 +409,7 @@ namespace openrmf_read_api.Controllers
         rawChecklist = rawChecklist.Replace("\t","");
         XmlDocument xmlDoc = new XmlDocument();
         xmlDoc.LoadXml(rawChecklist);
+        newArtifact.CHECKLIST = ChecklistLoader.LoadChecklist(rawChecklist);
 
         XmlNodeList assetList = xmlDoc.GetElementsByTagName("ASSET");
         // get the host name from here
@@ -449,6 +451,14 @@ namespace openrmf_read_api.Controllers
         if (newArtifact != null && !string.IsNullOrEmpty(newArtifact.stigRelease)) {
           newArtifact.stigRelease = newArtifact.stigRelease.Replace("Release: ", "R"); // i.e. R11, R2 for the release number
           newArtifact.stigRelease = newArtifact.stigRelease.Replace("Benchmark Date:","dated");
+        }
+
+        if (!string.IsNullOrWhiteSpace(newArtifact.CHECKLIST.ASSET.WEB_OR_DATABASE) && newArtifact.CHECKLIST.ASSET.WEB_OR_DATABASE == "true") {
+            newArtifact.isWebDatabase = true;                      
+            if (!string.IsNullOrWhiteSpace(newArtifact.CHECKLIST.ASSET.WEB_DB_SITE))
+                newArtifact.webDatabaseSite = newArtifact.CHECKLIST.ASSET.WEB_DB_SITE.Trim();
+            if (!string.IsNullOrWhiteSpace(newArtifact.CHECKLIST.ASSET.WEB_DB_INSTANCE))
+                newArtifact.webDatabaseInstance = newArtifact.CHECKLIST.ASSET.WEB_DB_INSTANCE.Trim();
         }
         return newArtifact;
       }

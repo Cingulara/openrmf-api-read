@@ -54,6 +54,8 @@ namespace openrmf_read_api.Data
         // see if there is a checklist based on the system, hostname, and STIG checklist type
         Task<Artifact> GetArtifactBySystemHostnameAndType(string systemGroupId, string hostName, string stigType);
 
+        Task<Artifact> GetArtifactBySystemHostnameAndTypeWithWebDatabase(string systemGroupId, string hostName, string stigType, bool isWebDatabase, string webDatabaseSite, string webDatabaseInstance);
+
         Task<bool> DeleteArtifact(string id);
     }
 }
