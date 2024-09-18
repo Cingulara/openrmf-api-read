@@ -1,4 +1,4 @@
-VERSION ?= 1.12.00
+VERSION ?= 1.12.01
 NAME ?= "openrmf-api-read"
 AUTHOR ?= "Dale Bingham"
 PORT_EXT ?= 8084

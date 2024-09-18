@@ -214,19 +214,35 @@ namespace openrmf_read_api.Controllers
                     chk.ASSET.HOST_MAC = hostmac;
                 else 
                     chk.ASSET.HOST_MAC = "";
-                // web or database fields
-                if (!string.IsNullOrEmpty(webordatabase) && webordatabase == "true")
+                // v1.12 web or database fields displaying the title
+                if (!string.IsNullOrEmpty(webordatabase) && webordatabase == "true") {
                     chk.ASSET.WEB_OR_DATABASE = webordatabase;
-                else 
+                    if (webordatabase == "true") {
+                        checklist.isWebDatabase = true;
+                    } else {
+                        checklist.isWebDatabase = false;
+                    }
+                }
+                else {
                     chk.ASSET.WEB_OR_DATABASE = "false"; // default
-                if (!string.IsNullOrEmpty(webdatabasesite))
+                    checklist.isWebDatabase = false;
+                }
+                if (!string.IsNullOrEmpty(webdatabasesite)) {
                     chk.ASSET.WEB_DB_SITE = webdatabasesite;
-                else 
+                    checklist.webDatabaseSite = webdatabasesite;
+                }
+                else {
                     chk.ASSET.WEB_DB_SITE = "";
-                if (!string.IsNullOrEmpty(webdatabaseinstance))
+                    checklist.webDatabaseSite = "";
+                }
+                if (!string.IsNullOrEmpty(webdatabaseinstance)) {
                     chk.ASSET.WEB_DB_INSTANCE= webdatabaseinstance;
-                else 
+                    checklist.webDatabaseInstance = webdatabaseinstance;
+                }
+                else {
                     chk.ASSET.WEB_DB_INSTANCE = "";
+                    checklist.webDatabaseInstance = "";
+                }
 
                 // serialize into a string again
                 System.Xml.Serialization.XmlSerializer xmlSerializer = new System.Xml.Serialization.XmlSerializer(chk.GetType());
