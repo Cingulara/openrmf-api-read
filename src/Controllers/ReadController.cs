@@ -332,7 +332,7 @@ namespace openrmf_read_api.Controllers
                         // Save the new worksheet.
                         workbookpart.Workbook.Save();
                         // Close the document.
-                        spreadSheet.Close();
+                        spreadSheet.Dispose();
                         memory.Seek(0, SeekOrigin.Begin);
                         _logger.LogInformation("Called ExportChecklistListing({0}) successfully", systemGroupId);
                         return File(memory, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "ChecklistListing.xlsx");
@@ -812,7 +812,7 @@ namespace openrmf_read_api.Controllers
                         // Save the new worksheet.
                         workbookpart.Workbook.Save();
                         // Close the document.
-                        spreadSheet.Close();
+                        spreadSheet.Dispose();
                         // set the filename
                         string filename = sg.title + "-NessusScanSummary";
                         memory.Seek(0, SeekOrigin.Begin);
@@ -1102,7 +1102,7 @@ namespace openrmf_read_api.Controllers
                         workbookpart.Workbook.Save();
                         // Close the document.
                         _logger.LogInformation("ExportSystemTestPlan({0}) closing the XLSX test plan", systemGroupId);
-                        spreadSheet.Close();
+                        spreadSheet.Dispose();
                         // set the filename
                         string filename = sg.title + "-SystemTestPlan";
                         memory.Seek(0, SeekOrigin.Begin);
@@ -1743,7 +1743,7 @@ namespace openrmf_read_api.Controllers
                         workbookpart.Workbook.Save();
                         // Close the document.
                         _logger.LogInformation("ExportSystemPOAM({0}) closing the XLSX test plan", systemGroupId);
-                        spreadSheet.Close();
+                        spreadSheet.Dispose();
                         // set the filename
                         string filename = sg.title + "-SystemPOAM";
                         memory.Seek(0, SeekOrigin.Begin);
@@ -1872,6 +1872,7 @@ namespace openrmf_read_api.Controllers
                                     if (string.IsNullOrEmpty(art.CHECKLIST.ASSET.HOST_MAC)) art.CHECKLIST.ASSET.HOST_MAC = "";
                                     if (string.IsNullOrEmpty(art.CHECKLIST.ASSET.HOST_FQDN)) art.CHECKLIST.ASSET.HOST_FQDN = "";
                                     if (string.IsNullOrEmpty(art.CHECKLIST.ASSET.TECH_AREA)) art.CHECKLIST.ASSET.TECH_AREA = "";
+                                    if (string.IsNullOrEmpty(art.CHECKLIST.ASSET.MARKING)) art.CHECKLIST.ASSET.MARKING = "";
                                     if (string.IsNullOrEmpty(art.CHECKLIST.ASSET.TARGET_KEY)) art.CHECKLIST.ASSET.TARGET_KEY = "";
                                     if (string.IsNullOrEmpty(art.CHECKLIST.ASSET.WEB_OR_DATABASE)) art.CHECKLIST.ASSET.WEB_OR_DATABASE = "";
                                     if (string.IsNullOrEmpty(art.CHECKLIST.ASSET.WEB_DB_SITE)) art.CHECKLIST.ASSET.WEB_DB_SITE = "";
@@ -1888,8 +1889,8 @@ namespace openrmf_read_api.Controllers
                                     // save the new serialized checklist record to the database
                                     art.rawChecklist = xDoc.ToString(System.Xml.Linq.SaveOptions.DisableFormatting);
                                     string rawChecklist = art.rawChecklist.Substring(art.rawChecklist.IndexOf("<STIGS>")); // save the rest but redo the top part
-                                    rawChecklist = string.Format("<CHECKLIST><ASSET><ROLE>{0}</ROLE><ASSET_TYPE>{1}</ASSET_TYPE><HOST_NAME>{2}</HOST_NAME><HOST_IP>{3}</HOST_IP><HOST_MAC>{4}</HOST_MAC><HOST_FQDN>{5}</HOST_FQDN><TECH_AREA>{6}</TECH_AREA><TARGET_KEY>{7}</TARGET_KEY><WEB_OR_DATABASE>{8}</WEB_OR_DATABASE><WEB_DB_SITE>{9}</WEB_DB_SITE><WEB_DB_INSTANCE>{10}</WEB_DB_INSTANCE></ASSET>",
-                                        art.CHECKLIST.ASSET.ROLE,art.CHECKLIST.ASSET.ASSET_TYPE,art.CHECKLIST.ASSET.HOST_NAME,art.CHECKLIST.ASSET.HOST_IP,
+                                    rawChecklist = string.Format("<CHECKLIST><ASSET><ROLE>{0}</ROLE><ASSET_TYPE>{1}</ASSET_TYPE><MARKING>{2}</MARKING><HOST_NAME>{3}</HOST_NAME><HOST_IP>{4}</HOST_IP><HOST_MAC>{5}</HOST_MAC><HOST_FQDN>{6}</HOST_FQDN><TECH_AREA>{7}</TECH_AREA><TARGET_KEY>{8}</TARGET_KEY><WEB_OR_DATABASE>{9}</WEB_OR_DATABASE><WEB_DB_SITE>{10}</WEB_DB_SITE><WEB_DB_INSTANCE>{11}</WEB_DB_INSTANCE></ASSET>",
+                                        art.CHECKLIST.ASSET.ROLE,art.CHECKLIST.ASSET.ASSET_TYPE,art.CHECKLIST.ASSET.MARKING,art.CHECKLIST.ASSET.HOST_NAME,art.CHECKLIST.ASSET.HOST_IP,
                                         art.CHECKLIST.ASSET.HOST_MAC,art.CHECKLIST.ASSET.HOST_FQDN,art.CHECKLIST.ASSET.TECH_AREA,
                                         art.CHECKLIST.ASSET.TARGET_KEY,art.CHECKLIST.ASSET.WEB_OR_DATABASE,art.CHECKLIST.ASSET.WEB_DB_SITE,
                                         art.CHECKLIST.ASSET.WEB_DB_INSTANCE) + rawChecklist;
@@ -1988,6 +1989,7 @@ namespace openrmf_read_api.Controllers
                 if (string.IsNullOrEmpty(art.CHECKLIST.ASSET.HOST_MAC)) art.CHECKLIST.ASSET.HOST_MAC = "";
                 if (string.IsNullOrEmpty(art.CHECKLIST.ASSET.HOST_FQDN)) art.CHECKLIST.ASSET.HOST_FQDN = "";
                 if (string.IsNullOrEmpty(art.CHECKLIST.ASSET.TECH_AREA)) art.CHECKLIST.ASSET.TECH_AREA = "";
+                if (string.IsNullOrEmpty(art.CHECKLIST.ASSET.MARKING)) art.CHECKLIST.ASSET.MARKING = "";
                 if (string.IsNullOrEmpty(art.CHECKLIST.ASSET.TARGET_KEY)) art.CHECKLIST.ASSET.TARGET_KEY = "";
                 if (string.IsNullOrEmpty(art.CHECKLIST.ASSET.WEB_OR_DATABASE)) art.CHECKLIST.ASSET.WEB_OR_DATABASE = "";
                 if (string.IsNullOrEmpty(art.CHECKLIST.ASSET.WEB_DB_SITE)) art.CHECKLIST.ASSET.WEB_DB_SITE = "";
@@ -2004,8 +2006,8 @@ namespace openrmf_read_api.Controllers
                 // save the new serialized checklist record to the database
                 art.rawChecklist = xDoc.ToString(System.Xml.Linq.SaveOptions.DisableFormatting);
                 string rawChecklist = art.rawChecklist.Substring(art.rawChecklist.IndexOf("<STIGS>")); // save the rest but redo the top part
-                rawChecklist = string.Format("<CHECKLIST><ASSET><ROLE>{0}</ROLE><ASSET_TYPE>{1}</ASSET_TYPE><HOST_NAME>{2}</HOST_NAME><HOST_IP>{3}</HOST_IP><HOST_MAC>{4}</HOST_MAC><HOST_FQDN>{5}</HOST_FQDN><TECH_AREA>{6}</TECH_AREA><TARGET_KEY>{7}</TARGET_KEY><WEB_OR_DATABASE>{8}</WEB_OR_DATABASE><WEB_DB_SITE>{9}</WEB_DB_SITE><WEB_DB_INSTANCE>{10}</WEB_DB_INSTANCE></ASSET>",
-                    art.CHECKLIST.ASSET.ROLE,art.CHECKLIST.ASSET.ASSET_TYPE,art.CHECKLIST.ASSET.HOST_NAME,art.CHECKLIST.ASSET.HOST_IP,
+                rawChecklist = string.Format("<CHECKLIST><ASSET><ROLE>{0}</ROLE><ASSET_TYPE>{1}</ASSET_TYPE><MARKING>{2}</MARKING><HOST_NAME>{3}</HOST_NAME><HOST_IP>{4}</HOST_IP><HOST_MAC>{5}</HOST_MAC><HOST_FQDN>{6}</HOST_FQDN><TECH_AREA>{7}</TECH_AREA><TARGET_KEY>{8}</TARGET_KEY><WEB_OR_DATABASE>{9}</WEB_OR_DATABASE><WEB_DB_SITE>{10}</WEB_DB_SITE><WEB_DB_INSTANCE>{11}</WEB_DB_INSTANCE></ASSET>",
+                    art.CHECKLIST.ASSET.ROLE,art.CHECKLIST.ASSET.ASSET_TYPE, art.CHECKLIST.ASSET.MARKING,art.CHECKLIST.ASSET.HOST_NAME,art.CHECKLIST.ASSET.HOST_IP,
                     art.CHECKLIST.ASSET.HOST_MAC,art.CHECKLIST.ASSET.HOST_FQDN,art.CHECKLIST.ASSET.TECH_AREA,
                     art.CHECKLIST.ASSET.TARGET_KEY,art.CHECKLIST.ASSET.WEB_OR_DATABASE,art.CHECKLIST.ASSET.WEB_DB_SITE,
                     art.CHECKLIST.ASSET.WEB_DB_INSTANCE) + rawChecklist;
@@ -2328,7 +2330,7 @@ namespace openrmf_read_api.Controllers
                             // Save the new worksheet.
                             workbookpart.Workbook.Save();
                             // Close the document.
-                            spreadSheet.Close();
+                            spreadSheet.Dispose();
                             // set the filename
                             string filename = art.title;
                             if (!string.IsNullOrEmpty(art.systemTitle) && art.systemTitle.ToLower().Trim() == "none")

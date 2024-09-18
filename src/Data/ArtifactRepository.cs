@@ -101,12 +101,23 @@ namespace openrmf_read_api.Data
             }
         }
 
-        // query after body text, updated time, and header image size
-        //
         public async Task<Artifact> GetArtifactBySystemHostnameAndType(string systemGroupId, string hostName, string stigType)
         {
             var query = _context.Artifacts.Find(artifact => artifact.systemGroupId == systemGroupId &&
-                                artifact.hostName == hostName && artifact.stigType == stigType);
+                        !string.IsNullOrWhiteSpace(artifact.hostName) && !string.IsNullOrWhiteSpace(hostName) &&
+                        artifact.hostName.ToLower() == hostName.ToLower() && artifact.stigType == stigType);
+
+            return await query.FirstOrDefaultAsync();
+        }
+
+        public async Task<Artifact> GetArtifactBySystemHostnameAndTypeWithWebDatabase(string systemGroupId, string hostName, string stigType, 
+            bool isWebDatabase, string webDatabaseSite, string webDatabaseInstance)
+        {
+            var query = _context.Artifacts.Find(artifact => artifact.systemGroupId == systemGroupId &&
+                        !string.IsNullOrWhiteSpace(artifact.hostName) && !string.IsNullOrWhiteSpace(hostName) &&
+                        artifact.hostName.ToLower() == hostName.ToLower() && artifact.stigType == stigType &&
+                        artifact.isWebDatabase == isWebDatabase && artifact.webDatabaseSite == webDatabaseSite && 
+                        artifact.webDatabaseInstance == webDatabaseInstance);
 
             return await query.FirstOrDefaultAsync();
         }

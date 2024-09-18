@@ -14,14 +14,12 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using Prometheus;
-using OpenTracing;
-using OpenTracing.Util;
-using Jaeger;
-using Jaeger.Samplers;
 using NATS.Client;
 
 using openrmf_read_api.Models;
 using openrmf_read_api.Data;
+using NLog.Web;
+using NLog;
 
 namespace openrmf_read_api
 {
@@ -39,7 +37,8 @@ namespace openrmf_read_api
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            var logger = NLog.Web.NLogBuilder.ConfigureNLog("nlog.config").GetCurrentClassLogger();
+            NLog.LogManager.Configuration = new NLog.Config.XmlLoggingConfiguration("nlog.config");
+            var logger = NLog.LogManager.Setup().LoadConfigurationFromAppSettings().GetCurrentClassLogger();
             // Register the database components
             if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DBTYPE")) || Environment.GetEnvironmentVariable("DBTYPE").ToLower() == "mongo") {
                 services.Configure<Settings>(options =>
@@ -48,25 +47,6 @@ namespace openrmf_read_api
                     options.Database = Environment.GetEnvironmentVariable("DB");
                 });
             }
-            
-            if (Environment.GetEnvironmentVariable("JAEGER_AGENT_HOST") != null && 
-                !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("JAEGER_AGENT_HOST"))) {
-
-                // Use "OpenTracing.Contrib.NetCore" to automatically generate spans for ASP.NET Core
-                services.AddSingleton<ITracer>(serviceProvider =>  
-                {                
-                    ILoggerFactory loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();  
-                    // use the environment variables to setup the Jaeger endpoints
-                    var config = Jaeger.Configuration.FromEnv(loggerFactory);
-                    var tracer = config.GetTracer();
-                
-                    GlobalTracer.Register(tracer);  
-                
-                    return tracer;  
-                });
-                services.AddOpenTracing();
-            }
-
             
             // Create a new connection factory to create a connection.
             ConnectionFactory cf = new ConnectionFactory();

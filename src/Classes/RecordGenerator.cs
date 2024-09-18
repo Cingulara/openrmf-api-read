@@ -17,5 +17,10 @@ namespace openrmf_read_api.Classes
             else 
                 return "";
         }
+        public static string CleanData(string rawdata)
+        {
+            return rawdata.Replace("\t", "").Replace(">\n<", "><");
+        }
+
     }
 }

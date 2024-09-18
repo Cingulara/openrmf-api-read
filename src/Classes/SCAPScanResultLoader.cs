@@ -68,8 +68,14 @@ namespace openrmf_read_api.Models
                 foreach (XmlNode node in targetAddresses) {
                     if (!string.IsNullOrEmpty(node.InnerText)) {
                         // grab the Node's InnerText
-                        results.ipaddress = node.InnerText;
-                        break; // we found it
+                        if (!string.IsNullOrEmpty(node.InnerText) && node.InnerText != "127.0.0.1" && 
+                                    results.ipaddress != node.InnerText && results.ipaddress.IndexOf(", " + node.InnerText) < 0 && 
+                                    results.ipaddress.IndexOf(node.InnerText + ", ") < 0) {
+                            if (!string.IsNullOrEmpty(results.ipaddress))
+                                results.ipaddress += ", " + node.InnerText;
+                            else 
+                                results.ipaddress = node.InnerText;
+                        }
                     }
                 }
             }
@@ -86,16 +92,43 @@ namespace openrmf_read_api.Models
                 }
             }
 
-            // if we did not get hostname from above, look in another place
-            if (string.IsNullOrEmpty(results.hostname)) {
-                // get the hostname and other facts off the computer that was SCAP scanned
-                XmlNodeList targetFactsHostname = xmlDoc.GetElementsByTagName(searchTag + "fact");
-                if (targetFactsHostname != null && targetFactsHostname.Count > 0) {
-                    foreach (XmlNode node in targetFactsHostname) {
-                        if (node.Attributes.Count > 1 && node.Attributes[1].InnerText.EndsWith("host_name")) {
-                            // grab the Node's InnerText
-                            results.hostname = node.InnerText;
-                            break; // we found it
+            // get the hostname and other facts off the computer that was SCAP scanned
+            XmlNodeList targetFactsHostname = xmlDoc.GetElementsByTagName(searchTag + "fact");
+            if (targetFactsHostname != null && targetFactsHostname.Count > 0) {
+                foreach (XmlNode node in targetFactsHostname) {
+                    if (node.Attributes.Count > 1 && (node.Attributes[0].InnerText.EndsWith("host_name") || 
+                        node.Attributes[1].InnerText.EndsWith("host_name")) && 
+                        string.IsNullOrEmpty(results.hostname))  {
+                        // grab the Node's InnerText
+                        results.hostname = node.InnerText;
+                        //break;
+                    } else if (node.Attributes.Count > 1 && (node.Attributes[0].InnerText.EndsWith("fqdn") || 
+                        node.Attributes[1].InnerText.EndsWith("fqdn")) && 
+                        string.IsNullOrEmpty(results.fqdn)) {
+                        // grab the Node's InnerText
+                        results.fqdn = node.InnerText;
+                    } else if (node.Attributes.Count > 1 && (node.Attributes[0].InnerText.EndsWith("mac") || 
+                        node.Attributes[1].InnerText.EndsWith("mac"))) {
+                        // grab the Node's InnerText
+                        if (!string.IsNullOrEmpty(node.InnerText) && node.InnerText != "00:00:00:00:00:00" && 
+                                    results.macaddress != node.InnerText && results.macaddress.IndexOf(", " + node.InnerText) < 0 && 
+                                    results.macaddress.IndexOf(node.InnerText + ", ") < 0) {
+                            if (!string.IsNullOrEmpty(results.macaddress))
+                                results.macaddress += ", " + node.InnerText;
+                            else 
+                                results.macaddress = node.InnerText;
+                        }
+                    } else if (node.Attributes.Count > 1 && (node.Attributes[0].InnerText.EndsWith("ipv4") || 
+                        node.Attributes[1].InnerText.EndsWith("ipv4"))) {
+                        // grab the Node's InnerText
+                        if (!string.IsNullOrEmpty(node.InnerText) && node.InnerText != "127.0.0.1" && 
+                                    !string.IsNullOrEmpty(results.ipaddress) && 
+                                    results.ipaddress != node.InnerText && results.ipaddress.IndexOf(", " + node.InnerText) < 0 && 
+                                    results.ipaddress.IndexOf(node.InnerText + ", ") < 0) {
+                            if (!string.IsNullOrEmpty(results.ipaddress))
+                                results.ipaddress += ", " + node.InnerText;
+                            else 
+                                results.ipaddress = node.InnerText;
                         }
                     }
                 }
@@ -196,6 +229,14 @@ namespace openrmf_read_api.Models
                 if (!string.IsNullOrEmpty(results.ipaddress)) {
                     chk.ASSET.HOST_IP = results.ipaddress;
                 }
+                // if we have the MAC Address, use that as well
+                if (!string.IsNullOrEmpty(results.macaddress)) {
+                    chk.ASSET.HOST_MAC = results.macaddress;
+                }
+                // if we have the FQDN, use that as well
+                if (!string.IsNullOrEmpty(results.fqdn)) {
+                    chk.ASSET.HOST_FQDN = results.fqdn;
+                }
 
                 string findingDetails = string.Format("Tool: {0}\nTime: {1}\nResult: ", results.scanTool, results.scanTime);
 
@@ -218,6 +259,11 @@ namespace openrmf_read_api.Models
                             else if (result.result.ToLower() == "pass") {
                                 v.STATUS = "NotAFinding";
                                 v.FINDING_DETAILS = findingDetails + "pass";
+                            }
+                            // mark the not_applicable on any checklist item we find that passed
+                            else if (result.result.ToLower() == "notapplicable") {
+                                v.STATUS = "Not_Applicable";
+                                v.FINDING_DETAILS = findingDetails + "Not Applicable";
                             }
                         }
                     }

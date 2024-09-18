@@ -110,11 +110,16 @@ namespace openrmf_read_api.Controllers
         /// <param name="systemGroupId">The ID of the system passed in</param>
         /// <param name="hostname">The hostname of the checklist machine</param>
         /// <param name="domainname">The full domain name of the checklist machine</param>
+        /// <param name="hostip">The host IP of the checklist machine</param>
+        /// <param name="hostmac">The host MAC address of the checklist machine</param>
         /// <param name="techarea">The technology area of the checklist machine</param>
         /// <param name="assettype">The asset type of the checklist machine</param>
+        /// <param name="marking">The MARKING field of the checklist</param>
         /// <param name="machinerole">The role of the checklist machine</param>
-        /// <param name="checklistFile">A new Checklist or SCAP scan results file, if any</param>
         /// <param name="tagList">List of tags to add to a checklist, pipe delimited</param>
+        /// <param name="webordatabase">Is the checklist for a website or database</param>
+        /// <param name="webdatabasesite">The checklist web/database site name</param>
+        /// <param name="webdatabaseinstance">The checklist web/database instance name</param>
         /// <returns>
         /// HTTP Status showing it was updated or that there is an error.
         /// </returns>
@@ -124,14 +129,15 @@ namespace openrmf_read_api.Controllers
         [HttpPut("artifact/{artifactId}")]
         [Authorize(Roles = "Administrator,Editor")]
         public async Task<IActionResult> UpdateChecklist(string artifactId, string systemGroupId, string hostname, string domainname,
-            string techarea, string assettype, string machinerole, IFormFile checklistFile, string tagList)
+            string techarea, string assettype, string machinerole, string tagList, string hostip, string hostmac, string webordatabase, 
+            string webdatabasesite, string webdatabaseinstance, string marking)
         {
             try
             {
                 _logger.LogInformation("Calling UpdateChecklist(system: {0}, checklist: {1})", systemGroupId, artifactId);
                 // see if this is a valid system
                 // update and fill in the same info
-                Artifact checklist = _artifactRepo.GetArtifactBySystem(systemGroupId, artifactId).GetAwaiter().GetResult();
+                Artifact checklist = await _artifactRepo.GetArtifactBySystem(systemGroupId, artifactId);
                 // the new raw checklist string
                 string newChecklistString = "";
 
@@ -191,6 +197,51 @@ namespace openrmf_read_api.Controllers
                         if (!string.IsNullOrEmpty(tag))
                             checklist.tags.Add(tag);
                     }
+                }
+
+                // marking
+                if (!string.IsNullOrEmpty(marking))
+                    chk.ASSET.MARKING = marking;
+                else 
+                    chk.ASSET.MARKING = "";
+
+                // host IP and MAC
+                if (!string.IsNullOrEmpty(hostip))
+                    chk.ASSET.HOST_IP = hostip;
+                else 
+                    chk.ASSET.HOST_IP = "";
+                if (!string.IsNullOrEmpty(hostmac))
+                    chk.ASSET.HOST_MAC = hostmac;
+                else 
+                    chk.ASSET.HOST_MAC = "";
+                // v1.12 web or database fields displaying the title
+                if (!string.IsNullOrEmpty(webordatabase) && webordatabase == "true") {
+                    chk.ASSET.WEB_OR_DATABASE = webordatabase;
+                    if (webordatabase == "true") {
+                        checklist.isWebDatabase = true;
+                    } else {
+                        checklist.isWebDatabase = false;
+                    }
+                }
+                else {
+                    chk.ASSET.WEB_OR_DATABASE = "false"; // default
+                    checklist.isWebDatabase = false;
+                }
+                if (!string.IsNullOrEmpty(webdatabasesite)) {
+                    chk.ASSET.WEB_DB_SITE = webdatabasesite;
+                    checklist.webDatabaseSite = webdatabasesite;
+                }
+                else {
+                    chk.ASSET.WEB_DB_SITE = "";
+                    checklist.webDatabaseSite = "";
+                }
+                if (!string.IsNullOrEmpty(webdatabaseinstance)) {
+                    chk.ASSET.WEB_DB_INSTANCE= webdatabaseinstance;
+                    checklist.webDatabaseInstance = webdatabaseinstance;
+                }
+                else {
+                    chk.ASSET.WEB_DB_INSTANCE = "";
+                    checklist.webDatabaseInstance = "";
                 }
 
                 // serialize into a string again
@@ -463,6 +514,7 @@ namespace openrmf_read_api.Controllers
                         upgradeArtifact.CHECKLIST.ASSET.HOST_MAC = art.CHECKLIST.ASSET.HOST_MAC;
                         upgradeArtifact.CHECKLIST.ASSET.HOST_FQDN = art.CHECKLIST.ASSET.HOST_FQDN;
                         upgradeArtifact.CHECKLIST.ASSET.TECH_AREA = art.CHECKLIST.ASSET.TECH_AREA;
+                        upgradeArtifact.CHECKLIST.ASSET.MARKING = art.CHECKLIST.ASSET.MARKING;
                         upgradeArtifact.CHECKLIST.ASSET.TARGET_KEY = art.CHECKLIST.ASSET.TARGET_KEY;
                         upgradeArtifact.CHECKLIST.ASSET.WEB_OR_DATABASE = art.CHECKLIST.ASSET.WEB_OR_DATABASE;
                         upgradeArtifact.CHECKLIST.ASSET.WEB_DB_SITE = art.CHECKLIST.ASSET.WEB_DB_SITE;

@@ -20,7 +20,7 @@ namespace openrmf_read_api.Classes
         //    for each VULN listing
         //      for each CCI within the VULN listed
         //        match up the CCI to the NIST, then get the status, checklist and ID, STIG ID , VULN ID, and type and return it
-        try {
+
           // Call the NATS subscription to get all CCI to NIST Major Controls
           List<CciItem> cciItems = NATSClient.GetCCIListing();
           // list of the NIST controls down to the index-to-CCI level we cycle through
@@ -148,11 +148,6 @@ namespace openrmf_read_api.Classes
           }
           else
               return null;
-        }
-        catch (Exception ex) {
-            // log it here
-            throw ex;
-        }
       }
 
       private static int GetFirstIndex(string term) {
