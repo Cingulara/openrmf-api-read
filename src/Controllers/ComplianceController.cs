@@ -74,7 +74,7 @@ namespace openrmf_read_api.Controllers
                 }
             }
             else {
-                _logger.LogWarning("Called GetCompliancBySystem() but with an invalid or empty Id", id);
+                _logger.LogWarning("Called GetCompliancBySystem() but with an invalid or empty Id {0}", id);
                 return BadRequest(); // no term entered
             }
         }
@@ -258,7 +258,7 @@ namespace openrmf_read_api.Controllers
                 }
             }
             else {
-                _logger.LogWarning("Called GetCompliancBySystemExport() but with an invalid or empty system group Id", id);
+                _logger.LogWarning("Called GetCompliancBySystemExport() but with an invalid or empty system group Id {0}", id);
                 return BadRequest(); // no term entered
             }
         }
@@ -297,7 +297,7 @@ namespace openrmf_read_api.Controllers
                 }
             }
             else {
-                _logger.LogWarning("Called GetCCIItem() but with an invalid or empty Id", cciid);
+                _logger.LogWarning("Called GetCCIItem() but with an invalid or empty Id {0}", cciid);
                 return BadRequest(); // no CCI Id entered
             }
         }
