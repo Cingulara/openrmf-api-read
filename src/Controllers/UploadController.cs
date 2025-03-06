@@ -94,12 +94,14 @@ namespace openrmf_read_api.Controllers
               // result we send back
               UploadResult uploadResult = new UploadResult();
               bool updatedChecklist = false;
-
+              List<BaselineScanResult> checklistRecords;
+              string rawChecklist = string.Empty;
               // now go through the Checklists and set them up
               foreach(IFormFile file in checklistFiles) {
                 try {
-                    string rawChecklist =  string.Empty;
+                    rawChecklist = string.Empty;
                     updatedChecklist = false;
+                    checklistRecords = new List<BaselineScanResult>();
 
                     if (file.FileName.ToLower().EndsWith(".xml")) {
                       // if an XML XCCDF SCAP scan file
@@ -112,24 +114,26 @@ namespace openrmf_read_api.Controllers
                         SCAPRuleResultSet results = SCAPScanResultLoader.LoadSCAPScan(xmlfile);
                         // get the rawChecklist data so we can move on
                         // generate a new checklist from a template based on the type and revision
-                        rawChecklist = SCAPScanResultLoader.GenerateChecklistData(results);
+                        checklistRecords = SCAPScanResultLoader.GenerateChecklistData(results);
                       }
                     }
                     else if (file.FileName.ToLower().EndsWith(".ckl")) {
                       // if a CKL file
                       _logger.LogInformation("UploadNewChecklist() parsing the Checklist CKL file for {0}.", file.FileName.ToLower());
+                      BaselineScanResult checklistFile = new BaselineScanResult();
                       using (var reader = new StreamReader(file.OpenReadStream()))
                       {
-                          rawChecklist = reader.ReadToEnd();  
+                          checklistFile.rawChecklist = reader.ReadToEnd();  
                       }
-                      if (!string.IsNullOrEmpty(rawChecklist)) {
-                        if (rawChecklist.Substring(0, 100).ToLower().IndexOf("evaluate-stig") > 0 || 
-                              rawChecklist.Substring(0, 100).ToLower().IndexOf("evaluatestig") > 0) {
+                      if (!string.IsNullOrEmpty(checklistFile.rawChecklist)) {
+                        if (checklistFile.rawChecklist.Substring(0, 100).ToLower().IndexOf("evaluate-stig") > 0 || 
+                              checklistFile.rawChecklist.Substring(0, 100).ToLower().IndexOf("evaluatestig") > 0) {
                               // sanitize this
-                              rawChecklist = ChecklistLoader.UpdateChecklistVulnerabilityOrder(rawChecklist);
+                              checklistFile.rawChecklist = ChecklistLoader.UpdateChecklistVulnerabilityOrder(checklistFile.rawChecklist);
                               if (_logger.IsEnabled(LogLevel.Information)) 
                                   _logger.LogInformation("Sanitizing Evaluate-STIG formatted Checklist " + file.FileName);
                           } 
+                        checklistRecords = ChecklistLoader.LoadMultipleChecklistTypes(checklistFile.rawChecklist);
                       }
                     }
                     else {
@@ -137,159 +141,170 @@ namespace openrmf_read_api.Controllers
                       return BadRequest();
                     }
 
-                    // clean up any odd data that can mess us up moving around, via JS, and such
-                    _logger.LogInformation("UploadNewChecklist() sanitizing the checklist for {0}.", file.FileName.ToLower());
-                    rawChecklist = SanitizeData(rawChecklist);
+                    // cycle through all the data in the upload whether SCAP, CKL, or combined CKL
+                    foreach (BaselineScanResult checklistRecord in checklistRecords) {
+                        if (!string.IsNullOrEmpty(checklistRecord.rawChecklist))
+                            rawChecklist = checklistRecord.rawChecklist;
+                        else {
+                          uploadResult.failed++;
+                          uploadResult.failedUploads.Add(file.FileName);
+                          continue; // it won't work
+                        }
 
-                    // create the new record for saving into the DB
-                    Artifact newArtifact = MakeArtifactRecord(rawChecklist);
-                    Artifact oldArtifact = null; 
-                    // add the system record ID to the Artifact to know how to query it
-                    _logger.LogInformation("UploadNewChecklist() setting the title of the checklist {0}.", file.FileName.ToLower());
-                    if (recordSystem != null) {
-                      newArtifact.systemGroupId = recordSystem.InternalId.ToString();
-                      // store the title for ease of use
-                      newArtifact.systemTitle = recordSystem.title;
-                    }
-                    else {
-                      newArtifact.systemGroupId = sg.InternalId.ToString();
-                      // store the title for ease of use
-                      newArtifact.systemTitle = sg.title;
-                    }
-                    
-                    // if there is a hostname, see if this is an UPDATE or a new one based on the checklist type for this system
-                    if (!string.IsNullOrEmpty(newArtifact.hostName) && newArtifact.hostName.ToLower() != "unknown") {
-                      // we got this far, so it is a valid checklist. Let's see if it is an update or a new one that we uploaded
-                      // v1.12 adds in the web or database 3 fields for uniqueness
-                      oldArtifact = await _artifactRepo.GetArtifactBySystemHostnameAndTypeWithWebDatabase(newArtifact.systemGroupId, newArtifact.hostName, newArtifact.stigType, newArtifact.isWebDatabase, newArtifact.webDatabaseSite, newArtifact.webDatabaseInstance);
-                      if (oldArtifact != null && oldArtifact.createdBy != Guid.Empty) {
-                        _logger.LogInformation("UploadNewChecklist({0}) this is an update, not a new checklist", newArtifact.systemGroupId);
-                        // this is an update of an older one, keep the createdBy intact
-                        newArtifact.createdBy = oldArtifact.createdBy;
-                        newArtifact.InternalId = oldArtifact.InternalId; // copy the ID over
-                        // keep it a part of the same system group
-                        oldArtifact.updatedBy = Guid.Parse(claim.Value);
-                        oldArtifact.updatedOn = DateTime.Now;
-                        updatedChecklist = true;
-                      } else {
-                        newArtifact.createdBy = Guid.Parse(claim.Value);
-                        newArtifact.created = DateTime.Now;
-                      }
-                      //oldArtifact = null;
-                    }
+                        // clean up any odd data that can mess us up moving around, via JS, and such
+                        _logger.LogInformation("UploadNewChecklist() sanitizing the checklist for {0}.", file.FileName.ToLower());
+                        rawChecklist = SanitizeData(rawChecklist);
 
-                    if (claim != null) { // get the value
-                      _logger.LogInformation("UploadNewChecklist() setting the created by ID of the checklist {0}.", file.FileName.ToLower());
-                      newArtifact.createdBy = Guid.Parse(claim.Value);
-                      if (sg.createdBy == Guid.Empty)
-                        sg.createdBy = Guid.Parse(claim.Value);
-                      else 
-                        sg.updatedBy = Guid.Parse(claim.Value);
-                    }
-
-                    // save the artifact record and checklist to the database
-                    Artifact record = new Artifact();
-                    if (!updatedChecklist || oldArtifact == null) {
-                      _logger.LogInformation("UploadNewChecklist() saving the new checklist {0} to the database", file.FileName.ToLower());
-                      record  = await _artifactRepo.AddArtifact(newArtifact);
-                    }
-                    else {
-                      _logger.LogInformation("UploadNewChecklist() saving the updated checklist {0} to the database", file.FileName.ToLower());
-                      // we need to update in place and copy the VULN information over
-                      // we also only copy the Status and Finding Details if an XML SCAP XCCDF file; otherwise we copy all the fields
-                      // then we call update in place
-                      // get the checklist data loaded correctly
-                      oldArtifact.CHECKLIST = ChecklistLoader.LoadChecklist(oldArtifact.rawChecklist);
-                      newArtifact.CHECKLIST = ChecklistLoader.LoadChecklist(newArtifact.rawChecklist);
-                      VULN oldVulnerability;
-                      string vulnid = "";
-                      foreach (VULN v in newArtifact.CHECKLIST.STIGS.iSTIG.VULN) {
-                          vulnid = v.STIG_DATA.Where(z => z.VULN_ATTRIBUTE == "Vuln_Num").FirstOrDefault().ATTRIBUTE_DATA;
-                          // if the vulnerability number/id matches, and 
-                          //  1) it is either Open or Not a Finding from a SCAP; OR 
-                          //  2) a checklist file finding from an uploaded CKL
-                          if (oldArtifact.CHECKLIST.STIGS.iSTIG.VULN.Where(y => y.STIG_DATA.Where(z => z.VULN_ATTRIBUTE == "Vuln_Num").FirstOrDefault()
-                            .ATTRIBUTE_DATA  == vulnid).FirstOrDefault() != null && 
-                            (!file.FileName.ToLower().EndsWith(".xml") || v.STATUS.ToLower() == "notafinding" || v.STATUS.ToLower() == "open")) { 
-
-                              // find the vulnerability
-                              oldVulnerability = oldArtifact.CHECKLIST.STIGS.iSTIG.VULN.Where(y => y.STIG_DATA.Where(z => z.VULN_ATTRIBUTE == "Vuln_Num").FirstOrDefault().ATTRIBUTE_DATA == vulnid).FirstOrDefault();
-                              if (v.STATUS.ToLower() == "notafinding")
-                                  oldVulnerability.STATUS = "NotAFinding";
-                              else if (v.STATUS.ToLower() == "open")
-                                  oldVulnerability.STATUS = "Open";
-                              else if (v.STATUS.ToLower() == "not_applicable")
-                                  oldVulnerability.STATUS = "Not_Applicable";
-                              else if (v.STATUS.ToLower() == "not_reviewed")
-                                  oldVulnerability.STATUS = "Not_Reviewed";
-
-                              if (!string.IsNullOrEmpty(v.FINDING_DETAILS)) oldVulnerability.FINDING_DETAILS = v.FINDING_DETAILS;
-                              else oldVulnerability.FINDING_DETAILS = "";
-                              if (!file.FileName.ToLower().EndsWith(".xml")) {
-                                  if (!string.IsNullOrEmpty(v.COMMENTS)) oldVulnerability.COMMENTS = v.COMMENTS;
-                                  else oldVulnerability.COMMENTS = "";
-                                  if (!string.IsNullOrEmpty(v.SEVERITY_OVERRIDE)) oldVulnerability.SEVERITY_OVERRIDE = v.SEVERITY_OVERRIDE;
-                                  else oldVulnerability.SEVERITY_OVERRIDE = "";
-                                  if (!string.IsNullOrEmpty(v.SEVERITY_JUSTIFICATION)) oldVulnerability.SEVERITY_JUSTIFICATION = v.SEVERITY_JUSTIFICATION;
-                                  else oldVulnerability.SEVERITY_JUSTIFICATION = "";
-                              }
+                        // create the new record for saving into the DB
+                        Artifact newArtifact = MakeArtifactRecord(rawChecklist);
+                        Artifact oldArtifact = null; 
+                        // add the system record ID to the Artifact to know how to query it
+                        _logger.LogInformation("UploadNewChecklist() setting the title of the checklist {0}.", file.FileName.ToLower());
+                        if (recordSystem != null) {
+                          newArtifact.systemGroupId = recordSystem.InternalId.ToString();
+                          // store the title for ease of use
+                          newArtifact.systemTitle = recordSystem.title;
+                        }
+                        else {
+                          newArtifact.systemGroupId = sg.InternalId.ToString();
+                          // store the title for ease of use
+                          newArtifact.systemTitle = sg.title;
+                        }
+                        
+                        // if there is a hostname, see if this is an UPDATE or a new one based on the checklist type for this system
+                        if (!string.IsNullOrEmpty(newArtifact.hostName) && newArtifact.hostName.ToLower() != "unknown") {
+                          // we got this far, so it is a valid checklist. Let's see if it is an update or a new one that we uploaded
+                          // v1.12 adds in the web or database 3 fields for uniqueness
+                          oldArtifact = await _artifactRepo.GetArtifactBySystemHostnameAndTypeWithWebDatabase(newArtifact.systemGroupId, newArtifact.hostName, newArtifact.stigType, newArtifact.isWebDatabase, newArtifact.webDatabaseSite, newArtifact.webDatabaseInstance);
+                          if (oldArtifact != null && oldArtifact.createdBy != Guid.Empty) {
+                            _logger.LogInformation("UploadNewChecklist({0}) this is an update, not a new checklist", newArtifact.systemGroupId);
+                            // this is an update of an older one, keep the createdBy intact
+                            newArtifact.createdBy = oldArtifact.createdBy;
+                            newArtifact.InternalId = oldArtifact.InternalId; // copy the ID over
+                            // keep it a part of the same system group
+                            oldArtifact.updatedBy = Guid.Parse(claim.Value);
+                            oldArtifact.updatedOn = DateTime.Now;
+                            updatedChecklist = true;
+                          } else {
+                            newArtifact.createdBy = Guid.Parse(claim.Value);
+                            newArtifact.created = DateTime.Now;
                           }
-                          // cycle to the next one
-                      }
+                          //oldArtifact = null;
+                        }
 
-                      // format the XML string
-                      string newChecklistString = "";
-                      System.Xml.Serialization.XmlSerializer xmlSerializer = new System.Xml.Serialization.XmlSerializer(oldArtifact.CHECKLIST.GetType());
-                      using(StringWriter textWriter = new StringWriter())                
-                      {
-                          xmlSerializer.Serialize(textWriter, oldArtifact.CHECKLIST);
-                          newChecklistString = textWriter.ToString();
-                      }
-                      // strip out all the extra formatting crap and clean up the XML to be as simple as possible
-                      System.Xml.Linq.XDocument xDoc = System.Xml.Linq.XDocument.Parse(newChecklistString, System.Xml.Linq.LoadOptions.None);
-                      // save the new serialized checklist record to the database
-                      oldArtifact.rawChecklist = xDoc.ToString(System.Xml.Linq.SaveOptions.DisableFormatting);
-                      // clear out the data we do not need now before saving this updated record
-                      oldArtifact.CHECKLIST = new CHECKLIST();
-                      // save the update                      
-                      await _artifactRepo.UpdateArtifact(oldArtifact.InternalId.ToString(), oldArtifact);
-                    }
+                        if (claim != null) { // get the value
+                          _logger.LogInformation("UploadNewChecklist() setting the created by ID of the checklist {0}.", file.FileName.ToLower());
+                          newArtifact.createdBy = Guid.Parse(claim.Value);
+                          if (sg.createdBy == Guid.Empty)
+                            sg.createdBy = Guid.Parse(claim.Value);
+                          else 
+                            sg.updatedBy = Guid.Parse(claim.Value);
+                        }
 
-                    _logger.LogInformation("UploadNewChecklist() saved the checklist {0} to the database.", file.FileName.ToLower());
+                        // save the artifact record and checklist to the database
+                        Artifact record = new Artifact();
+                        if (!updatedChecklist || oldArtifact == null) {
+                          _logger.LogInformation("UploadNewChecklist() saving the new checklist {0} to the database", file.FileName.ToLower());
+                          record  = await _artifactRepo.AddArtifact(newArtifact);
+                        }
+                        else {
+                          _logger.LogInformation("UploadNewChecklist() saving the updated checklist {0} to the database", file.FileName.ToLower());
+                          // we need to update in place and copy the VULN information over
+                          // we also only copy the Status and Finding Details if an XML SCAP XCCDF file; otherwise we copy all the fields
+                          // then we call update in place
+                          // get the checklist data loaded correctly
+                          oldArtifact.CHECKLIST = ChecklistLoader.LoadChecklist(oldArtifact.rawChecklist);
+                          newArtifact.CHECKLIST = ChecklistLoader.LoadChecklist(newArtifact.rawChecklist);
+                          VULN oldVulnerability;
+                          string vulnid = "";
+                          foreach (VULN v in newArtifact.CHECKLIST.STIGS.iSTIG.VULN) {
+                              vulnid = v.STIG_DATA.Where(z => z.VULN_ATTRIBUTE == "Vuln_Num").FirstOrDefault().ATTRIBUTE_DATA;
+                              // if the vulnerability number/id matches, and 
+                              //  1) it is either Open or Not a Finding from a SCAP; OR 
+                              //  2) a checklist file finding from an uploaded CKL
+                              if (oldArtifact.CHECKLIST.STIGS.iSTIG.VULN.Where(y => y.STIG_DATA.Where(z => z.VULN_ATTRIBUTE == "Vuln_Num").FirstOrDefault()
+                                .ATTRIBUTE_DATA  == vulnid).FirstOrDefault() != null && 
+                                (!file.FileName.ToLower().EndsWith(".xml") || v.STATUS.ToLower() == "notafinding" || v.STATUS.ToLower() == "open")) { 
 
-                    // add to the number of successful uploads
-                    uploadResult.successful++;
+                                  // find the vulnerability
+                                  oldVulnerability = oldArtifact.CHECKLIST.STIGS.iSTIG.VULN.Where(y => y.STIG_DATA.Where(z => z.VULN_ATTRIBUTE == "Vuln_Num").FirstOrDefault().ATTRIBUTE_DATA == vulnid).FirstOrDefault();
+                                  if (v.STATUS.ToLower() == "notafinding")
+                                      oldVulnerability.STATUS = "NotAFinding";
+                                  else if (v.STATUS.ToLower() == "open")
+                                      oldVulnerability.STATUS = "Open";
+                                  else if (v.STATUS.ToLower() == "not_applicable")
+                                      oldVulnerability.STATUS = "Not_Applicable";
+                                  else if (v.STATUS.ToLower() == "not_reviewed")
+                                      oldVulnerability.STATUS = "Not_Reviewed";
 
-                    // publish to the openrmf save message the artifactId we can use
-                    if (!updatedChecklist) {
-                      _logger.LogInformation("UploadNewChecklist() publish a message on a new checklist {0} for the scoring of it.", file.FileName.ToLower());
-                      _msgServer.Publish("openrmf.checklist.save.new", Encoding.UTF8.GetBytes(record.InternalId.ToString()));
-                      // publish to update the system checklist count
-                      _logger.LogInformation("UploadNewChecklist() publish a message on a new checklist {0} for updating the count of checklists in the system.", file.FileName.ToLower());
-                      _msgServer.Publish("openrmf.system.count.add", Encoding.UTF8.GetBytes(record.systemGroupId));
-                      _msgServer.Flush();
+                                  if (!string.IsNullOrEmpty(v.FINDING_DETAILS)) oldVulnerability.FINDING_DETAILS = v.FINDING_DETAILS;
+                                  else oldVulnerability.FINDING_DETAILS = "";
+                                  if (!file.FileName.ToLower().EndsWith(".xml")) {
+                                      if (!string.IsNullOrEmpty(v.COMMENTS)) oldVulnerability.COMMENTS = v.COMMENTS;
+                                      else oldVulnerability.COMMENTS = "";
+                                      if (!string.IsNullOrEmpty(v.SEVERITY_OVERRIDE)) oldVulnerability.SEVERITY_OVERRIDE = v.SEVERITY_OVERRIDE;
+                                      else oldVulnerability.SEVERITY_OVERRIDE = "";
+                                      if (!string.IsNullOrEmpty(v.SEVERITY_JUSTIFICATION)) oldVulnerability.SEVERITY_JUSTIFICATION = v.SEVERITY_JUSTIFICATION;
+                                      else oldVulnerability.SEVERITY_JUSTIFICATION = "";
+                                  }
+                              }
+                              // cycle to the next one
+                          }
 
-                      // publish an audit event
-                      _logger.LogInformation("UploadNewChecklist() publish an audit message on a new checklist {0}.", file.FileName.ToLower());
-                      Audit newAudit = GenerateAuditMessage(claim, "add checklist");
-                      newAudit.message = string.Format("UploadNewChecklist() uploaded a new checklist {0} {1} in system group ({2}) {3}.", file.FileName.ToLower(),record.title, sg.InternalId.ToString(), sg.title);
-                      newAudit.url = "POST /";
-                      _msgServer.Publish("openrmf.audit.upload", Encoding.UTF8.GetBytes(Compression.CompressString(JsonConvert.SerializeObject(newAudit))));
-                      _msgServer.Flush();
-                    } else { // send a different message, this is an update
-                      _logger.LogInformation("UploadNewChecklist({0}) publishing the updated checklist for scoring", oldArtifact.InternalId.ToString());
-                      _msgServer.Publish("openrmf.checklist.save.update", Encoding.UTF8.GetBytes(oldArtifact.InternalId.ToString()));
-                      _msgServer.Flush();
-                      _logger.LogInformation("Called UploadNewChecklist() with an updated checklist {0} successfully", oldArtifact.InternalId.ToString());
-                      
-                      // publish an audit event
-                      _logger.LogInformation("UploadNewChecklist() publish an audit message on an updated checklist {0}.", file.FileName.ToLower());
-                      Audit newAudit = GenerateAuditMessage(claim, "update checklist");
-                      newAudit.message = string.Format("UploadNewChecklist() updated checklist {0} {1} with file {2} in system group ({3}) {4}.", oldArtifact.InternalId.ToString(), oldArtifact.title, file.FileName.ToLower(), sg.InternalId.ToString(), sg.title);
-                      newAudit.url = "POST /";
-                      _msgServer.Publish("openrmf.audit.upload", Encoding.UTF8.GetBytes(Compression.CompressString(JsonConvert.SerializeObject(newAudit))));
-                      _msgServer.Flush();
-                    }
+                          // format the XML string
+                          string newChecklistString = "";
+                          System.Xml.Serialization.XmlSerializer xmlSerializer = new System.Xml.Serialization.XmlSerializer(oldArtifact.CHECKLIST.GetType());
+                          using(StringWriter textWriter = new StringWriter())                
+                          {
+                              xmlSerializer.Serialize(textWriter, oldArtifact.CHECKLIST);
+                              newChecklistString = textWriter.ToString();
+                          }
+                          // strip out all the extra formatting crap and clean up the XML to be as simple as possible
+                          System.Xml.Linq.XDocument xDoc = System.Xml.Linq.XDocument.Parse(newChecklistString, System.Xml.Linq.LoadOptions.None);
+                          // save the new serialized checklist record to the database
+                          oldArtifact.rawChecklist = xDoc.ToString(System.Xml.Linq.SaveOptions.DisableFormatting);
+                          // clear out the data we do not need now before saving this updated record
+                          oldArtifact.CHECKLIST = new CHECKLIST();
+                          // save the update                      
+                          await _artifactRepo.UpdateArtifact(oldArtifact.InternalId.ToString(), oldArtifact);
+                        }
+
+                        _logger.LogInformation("UploadNewChecklist() saved the checklist {0} to the database.", file.FileName.ToLower());
+
+                        // add to the number of successful uploads
+                        uploadResult.successful++;
+
+                        // publish to the openrmf save message the artifactId we can use
+                        if (!updatedChecklist) {
+                          _logger.LogInformation("UploadNewChecklist() publish a message on a new checklist {0} for the scoring of it.", file.FileName.ToLower());
+                          _msgServer.Publish("openrmf.checklist.save.new", Encoding.UTF8.GetBytes(record.InternalId.ToString()));
+                          // publish to update the system checklist count
+                          _logger.LogInformation("UploadNewChecklist() publish a message on a new checklist {0} for updating the count of checklists in the system.", file.FileName.ToLower());
+                          _msgServer.Publish("openrmf.system.count.add", Encoding.UTF8.GetBytes(record.systemGroupId));
+                          _msgServer.Flush();
+
+                          // publish an audit event
+                          _logger.LogInformation("UploadNewChecklist() publish an audit message on a new checklist {0}.", file.FileName.ToLower());
+                          Audit newAudit = GenerateAuditMessage(claim, "add checklist");
+                          newAudit.message = string.Format("UploadNewChecklist() uploaded a new checklist {0} {1} in system group ({2}) {3}.", file.FileName.ToLower(),record.title, sg.InternalId.ToString(), sg.title);
+                          newAudit.url = "POST /";
+                          _msgServer.Publish("openrmf.audit.upload", Encoding.UTF8.GetBytes(Compression.CompressString(JsonConvert.SerializeObject(newAudit))));
+                          _msgServer.Flush();
+                        } else { // send a different message, this is an update
+                          _logger.LogInformation("UploadNewChecklist({0}) publishing the updated checklist for scoring", oldArtifact.InternalId.ToString());
+                          _msgServer.Publish("openrmf.checklist.save.update", Encoding.UTF8.GetBytes(oldArtifact.InternalId.ToString()));
+                          _msgServer.Flush();
+                          _logger.LogInformation("Called UploadNewChecklist() with an updated checklist {0} successfully", oldArtifact.InternalId.ToString());
+                          
+                          // publish an audit event
+                          _logger.LogInformation("UploadNewChecklist() publish an audit message on an updated checklist {0}.", file.FileName.ToLower());
+                          Audit newAudit = GenerateAuditMessage(claim, "update checklist");
+                          newAudit.message = string.Format("UploadNewChecklist() updated checklist {0} {1} with file {2} in system group ({3}) {4}.", oldArtifact.InternalId.ToString(), oldArtifact.title, file.FileName.ToLower(), sg.InternalId.ToString(), sg.title);
+                          newAudit.url = "POST /";
+                          _msgServer.Publish("openrmf.audit.upload", Encoding.UTF8.GetBytes(Compression.CompressString(JsonConvert.SerializeObject(newAudit))));
+                          _msgServer.Flush();
+                        }
+                    } // for each baseline SCAP to checklist, each checklist ckl, or each checklist in a combined CKL file
                 }
                 catch (Exception ex) {
                   // add to the list of failed uploads

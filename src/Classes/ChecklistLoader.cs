@@ -144,8 +144,7 @@ namespace openrmf_read_api.Classes
             }
             return vulns;
         }
- 
- 
+  
         public static string UpdateChecklistVulnerabilityOrder(string rawChecklist) {
             rawChecklist = rawChecklist.Replace("\t","");
             // load the CHECKLIST structure
@@ -313,6 +312,135 @@ namespace openrmf_read_api.Classes
                 }
             }
             return newDataList;
+        }
+
+        public static List<BaselineScanResult> LoadMultipleChecklistTypes(string rawChecklist) {
+            List<BaselineScanResult> checklistRecordsResult = new List<BaselineScanResult>();
+            BaselineScanResult checklistResult;
+
+            CHECKLIST myChecklist = new CHECKLIST();
+            rawChecklist = rawChecklist.Replace("\t","");
+            XmlDocument xmlDoc = new XmlDocument();
+            xmlDoc.LoadXml(rawChecklist);
+            XmlNodeList assetList = xmlDoc.GetElementsByTagName("ASSET");
+            XmlNodeList vulnList = xmlDoc.GetElementsByTagName("VULN");
+            XmlNodeList stiginfoList = xmlDoc.GetElementsByTagName("STIG_INFO");
+            XmlNodeList iStigList = xmlDoc.GetElementsByTagName("iSTIG");
+            ASSET assetResults = new ASSET();
+            STIG_INFO stigsResult = new STIG_INFO();
+            List<VULN> vulnResults = new List<VULN>();
+            SI_DATA titleInfo = new SI_DATA();
+            // ensure all three are valid otherwise this XML is junk
+            if (assetList != null && stiginfoList != null && vulnList != null && vulnList.Count > 0) {
+                // get top level information for EVERY checklist whether 1 or 12
+                if (assetList.Count >= 1)
+                    assetResults = getAssetListing(assetList.Item(0));
+                if (stiginfoList.Count >= 1)
+                    stigsResult = getStigInfoListing(stiginfoList.Item(0));
+                // get all of the VULN listings until the end
+                if (vulnList.Count > 0) {
+                    vulnResults = getVulnerabilityListing(vulnList);
+                }
+                // now cycle through all VULN records, based on the distinct STIGRef field iv V2
+                var stigTypes = vulnResults.Select(v => v.STIG_DATA.Where(x => x.VULN_ATTRIBUTE == "STIGRef").Select(z => z.ATTRIBUTE_DATA).Distinct()).ToList();
+                // get the unique listing of STIG types / CKL types
+                IEnumerable<string> stigTypeResults = null;
+                if (stigTypes != null) stigTypeResults = stigTypes.Select(x => x.FirstOrDefault()).Distinct();
+                stigTypes = null; // clear out the memory
+                // make sure this is not a list of 1 where the type is null, if so STIGRef is not there, try V3 exported to V2
+                if (stigTypeResults != null && stigTypeResults.Count() > 0 && 
+                    !(stigTypeResults.Count() == 1 && string.IsNullOrEmpty(stigTypeResults.First()))) { // this is a V2 original CKL
+                    // create a checklist for each distinct STIGRef
+                    foreach (string stigType in stigTypeResults) {
+                        checklistResult = new BaselineScanResult();
+                        myChecklist.ASSET = assetResults;
+                        titleInfo = stigsResult.SI_DATA.Where(z => !string.IsNullOrWhiteSpace(z.SID_NAME) && z.SID_NAME.ToLower() == "title").FirstOrDefault();
+                        if (titleInfo != null) {
+                            // fix the title of the checklist STIG Type at the top level also
+                            titleInfo.SID_DATA = stigType.Replace("SCAP Benchmark","").Replace(" SCAP","")
+                                .Replace("Security Technical Implementation Guide", "STIG");
+                            if (titleInfo.SID_DATA.EndsWith(" (STIG)"))
+                                titleInfo.SID_DATA = titleInfo.SID_DATA.Replace(" (STIG)", "");
+                            if (titleInfo.SID_DATA.IndexOf("- NIWC") > 0) {
+                                // remove the NIWC Enhanced type of ending
+                                titleInfo.SID_DATA = titleInfo.SID_DATA.Substring(0, titleInfo.SID_DATA.IndexOf("- NIWC")).Trim();
+                            }
+                            if (titleInfo.SID_DATA.IndexOf(" ::") > 0) {
+                                // remove the NIWC Enhanced type of ending
+                                titleInfo.SID_DATA = titleInfo.SID_DATA.Substring(0, titleInfo.SID_DATA.IndexOf(" ::")).Trim();
+                            }
+                        }
+                        myChecklist.STIGS.iSTIG.STIG_INFO = stigsResult;
+                        myChecklist.STIGS.iSTIG.VULN = vulnResults.Where(v => v.STIG_DATA.Where(x => x.VULN_ATTRIBUTE == "STIGRef" && x.ATTRIBUTE_DATA == stigType).FirstOrDefault() != null).ToList();
+                        checklistResult.rawChecklist = MakeRawChecklistString(myChecklist);
+                        checklistRecordsResult.Add(checklistResult); // add the raw string to the listing for parsing later in the routines
+                    }
+                }
+                else { 
+                    // if stigTypes is null, then check for multiple iSTIG and STIG_INFO in each lik V3 exported to V2, and then for each do a title grab
+                    foreach(XmlNode iStigNode in iStigList) {
+                        // get the STIGInfo one at a time
+                        stiginfoList = iStigNode.SelectNodes("STIG_INFO");
+                        stigsResult = getStigInfoListing(stiginfoList.Item(0));
+                        if (stigsResult != null) {
+                            checklistResult = new BaselineScanResult();
+                            // asset should be the same all around
+                            myChecklist.ASSET = assetResults;
+                            // get the title of the checklist
+                            titleInfo = stigsResult.SI_DATA.Where(z => !string.IsNullOrWhiteSpace(z.SID_NAME) && z.SID_NAME.ToLower() == "title").FirstOrDefault();
+                            if (titleInfo == null || string.IsNullOrEmpty(titleInfo.SID_DATA))
+                                continue; // skip to next
+                            // fix the title of the checklist STIG Type at the top level also
+                            titleInfo.SID_DATA = titleInfo.SID_DATA.Replace("SCAP Benchmark","").Replace(" SCAP","")
+                                .Replace("Security Technical Implementation Guide", "STIG");
+                            if (titleInfo.SID_DATA.EndsWith(" (STIG)"))
+                                titleInfo.SID_DATA = titleInfo.SID_DATA.Replace(" (STIG)", "");
+                            if (titleInfo.SID_DATA.IndexOf("- NIWC") > 0) {
+                                // remove the NIWC Enhanced type of ending
+                                titleInfo.SID_DATA = titleInfo.SID_DATA.Substring(0, titleInfo.SID_DATA.IndexOf("- NIWC")).Trim();
+                            }
+                            if (titleInfo.SID_DATA.IndexOf(" ::") > 0) {
+                                // remove the NIWC Enhanced type of ending
+                                titleInfo.SID_DATA = titleInfo.SID_DATA.Substring(0, titleInfo.SID_DATA.IndexOf(" ::")).Trim();
+                            }
+                            // put it all together
+                            myChecklist.STIGS.iSTIG.STIG_INFO = stigsResult;
+                            // get all VULN records under the iSTIG and after the STIG_INFO section
+                            vulnList = iStigNode.SelectNodes("VULN");
+                            if (vulnList.Count > 0) {
+                                myChecklist.STIGS.iSTIG.VULN = getVulnerabilityListing(vulnList);
+                            } 
+                            else 
+                                continue; // no VULNS
+                            checklistResult.rawChecklist = MakeRawChecklistString(myChecklist);
+                            checklistRecordsResult.Add(checklistResult); // add the raw string to the listing for parsing later in the routines
+                        }
+                    }
+                } // how the STIG types are referenced depending on STIGViewer v2 or v3, single or combined CKL
+            } // if asset list is not null or empty
+            return checklistRecordsResult;
+        }
+
+        public static string MakeRawChecklistString (CHECKLIST checklistXMLData) {
+            string rawTempData = "";
+            System.Xml.Serialization.XmlSerializer writer = new System.Xml.Serialization.XmlSerializer(typeof(CHECKLIST)); 
+            using(System.IO.StringWriter textWriter = new System.IO.StringWriter())
+            {
+                writer.Serialize(textWriter, checklistXMLData);
+                rawTempData = textWriter.ToString();
+            }
+            // strip out all the extra formatting crap and clean up the XML to be as simple as possible
+            System.Xml.Linq.XDocument xDoc = System.Xml.Linq.XDocument.Parse(rawTempData, System.Xml.Linq.LoadOptions.PreserveWhitespace);
+            // save the new serialized checklist record to the database
+            rawTempData = xDoc.ToString(System.Xml.Linq.SaveOptions.DisableFormatting);
+            string strChecklist = rawTempData.Substring(rawTempData.IndexOf("<STIGS>")); // save the rest but redo the top part
+            strChecklist = string.Format("<?xml version=\"1.0\" encoding=\"UTF-8\"?><CHECKLIST><ASSET><ROLE>{0}</ROLE><ASSET_TYPE>{1}</ASSET_TYPE><MARKING>{2}</MARKING><HOST_NAME>{3}</HOST_NAME><HOST_IP>{4}</HOST_IP><HOST_MAC>{5}</HOST_MAC><HOST_FQDN>{6}</HOST_FQDN><TARGET_COMMENT></TARGET_COMMENT><TECH_AREA>{7}</TECH_AREA><TARGET_KEY>{8}</TARGET_KEY><WEB_OR_DATABASE>{9}</WEB_OR_DATABASE><WEB_DB_SITE>{10}</WEB_DB_SITE><WEB_DB_INSTANCE>{11}</WEB_DB_INSTANCE></ASSET>",
+                checklistXMLData.ASSET.ROLE,checklistXMLData.ASSET.ASSET_TYPE,checklistXMLData.ASSET.MARKING,checklistXMLData.ASSET.HOST_NAME,checklistXMLData.ASSET.HOST_IP,
+                checklistXMLData.ASSET.HOST_MAC,checklistXMLData.ASSET.HOST_FQDN,checklistXMLData.ASSET.TECH_AREA,
+                checklistXMLData.ASSET.TARGET_KEY,checklistXMLData.ASSET.WEB_OR_DATABASE,checklistXMLData.ASSET.WEB_DB_SITE,
+                checklistXMLData.ASSET.WEB_DB_INSTANCE).Trim() + strChecklist.Trim();
+
+            return RecordGenerator.CleanData(strChecklist.Trim());
         }
 
     }
