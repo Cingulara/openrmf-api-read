@@ -101,6 +101,15 @@ namespace openrmf_read_api.Data
             }
         }
 
+        public async Task<IEnumerable<object>> GetChecklistCountByHost(string systemGroupId) {
+
+                var groupArtifactItemsByType = _context.Artifacts.Aggregate().Match(artifact => artifact.systemGroupId == systemGroupId 
+                    && !string.IsNullOrEmpty(artifact.hostName))
+                        .Group(s => s.hostName,
+                        g => new ChecklistCountPerHost { hostName = g.Key, numberOfChecklists = g.Count() }).ToListAsync();
+                return await groupArtifactItemsByType;
+        }
+
         public async Task<Artifact> GetArtifactBySystemHostnameAndType(string systemGroupId, string hostName, string stigType)
         {
             var query = _context.Artifacts.Find(artifact => artifact.systemGroupId == systemGroupId &&

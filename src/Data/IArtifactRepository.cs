@@ -41,6 +41,7 @@ namespace openrmf_read_api.Data
          Reports specific calls
         ********************************************/
         Task<IEnumerable<object>> GetCountByType(string system);
+        Task<IEnumerable<object>> GetChecklistCountByHost(string system);
 
         // add new note document
         Task<Artifact> AddArtifact(Artifact item);
