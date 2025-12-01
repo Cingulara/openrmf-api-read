@@ -12,7 +12,7 @@ RUN dotnet build
 RUN dotnet publish --runtime linux-musl-x64 -c Release -o out --self-contained true
 
 # build runtime image with DoD CA Certificates
-FROM cingulara/openrmf-base:1.13.01
+FROM docker.io/cingulara/openrmf-base:1.14.01
 RUN apk update && apk upgrade && rm -rf /var/cache/apk/*
 
 RUN mkdir /app
@@ -32,5 +32,8 @@ USER 1001
 # start the application
 ENTRYPOINT ["./openrmf-api-read"]
 
-LABEL org.opencontainers.image.source https://github.com/Cingulara/openrmf-api-read
-LABEL maintainer="dale.bingham@cingulara.com"
+LABEL org.opencontainers.image.source=https://github.com/Cingulara/openrmf-api-read
+LABEL org.opencontainers.image.authors="dale.bingham@cingulara.com"
+LABEL org.opencontainers.image.description="This is the checklist and patch internal API to capture scan and checklist data for OpenRMF OSS"
+LABEL org.opencontainers.image.vendor="Cingulara LLC and Tutela LLC"
+LABEL org.opencontainers.image.title="OpenRMF OSS Checklist internal API"
