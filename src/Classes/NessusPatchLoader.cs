@@ -54,6 +54,12 @@ namespace openrmf_read_api.Classes
             bool credentialed = false;
             string ipAddress = "";
             string scanVersion = "";
+            float cvssScore;
+            string hostMACAddress = "";
+            DateTime reportDate = DateTime.Now;
+            int reportDateTimestamp = 0;
+            string hostfqdn = "";
+            string hostrdns = "";
 
             foreach (XmlNode node in nodes) {
                 // reset the variables for each reporthost listing
@@ -62,7 +68,13 @@ namespace openrmf_read_api.Classes
                 operatingSystem = "";
                 systemType = "";
                 credentialed = false;
+                reportDate = DateTime.Now;
+                reportDateTimestamp = 0;
                 ipAddress = "";
+                hostMACAddress = "";
+                hostfqdn = "";
+                hostrdns = "";
+                cvssScore = 0F;
                 colAttributes = node.Attributes;
                 foreach (XmlAttribute attr in colAttributes) {
                     if (attr.Name == "name") {
@@ -75,10 +87,15 @@ namespace openrmf_read_api.Classes
                         if (child.Name == "HostProperties") {
                             // for each child node in here
                             netbiosname = "";
+                            hostfqdn = "";
+                            hostrdns = "";
                             operatingSystem = "";
                             systemType = "";
                             credentialed = false;
+                            reportDate = DateTime.Now;
+                            reportDateTimestamp = 0;
                             ipAddress = "";
+                            hostMACAddress = "";
                             foreach (XmlElement hostChild in child.ChildNodes) {
                                 // get the child
                                 foreach (XmlAttribute childAttr in hostChild.Attributes) {
@@ -87,14 +104,73 @@ namespace openrmf_read_api.Classes
                                         netbiosname = hostChild.InnerText; // get the outside child text;
                                     } else if (childAttr.InnerText == "hostname") {
                                         hostname = hostChild.InnerText; // get the outside child text;
-                                    } else if (childAttr.InnerText == "operating-system") {
+                                    } 
+                                    else if (childAttr.InnerText == "host-fqdn")
+                                    {
+                                        hostfqdn = hostChild.InnerText; // get the outside child text;
+                                    }
+                                    else if (childAttr.InnerText == "host-rdns")
+                                    {
+                                        hostrdns = hostChild.InnerText; // get the outside child text;
+                                    }
+                                    else if (childAttr.InnerText == "operating-system") {
                                         operatingSystem = hostChild.InnerText; // get the outside child text;
                                     } else if (childAttr.InnerText == "system-type") {
                                         systemType = hostChild.InnerText; // get the outside child text;
                                     } else if (childAttr.InnerText == "Credentialed_Scan") {
                                         bool.TryParse(hostChild.InnerText, out credentialed); // get the outside child text;
-                                    } else if (childAttr.InnerText == "host-rdns") {
-                                        ipAddress = hostChild.InnerText; // get the outside child text;
+                                    }
+                                    else if (childAttr.InnerText == "host-ip")
+                                    {
+                                        if (hostChild.InnerText != "127.0.0.1")
+                                        {
+                                            // keep a running list of IPs in case there is more than 1
+                                            if (!string.IsNullOrEmpty(hostChild.InnerText) &&
+                                                    ipAddress != hostChild.InnerText && ipAddress.IndexOf(", " + hostChild.InnerText) < 0 &&
+                                                    ipAddress.IndexOf(hostChild.InnerText + ", ") < 0)
+                                            {
+                                                if (!string.IsNullOrEmpty(ipAddress))
+                                                    ipAddress += ", " + hostChild.InnerText;
+                                                else
+                                                    ipAddress = hostChild.InnerText;
+                                            }
+                                        }
+                                    }
+                                    else if (childAttr.InnerText == "mac-address")
+                                    {
+                                        if (hostChild.InnerText != "00:00:00:00:00:00")
+                                        {
+                                            // keep a running list of MAC Addresses in case there is more than 1
+                                            if (!string.IsNullOrEmpty(hostChild.InnerText) &&
+                                                    hostMACAddress != hostChild.InnerText && hostMACAddress.IndexOf(", " + hostChild.InnerText) < 0 &&
+                                                    hostMACAddress.IndexOf(hostChild.InnerText + ", ") < 0)
+                                            {
+                                                if (!string.IsNullOrEmpty(hostMACAddress))
+                                                    hostMACAddress += ", " + hostChild.InnerText;
+                                                else
+                                                    hostMACAddress = hostChild.InnerText;
+                                            }
+                                        }
+                                    }
+                                    else if (childAttr.InnerText == "HOST_END_TIMESTAMP")
+                                    { //HOST_END_TIMESTAMP
+                                        try
+                                        {
+                                            bool success = Int32.TryParse(hostChild.InnerText, out reportDateTimestamp); // get the outside child text;
+                                            if (success)
+                                            {
+                                                reportDate = new DateTime(1970, 1, 1, 0, 0, 0, 0).AddSeconds(reportDateTimestamp).ToLocalTime();
+                                            }
+                                            else
+                                            {
+                                                reportDate = DateTime.Now; // worst case the date they upload it
+                                            }
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            Console.WriteLine(ex.Message + " error in PatchLoader for Nessus ACAS file.");
+                                            reportDate = DateTime.Now; // worst case the date they upload it
+                                        }
                                     }
                                 }// for each childAttr in hostChild
                             } // for each hostChild
@@ -107,9 +183,13 @@ namespace openrmf_read_api.Classes
                             // set the hostname and other host data for every single record
                             summary.hostname = hostname;
                             summary.operatingSystem = operatingSystem;
-                            summary.ipAddress = SanitizeHostname(ipAddress); // if an IP clean up the information octets
+                            if (!string.IsNullOrEmpty(ipAddress))
+                                summary.ipAddress = SanitizeHostname(ipAddress); // v2.12
+                            if (!string.IsNullOrEmpty(hostMACAddress))
+                                summary.macAddress = hostMACAddress; // v2.12
                             summary.systemType = systemType;
                             summary.credentialed = credentialed;
+                            summary.reportDate = reportDate;
                             // get all the attributes
                             foreach (XmlAttribute attr in colAttributes) {
                                 if (attr.Name == "severity") {
@@ -121,6 +201,18 @@ namespace openrmf_read_api.Classes
                                     summary.pluginName = attr.Value;
                                 } else if (attr.Name == "pluginFamily") {
                                     summary.family = attr.Value;
+                                }
+                                else if (attr.Name == "port")
+                                {
+                                    summary.port = attr.Value;
+                                }
+                                else if (attr.Name == "svc_name")
+                                {
+                                    summary.svc_name = attr.Value;
+                                }
+                                else if (attr.Name == "protocol")
+                                {
+                                    summary.protocol = attr.Value;
                                 }
                             }
                             // get all the child record data we need
@@ -135,6 +227,12 @@ namespace openrmf_read_api.Classes
                                     summary.riskFactor = reportData.InnerText;
                                 else if (reportData.Name == "synopsis")
                                     summary.synopsis = reportData.InnerText;
+                                else if (reportData.Name == "plugin_output")
+                                    summary.plugin_output = reportData.InnerText;
+                                else if (reportData.Name == "cvss3_base_score" && float.TryParse(reportData.InnerText, out cvssScore))
+                                    summary.cvssScore = cvssScore;
+                                else if (reportData.Name == "solution")
+                                    summary.solution = reportData.InnerText;
 
                                 if (summary.family == "Settings" && summary.pluginName == "Nessus Scan Information") { // get the version of ACAS
                                     if (reportData.Name == "plugin_output") { // parse the data in here
