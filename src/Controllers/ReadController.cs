@@ -1,4 +1,4 @@
-﻿// Copyright (c) Cingulara LLC 2019 and Tutela LLC 2019. All rights reserved.
+﻿// Copyright (c) Cingulara LLC 2025 and Tutela LLC 2025. All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007 license. See LICENSE file in the project root for full license information.
 
 using System;
@@ -3194,6 +3194,42 @@ namespace openrmf_read_api.Controllers
                 return BadRequest();
             }
         }
+
+        /// <summary>
+        /// GET Called from the OpenRMF UI (or external access) to return a count of each 
+        /// type of checklist type per host. 
+        /// If you pass in the system Id it does this per system.
+        /// </summary>
+        /// <param name="systemGroupId">The ID of the system for generating the count</param>
+        /// <returns>
+        /// HTTP Status showing it was searched correctly and the count per STIG type or 
+        /// that there is an error.
+        /// </returns>
+        /// <response code="200">Returns the list of checklist count per hostname</response>
+        /// <response code="400">If the item did not search correctly</response>
+        /// <response code="404">If the ID passed in is not valid</response>
+        [HttpGet("system/{systemGroupId}/checklistsbyhost")]
+        [Authorize(Roles = "Administrator,Reader,Editor,Assessor")]
+        public async Task<IActionResult> GetChecklistCountByHost(string systemGroupId)
+        {
+            try {
+                _logger.LogInformation("Calling GetChecklistCountByHost('{0}')", systemGroupId);
+                IEnumerable<Object> artifacts;
+                artifacts = await _artifactRepo.GetChecklistCountByHost(systemGroupId);
+                _logger.LogInformation("Called GetChecklistCountByHost('{0}')", systemGroupId);
+                if (artifacts == null) {                    
+                    _logger.LogWarning("Calling GetChecklistCountByHost('{0}') returned null", systemGroupId);
+                    NotFound();
+                }
+                return Ok(artifacts);
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "GetChecklistCountByHost() Error getting the counts by type for the Reports page");
+                return BadRequest();
+            }
+        }
+        // 
+
         #endregion
 
         private string CleanupData (string rawdata) {

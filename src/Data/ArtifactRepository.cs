@@ -1,4 +1,4 @@
-// Copyright (c) Cingulara LLC 2019 and Tutela LLC 2019. All rights reserved.
+// Copyright (c) Cingulara LLC 2025 and Tutela LLC 2025. All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007 license. See LICENSE file in the project root for full license information.
 
 using openrmf_read_api.Models;
@@ -99,6 +99,15 @@ namespace openrmf_read_api.Data
                         g => new ArtifactCount { stigType = g.Key, count = g.Count() }).ToListAsync();
                 return await groupArtifactItemsByType;
             }
+        }
+
+        public async Task<IEnumerable<object>> GetChecklistCountByHost(string systemGroupId) {
+
+                var groupArtifactItemsByType = _context.Artifacts.Aggregate().Match(artifact => artifact.systemGroupId == systemGroupId 
+                    && !string.IsNullOrEmpty(artifact.hostName))
+                        .Group(s => s.hostName,
+                        g => new ChecklistCountPerHost { hostName = g.Key, numberOfChecklists = g.Count() }).ToListAsync();
+                return await groupArtifactItemsByType;
         }
 
         public async Task<Artifact> GetArtifactBySystemHostnameAndType(string systemGroupId, string hostName, string stigType)

@@ -1,4 +1,4 @@
-// Copyright (c) Cingulara LLC 2019 and Tutela LLC 2019. All rights reserved.
+// Copyright (c) Cingulara LLC 2025 and Tutela LLC 2025. All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007 license. See LICENSE file in the project root for full license information.
 using System.Collections.Generic;
 using System.Linq;
@@ -196,15 +196,17 @@ namespace openrmf_read_api.Models
         /// </summary>
         /// <param name="results">The results list of pass and fail information rules from the SCAP scan</param>
         /// <returns>A checklist raw XML string, if found</returns>
-        public static string GenerateChecklistData(SCAPRuleResultSet results) {
+        public static List<BaselineScanResult> GenerateChecklistData(SCAPRuleResultSet results) {
             string checklistString = NATSClient.GetArtifactByTemplateTitle(results.title);
-
+            List<BaselineScanResult> checklistRecords = new List<BaselineScanResult>();
+            BaselineScanResult checklistRecord = new BaselineScanResult();
             // generate the checklist from reading the template in using a Request/Reply to openrmf.template.read
             if (!string.IsNullOrEmpty(checklistString)) {
-                return UpdateChecklistData(results, checklistString, true);
-            }            
-            // return the default template string
-            return checklistString;
+                checklistRecord.rawChecklist = UpdateChecklistData(results, checklistString, true);
+            }
+            // return the object
+            checklistRecords.Add(checklistRecord);
+            return checklistRecords;
         }
 
         /// <summary>

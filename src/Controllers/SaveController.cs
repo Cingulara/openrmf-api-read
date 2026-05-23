@@ -1,4 +1,4 @@
-﻿// Copyright (c) Cingulara LLC 2019 and Tutela LLC 2019. All rights reserved.
+﻿// Copyright (c) Cingulara LLC 2025 and Tutela LLC 2025. All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007 license. See LICENSE file in the project root for full license information.
 using System;
 using System.Collections.Generic;
@@ -268,6 +268,8 @@ namespace openrmf_read_api.Controllers
                 newAudit.message = string.Format("UpdateChecklist() update the system: {0}, checklist: {1}.", systemGroupId, artifactId);
                 newAudit.url = string.Format("PUT /artifact/{0}", artifactId);
                 _msgServer.Publish("openrmf.audit.save", Encoding.UTF8.GetBytes(Compression.CompressString(JsonConvert.SerializeObject(newAudit))));
+                // update the checklist details here
+                _msgServer.Publish("openrmf.checklist.save.update", Encoding.UTF8.GetBytes(artifactId));
                 _msgServer.Flush();
 
                 return Ok();

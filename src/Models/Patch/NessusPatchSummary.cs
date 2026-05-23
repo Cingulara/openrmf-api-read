@@ -1,5 +1,7 @@
-// Copyright (c) Cingulara LLC 2019 and Tutela LLC 2019. All rights reserved.
+// Copyright (c) Cingulara LLC 2019 and Tutela LLC 2025. All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007 license. See LICENSE file in the project root for full license information.
+using System;
+using MongoDB.Bson.Serialization.Attributes;
 
 namespace openrmf_read_api.Models
 {
@@ -14,7 +16,12 @@ namespace openrmf_read_api.Models
         public string operatingSystem { get; set;}
         public string systemType { get; set;}
         public string ipAddress { get; set;}
+        public string macAddress { get; set; }
         public bool credentialed { get; set;}
+
+        [BsonDateTimeOptions(Kind = DateTimeKind.Local)]
+        public DateTime reportDate { get; set; }
+        public string reportDateString { get { return reportDate.ToString("MM/dd/yyyy hh:mm tt"); }}
         
         public string pluginId { get; set; }
 
@@ -26,6 +33,9 @@ namespace openrmf_read_api.Models
         }}
         public string pluginName { get; set; }
         public string family { get; set; }
+        public string port { get; set; }
+        public string svc_name { get; set; }
+        public string protocol { get; set; }
         public int severity { get; set; }
         public string severityName { get {
             if (severity == 4)
@@ -39,6 +49,7 @@ namespace openrmf_read_api.Models
             else
                 return "Informational";
         }}
+        public float cvssScore { get; set; }
         // how many hosts have this pluginId
         public int hostTotal { get; set; }
         // how many times has this pluginId come up in total
@@ -50,8 +61,11 @@ namespace openrmf_read_api.Models
         public string pluginType { get; set; }
         public string riskFactor { get; set; }
         public string synopsis { get; set; }
+        public string plugin_output { get; set; }
+        public string solution { get; set;}
 
         // Nessus ACAS Scanner Version
+        public string scanSoftware { get; set;}
         public string scanVersion { get; set; }
     }
 }

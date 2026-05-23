@@ -1,4 +1,4 @@
-﻿// Copyright (c) Cingulara LLC 2019 and Tutela LLC 2019. All rights reserved.
+﻿// Copyright (c) Cingulara LLC 2025 and Tutela LLC 2025. All rights reserved.
 // Licensed under the GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007 license. See LICENSE file in the project root for full license information.
 
 using System;
@@ -74,7 +74,7 @@ namespace openrmf_read_api.Controllers
                 }
             }
             else {
-                _logger.LogWarning("Called GetCompliancBySystem() but with an invalid or empty Id", id);
+                _logger.LogWarning("Called GetCompliancBySystem() but with an invalid or empty Id {0}", id);
                 return BadRequest(); // no term entered
             }
         }
@@ -258,7 +258,7 @@ namespace openrmf_read_api.Controllers
                 }
             }
             else {
-                _logger.LogWarning("Called GetCompliancBySystemExport() but with an invalid or empty system group Id", id);
+                _logger.LogWarning("Called GetCompliancBySystemExport() but with an invalid or empty system group Id {0}", id);
                 return BadRequest(); // no term entered
             }
         }
@@ -297,7 +297,7 @@ namespace openrmf_read_api.Controllers
                 }
             }
             else {
-                _logger.LogWarning("Called GetCCIItem() but with an invalid or empty Id", cciid);
+                _logger.LogWarning("Called GetCCIItem() but with an invalid or empty Id {0}", cciid);
                 return BadRequest(); // no CCI Id entered
             }
         }
